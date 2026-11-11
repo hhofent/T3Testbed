@@ -36,7 +36,16 @@ farmhouses. Matched to the gridded unincorporated towns in the reference images
 `out/index.html` (everything) and `out/example.html` (single featured example —
 the rural farmstead). Default phone view is the single example.
 
-### Build & run
+### If a thread dies (durability)
+
+Threads fail; this repo is the record. Live status is in `STATE.md` (rewritten at
+milestones, never appended), observations live in `docs/research/`, decisions and the
+journal live in `git log`. Recovery protocol: read `STATE.md` → `git log --oneline -20`
+→ re-read only what's needed; the dead thread's messages remain readable via
+`t3_thread_read`. Do not inline large media into thread context — that's what killed
+the previous thread.
+
+## Build & run
 
 ```
 cd src/SpawnGuide
