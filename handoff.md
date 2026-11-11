@@ -1,0 +1,247 @@
+# Handoff — t3 testbed / SpawnGuide (1990s rural Iowa procgen)
+
+Written after the old thread [this is a separate space…](t3-thread://v2/1a62d61d-4b29-42b9-81fb-e2664e1740dd/bf7404fa-b1a3-4262-8c2f-4b9cafe29f58)
+died three runs in a row with:
+
+> 400: "inlined media exceeds the 56623104 byte total limit" (Thinking Machines airlock_error)
+
+Cause: the thread accumulated too much inlined media (browser screenshots with
+`includeImage: true` + the user's attached Lyon County aerial photos). The fix is a
+fresh thread (this one) and a written handoff. **Do not inline large images into the
+thread context again** — snapshot Google Maps sparingly, and prefer numeric/text
+observations over embedding full screenshots.
+
+## What this is
+
+Scratch space for systems headed into a 3D Unity building-construction game.
+Theme: **1990s rural Iowa**. The spawner will spawn walls / houses / neighborhoods /
+towns. This repo tests those systems before they go into the game. Walls spawn
+**already fastened** — this is a placement guide, not a construction sim. No raise
+mechanic, no anchoring, no nails (the user explicitly removed the raise flow).
+
+Unity is installed on this machine but the project lives elsewhere; this testbed stays
+engine-agnostic C# (.NET 5 SDK, C# 9 — no raw strings, no file-scoped namespaces) and
+ports later.
+
+## Builder-Guy wall facts (carried in, keep these)
+
+From `../Builder-Guy` (`Stock.cs`, `CONTEXT.md`, `Backlog_Update_1-wall test bed/handoff.md`,
+`Combination.cs`, `Fasten.cs`):
+
+- Framed wall height per story: **97-1/8 in** = bottom 2×6 plate + 92-5/8 in precut
+  stud (`PrecutStudTwoBySix`) + double top plate. Encoded as `BuilderGuyDims.WallHeightFeet`.
+- 2×6 construction, `TenFootPlateTwoBySix` (bottom + double top + spare).
+- Drawn wall thickness is framed+finish, 6.5 in (Builder-Guy frames bare 5.5 in).
+- Openings are framed holes (header, jacks, sill), not placeables.
+- 10-ft wall at 12" OC wants ~11 studs. Wall test bed kit: 16 precut studs, 4 plates, 4 8-ft 2×6s.
+
+## What's built (`src/SpawnGuide/`, ~1700 LOC, builds clean)
+
+See `README.md` for the current feature list. Summary:
+
+- **House archetypes**: `ranch`, `farmhouse` (two-story + front porch), `split-level`
+  (offset-gable L, side-entry garage). Seeded, deterministic (mulberry32 in `Rng.cs`).
+  L-shaped footprints, attached garage left/right seeded, 1990s features (vinyl siding
+  colors, 3-tab asphalt, brick-front option, 3.5/4/6-in-12 gables).
+- **Rural farmstead lot** (`--map rural`): section-line county road (66-ft ROW, no
+  centerline), house set back, machine shed (36–48 × 30–40 ft) behind house, steel
+  bins in a row behind shed, optional shop / pole barn, rare labeled *existing*
+  pre-1990s gambrel barn (minority of farms, labeled as such), LP tank, shelterbelt
+  ringing the **building cluster** N and W (not the lot edge), two gravel lanes
+  (house + shed), walk to the front door. **Rural lot = the building cluster and its
+  yard only — fields are separate and NOT part of the lot** (user correction).
+- **Town block** (`--map town`): one street both sides, 36-ft ROW, yellow centerline,
+  4 lots/side, 50–66 ft frontage, 20–22 ft setbacks, heavy yard + street trees
+  (canopy is structural — a spawn without ~70% canopy reads wrong), sidewalks along
+  E–W streets, spur walks to doors, integral or side-entry garages, short driveways,
+  seeded 35% alley with rear pole garages (garages door onto the alley).
+- **Driveways**: front-entry straight, side-entry with 90° turn, from garage apron.
+  Concrete in town, gravel rural.
+- **Outputs**: ASCII plans to console, per-artifact SVGs in `out/`,
+  `out/index.html` (everything) and **`out/example.html` — single featured example
+  (rural farmstead), the default phone embed** (user asked for one example by default).
+- Run: `cd src/SpawnGuide && dotnet run -- --seed 1993` (also `--map rural|town`,
+  `--archetype ranch|farmhouse|split-level`).
+- SVG renderer was verified **geometrically, not visually** (every element inside
+  viewBox; two real bugs found/fixed). No eyes on renders from inside the session —
+  the user views them (inline thread embed works on their phone over T3 Connect).
+
+## Reference research done (all via Google Maps in the agent browser)
+
+Web access works **only** through the T3 preview/browser tools pointed at Google Maps
+(DuckDuckGo also loaded once). There are **no fetch/search tools** in this session.
+The user attached Lyon County, IA aerial photos (George, Craig, Struble, coop corner).
+Observations:
+
+**George, IA (hamlet / unincorporated grid town)** — actual coords **43.344, -96.002**
+(not the 43.41 guess, which was wrong):
+- Cardinal grid; one **diagonal street (Boiler Ave)** on the old rail corridor, lined
+  with warehouses/shops (Siebring Mfg, custom cabinet shops, Oehmsen-Mid-West), plus
+  tabernacles/funeral homes anchoring corners. School complex at SE edge.
+- Commercial strip on the E–W highway (A34): Dollar General, Frontier Bank, Casey's —
+  main street IS the highway, no downtown retail core.
+- Blocks ~200–330 ft per face, ~3–4 lots/face → **lots ~50–66 ft frontage**
+  (railroad-plat tight, not 1990s suburb width). N–S block face ~200 ft measured.
+- Houses small-to-mid 1–2 story gable/hip, set back ~20–30 ft, detached garages at
+  rear (many lots show NO driveway — garage opens to rear lane/alley).
+- Sidewalks along E–W streets. Abrupt edges into fields on all sides.
+- Massive tree canopy — dominant visual feature.
+
+**Cattle yards** (seen near George / NW Iowa feedlot belt — Lyon County):
+- NOT homesteads. Rectangular dirt pen grid (~100–150 ft pens, 10–25 pens/yard),
+  concrete feedline mounds, central feed alley for mixer trucks, long silver loafing
+  barns along the road, 1–2 big metal shop/feed sheds, dark rectangular manure
+  lagoons at the edge, small white tanks/silos near barns, wide entrance apron
+  midway on the long side hard against the section-line road, no house inside the wire.
+- Would be a distinct **"cattle yard" archetype** (20–40 acre parcel), not a farmstead;
+  a landmark the town layer could place sparsely. **Not built yet — user hasn't confirmed.**
+
+**Farmstead pattern** (Lyon County aerials + ISU Extension farmstead layout norms):
+- House near the road on a rise; long E–W machine shed behind it; steel bins in a row
+  beside/behind the shed; machine shed long side to the road; windbreak/shelterbelt
+  around the building cluster (N and W); two gravel lanes; LP tank; pole barn/shop.
+
+**Section-line grid**: 1-mile section grid, county roads on section lines, no
+centerlines on rural gravel/blacktop, heavy tree canopy in towns, fields outside lot
+boundaries (lot boundaries clearly visible from the air).
+
+## The four reference links the user gave (MUST study next)
+
+These are the calibration anchors for the town density ladder and the infinite map:
+
+1. **Hull, IA — LARGE town**: `https://www.google.com/maps/@43.1912592,-96.1339449,1468m/data=!3m1!1e3`
+   ~2 miles wide. Should be the **largest town that ever spawns — ~1 per 100 miles**.
+2. **Boyden, IA — medium town**: `https://www.google.com/maps/@43.1895815,-96.0013215,1199m/data=!3m1!1e3`
+   ~1 mi × 3/4 mi. **More common — ~1 per 30 miles**.
+3. **Average farm**: `https://www.google.com/maps/@43.1778146,-96.0388077,130m/data=!3m1!1e3`
+   Zoomed close view of a typical farmstead.
+4. **Typical surrounding land**: `https://www.google.com/maps/@43.0247717,-96.2582973,1801m/data=!3m1!1e3`
+   Most of the map should look like this — large fields, scattered farmsteads,
+   clearly visible lot boundaries. "Most areas should be like this."
+
+User also said: turn satellite **off** (road/label mode) and zoom in on the towns to
+see average house placement and street shapes.
+
+## The actual goal (user, verbatim intent)
+
+> "the goal is a 3 mile square procedurally generated map that is reproducible with a
+> seed and continues on for hundreds of miles when the 'lens' is slowly moved"
+
+So the destination is an **infinite, seed-reproducible map** streaming around a slowly
+moving lens, built from **3-mile-square cells**. Town density ladder from the user's
+calibration: Hull-class every ~100 miles, Boyden-class every ~30 miles, George-class
+hamlets more frequent still (Struble/Craig/George spacing suggested every ~8–12 mi —
+not yet confirmed with the user), farmsteads scattered, most of the map empty fields
+on the section grid. Towns sit on the 1-mile section grid; George had one diagonal
+"old rail" avenue — that pattern (grid town + a diagonal rail-corridor street) is
+worth replicating as an optional town feature.
+
+## Immediate next steps
+
+1. Study the four links above (satellite AND road/label mode), record measured
+   observations (lot widths, setbacks, block sizes, street widths, town footprint,
+   farmstead anatomy).
+2. Write the observations + proposed town-density ladder into this handoff (or a
+   DESIGN.md).
+3. Propose the 3-mile-cell architecture: how cells seed (world seed + cell coords),
+   what lives at cell level vs town level vs lot level, how the lens streams cells,
+   and how the existing `MapGenerator`/`SvgMapRenderer` pieces slot in.
+4. Only then build. Walls/houses/farmstead/town-block archetypes already exist and
+   stay the leaf level.
+
+## Workflow / environment notes
+
+- This is a separate space from the game project; commitments live here, code graduates later.
+- Embeds of `out/*.html` via `html_render` show up inline in the thread and on the
+  user's phone (T3 Connect mirrors the thread). One example by default.
+- `html_preview`/`html_render` ARE available in this environment (they weren't in the
+  old thread — environment changed).
+- Google Maps works through `preview_navigate` + `preview_snapshot`. Use
+  `includeImage: true` sparingly (see failure cause at top).
+- .NET 5 SDK, Node 24, no Python (Store stub only). `dotnet run` works.
+- Old thread's provider (`openrouter/thinkingmachines/inkling-2-small:free`) failed
+  only due to inlined-media bloat, not code quality — the code on disk is good.
+
+---
+
+## Research results: the four reference links (studied 2026-11-11, fresh thread)
+
+**Hull, IA — the LARGE-town archetype** (~2 mi E–W × ~1 mi N–S, spawn ~1/100 mi)
+- Compact rectangular grid on the county-road section lines; abrupt field edges on all sides.
+- **Highway 18 runs the full E–W width along the SOUTH edge** — the commercial strip lives
+  there (Casey's, Van's Power Center, AgriPro, B&M Concrete, Van Schagen Oil, grain/feed).
+  Main street = the highway, same pattern as George/Boyden.
+- Residential grid: numbered E–W streets (310th St at the north edge, 7th/5th/4th/3rd/2nd/1st St,
+  Milwaukee Rd) crossed by named N–S streets (Division St, Lincoln St, Park St, Walnut St,
+  Chestnut St, Willow St, Elm Ave…). One curved residential street on the east side.
+- Civic anchors: Trinity Christian HS (NW edge), Western Christian HS (center), Westside +
+  Eastside City Parks, Hope Cemetery (NW), Calvary Protestant Reformed church (E),
+  "The Grain House" cafe on the main grid, "resla Field" ball field (SE).
+- North side has sparse rural-residential along 310th St outside the grid.
+
+**Boyden, IA — the MEDIUM-town archetype** (~1 mi × 3/4 mi, spawn ~1/30 mi)
+- Same DNA, one size down: grid of named E–W (Prairie, Pleasant, Webb, Railroad, Taft,
+  Grove, Walnut) × N–S (Sheridan, Sherman, Main, Blaine, Kennedy, Blanchard, Sunshine,
+  Aurora, Centennial). **Railroad St** runs E–W through the south third, curving SE.
+- Highway 18 (= 320th St) along the SOUTH edge again; commercial on it (Boer and Sons,
+  Farmers Feed & Supply, Rick's Customs, Boyden Storage, Demsco Products industrial SE).
+- Anchors: First Reformed Church, Boyden Public Library, Boyden Elementary School,
+  Rok's Bar & Grill, grain elevator silos at Railroad St & Main (west-center),
+  Centennial Park + disc golf + ball field (E edge).
+- A tree-lined creek/coulee corridor curves through the SOUTH edge of town.
+- Industrial/commercial on the highway fringe, residential on the grid inside, parks and
+  school inside the grid. Heavy canopy again.
+
+**Average farm** (Jay Ave area) — house near the road (~100–150 ft setback), mature trees
+flanking the driveway entrance, main house + 1 large pole/machine shed + smaller shed,
+gravel drive curving from the road to the buildings, fields right up to the yard edge.
+Confirms the farmstead archetype proportions already built.
+
+**Typical surrounding land** (430th St & Fir Ave area, ~1800 m wide) — the DEFAULT terrain:
+- 1-mile section grid: E–W roads (430th St) and N–S roads (Fig Ave, Fir Ave, Garfield Ave,
+  K42 highway), no centerlines.
+- Huge fields (section-sized and half-section-sized), contour-following plow/planting
+  patterns, tree-lined meandering creek cutting diagonally across sections (SW–NE),
+  occasional pond, sparse farmsteads (a few per section, each a small tree-ringed cluster),
+  one off-farm commercial drive-through (D&T Diesel Service) at a road junction.
+- Lot boundaries = field/road edges; farmsteads sit ON the grid roads at cluster points.
+
+**Density ladder (user-calibrated)**
+- Hull-class (2 mi wide): ~1 per 100 miles — the biggest a town ever gets.
+- Boyden-class (1 × 3/4 mi): ~1 per 30 miles.
+- George/Craig/Struble-class hamlets (gridded unincorporated, ~0.3–0.5 mi): most common
+  town; spacing unconfirmed (George area showed them ~6–10 mi apart — ask user).
+- Farmsteads: a few per section (1–3 per sq mi), tree-ringed clusters on grid roads.
+- Everything else: empty fields on the section grid. **Most of the map is this.**
+
+**Shared town anatomy (all three references agree)**
+1. Commercial/industrial strip on the highway = the town's south edge (almost always).
+2. Cardinal grid inside, blocks ~200–330 ft, lots ~50–66 ft frontage, 20–30 ft setbacks.
+3. Civic anchors inside the grid: school, church(es), library, park + ball field.
+4. Grain elevator near the rail/main junction (Boyden, George) — strong Iowa marker.
+5. Heavy tree canopy; abrupt transitions to fields; some towns pierced by one curved
+   rail-corridor street (George: Boiler Ave diagonal; Boyden: Railroad St curving).
+6. Creek corridor tree lines; railroads/diagonals optional but characteristic.
+
+## Architecture sketch for the 3-mile-cell infinite map (proposal, not built)
+
+- World seed → per-cell RNG via hash(worldSeed, cellX, cellZ). Cell = 3 mi square.
+- Cell content classes: (a) farmland+section grid (default), (b) hamlet, (c) Boyden-class,
+  (d) Hull-class — placed by a low-frequency "town field" (e.g. jittered Poisson /
+  blue-noise with class radii ~100 mi / ~30 mi / ~8–12 mi), independent of cell edges so
+  towns can straddle cells.
+- Each cell independently generates: section-line roads (global 1-mi lattice), fields,
+  creek corridor (low-freq noise ribbon), farmstead placements (hashed per section),
+  and whichever town overlaps it (town generated once per town-center, stamped into
+  every cell it overlaps — deterministic from the town's own seed).
+- Lens streams cells in a radius; generation is pure(worldSeed, cellCoord) → same result
+  regardless of visit order or direction.
+- Existing pieces (houses, farmstead lot, town block archetypes, SvgMapRenderer) become
+  the LEAF renderers the town/farmstead stampers call. Field fill stays cheap geometry.
+- Verification ladder: (1) cell-hash determinism tests, (2) single 3-mi cell render,
+  (3) 9-cell (9×9 mi) super-map render, (4) Unity port.
+
+## Environment change (this thread)
+html_preview / html_render ARE available here (they were not in the old thread).
+Google Maps still only works through the preview/browser tools; satellite mode is
+sticky per browser profile (road-mode URLs without !1e3 kept showing satellite).
