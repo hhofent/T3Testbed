@@ -7,46 +7,48 @@ namespace SpawnGuide
 
 /// <summary>
 /// The town in its countryside context — the test view for the infinite-map work.
-/// A 2-mile square cell (two sections) with the 1-mile section-grid roads, large
+/// A 3-mile square cell (three sections) with the 1-mile section-grid roads, large
 /// field fills, scattered farmsteads, and the town seeded at the central grid
 /// junction (the real pattern: towns sit at section-line corners). HWY 18 runs
 /// through the town and continues to the cell edges, like the real Highway 18 at
 /// George / Boyden / Hull.
 /// The town grows with each test via --size hamlet|boyden|hull; town geometry
 /// comes from SmallTownGenerator and is shifted into the cell.
+/// detail=false → far-LOD (silhouettes, trunk dots) for the zoomed-out view;
+/// detail=true  → everything (walls, captions) for the viewer's close-in layer.
 /// Always RoadSurface "asphalt" for now (section roads read as blacktop).
-/// The 3-mile cell and the town density field are NOT here yet — this is the
-/// canvas those will ride on.
+/// The town density field is NOT here yet — this is the canvas it will ride on.
 /// </summary>
 public static class CountrysideMap
 {
-    public const float CellFeet = 10560f;      // 2 miles
+    public const float CellFeet = 15840f;      // 3 miles
     const float SectionRoad = 66f;             // 66-ft section-line ROW
-    const float SectionMid = 5280f;            // one section-line cross at the middle
+    const float SectionMid = 7920f;            // one section-line cross at the middle
 
-    public static MapPlan Generate(uint seed, string sizeName)
+    public static MapPlan Generate(uint seed, string sizeName, bool detail = false)
     {
-        var town = SmallTownGenerator.Generate(seed, sizeName);
+        var town = SmallTownGenerator.Generate(seed, sizeName, detail: detail);
 
         var rng = new Rng(seed * 7919u + 13u);
         float cell = CellFeet;
 
         var map = new MapPlan
         {
-            Title = $"COUNTRYSIDE — 2 MI VIEW — SEED {seed} ({sizeName.ToUpperInvariant()})",
+            Title = $"3 MI CELL — SEED {seed} ({sizeName.ToUpperInvariant()})",
             Seed = seed,
             WidthFeet = cell,
             DepthFeet = cell,
             RoadSurface = "asphalt",
-            LodSimple = true,
+            LodSimple = !detail,
+            QuietAnnotations = false,
         };
 
-        // --- fields: two seeded split lines per axis, nine big muted rects.
+        // --- fields: 1/3 and 2/3 split lines per axis, jittered off the grid, nine muted rects.
         var fieldFills = new[] { "#ded9bd", "#d6d0b4", "#cbc4a2", "#e4e0cb", "#d2cbb0", "#dcd6b8" };
         var xs = new List<float> { 0f, cell };
         var ys = new List<float> { 0f, cell };
-        foreach (float vx in new[] { cell * 0.28f, cell * 0.62f }) xs.Insert(xs.Count - 1, vx + rng.Range(-160f, 160f));
-        foreach (float hz in new[] { cell * 0.3f, cell * 0.68f }) ys.Insert(ys.Count - 1, hz + rng.Range(-160f, 160f));
+        foreach (float vx in new[] { cell / 3f, cell * 2f / 3f }) xs.Insert(xs.Count - 1, vx + rng.Range(-220f, 220f));
+        foreach (float hz in new[] { cell / 3f, cell * 2f / 3f }) ys.Insert(ys.Count - 1, hz + rng.Range(-220f, 220f));
         xs.Sort(); ys.Sort();
         int fi = 0;
         for (int ix = 0; ix < xs.Count - 1; ix++)
@@ -128,7 +130,7 @@ public static class CountrysideMap
         // --- scattered farmsteads: house + machine shed + bins + tree ring,
         //     near a grid road, clear of the town.
         int placedFarms = 0, farmAttempts = 0;
-        while (placedFarms < 4 && farmAttempts++ < 40)
+        while (placedFarms < 6 && farmAttempts++ < 60)
         {
             float fx = rng.Range(700f, cell - 700f);
             float fz = rng.Range(700f, cell - 700f);

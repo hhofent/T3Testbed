@@ -58,12 +58,19 @@ no raw strings, no file-scoped namespaces) and ports later.
   school, 2 churches), elevator + bin row, HWY-18 commercial strip, sidewalks on
   both sides of every street, per-row alleys, heavy canopy. `--seeds a,b,c` =
   multiple seeds per run; `out/examples.html` gallery = smalltown×3 + country×3.
-- `--map country` (`CountrysideMap.cs`): the 2-mile countryside test view — town
-  straddling the interior section-line junction, 1-mile section grid roads, field
-  fills, scattered farmstead clusters, HWY 18 continued to the cell edges. One view
-  per size class per run (hamlet/boyden/hull) so growth is visible test-to-test.
-  Renders houses as footprint silhouettes (LodSimple) with contour-free fields;
-  house-plan annotations suppressed below scale 0.55 px/ft.
+- `--map country` (`CountrysideMap.cs`): THE 3-mile cell (15840 ft), town straddling
+  the interior section-line junction, 1-mile section grid, field fills, 6 farmstead
+  clusters, HWY 18 to the cell edges. One far-LOD (silhouettes, trunk dots) AND one
+  detail (walls + captions, trunk dots r≈2 ft) per size class per run.
+- `out/viewer.html` (~11 MB, self-contained data-URI maps, no server needed — open in
+  a desktop browser): pan/zoom viewer, wheel+drag+pinch, far↔detail LOD crossfade at
+  1.55× (smalltown) / 2.6× (cell) fit zoom. Floor plans for houses are NOT built yet —
+  the detail zoom is the target layer for them when they come.
+- Trees render as trunk-location dots only, no canopy disks (user call, 2026-11-11).
+- Town silhouettes are seeded superellipse-wobble blobs (edge lots dropped), never a
+  rectangle (user call). Hamlet seed 1993 now 130 houses after blob cut (was 168).
+- QuietAnnotations is generator-set, not scale-derived; wall min-stroke is 2.2px at
+  natural size (was 5px).
 - Sequencing note: parallel thread (durability agent) committed mid-build twice;
   verify with `git status` before committing; STATE.md is the source of truth.
   Verified geometrically (bbox checks) and by user's eye via example.html.

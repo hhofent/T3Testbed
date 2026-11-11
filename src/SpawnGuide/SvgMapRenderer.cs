@@ -58,7 +58,7 @@ public static class SvgMapRenderer
         string N(float v) => SvgRenderer.Format(v);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {N(widthPx)} {N(heightPx)}' font-family='Georgia, serif'>");
+        sb.AppendLine($"<svg xmlns='http://www.w3.org/2000/svg' width='{N(widthPx)}' height='{N(heightPx)}' viewBox='0 0 {N(widthPx)} {N(heightPx)}' font-family='Georgia, serif'>");
         sb.AppendLine("<style>");
         sb.AppendLine(".floor{fill:#e9e4d2}");
         sb.AppendLine(".wall{stroke:#3a332b;fill:none}");
@@ -86,8 +86,9 @@ public static class SvgMapRenderer
         foreach (var t in map.Trees)
         {
             var c = Map(t);
-            float r = map.LodSimple ? 2.8f : 5.5f * scale;
-            sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(r)}' fill='#7d8b5f' fill-opacity='0.85' stroke='#5c6a43' stroke-width='1'/>");
+            // Trunk-location dots only — no canopy fill.
+            float r = map.LodSimple ? 3.2f : MathF.Max(0.9f, 2.2f * scale);
+            sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(r)}' fill='#3f3b34' fill-opacity='{(map.LodSimple ? "0.75" : "0.9")}'/>");
         }
 
         // Lot boundaries (hidden at countryside zoom).
@@ -145,11 +146,11 @@ public static class SvgMapRenderer
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Driveways)
         {
             string color = d.Surface == "concrete" ? "#dcd9d2" : "#d6c9a3";
-            sb.AppendLine(Polyline(Map, d.Points, color, MathF.Max(2.5f, d.WidthFeet * scale)));
+            sb.AppendLine(Polyline(Map, d.Points, color, MathF.Max(0.6f, d.WidthFeet * scale)));
         }
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Walks)
         {
-            sb.AppendLine(Polyline(Map, d.Points, "#e3e0d8", MathF.Max(2f, d.WidthFeet * scale)));
+            sb.AppendLine(Polyline(Map, d.Points, "#e3e0d8", MathF.Max(0.5f, d.WidthFeet * scale)));
         }
 
         // Houses.
@@ -167,7 +168,7 @@ public static class SvgMapRenderer
                 }
                 sil.Length--;
                 sil.Append("Z");
-                sb.AppendLine($"<path d='{sil}' fill='#45413a' fill-opacity='0.95'/>");
+                sb.AppendLine($"<path d='{sil}' fill='#4c483f' fill-opacity='0.92'/>");
                 continue;
             }
             SvgPx HouseMap(Vec2 p)
@@ -175,7 +176,7 @@ public static class SvgMapRenderer
                 var q = Map(p);
                 return q;
             }
-            SvgRenderer.AppendHouse(sb, h.Plan, HouseMap, scale, "#f0efe0", h.MirroredZ, quietAnnotations: scale < 0.55f);
+            SvgRenderer.AppendHouse(sb, h.Plan, HouseMap, scale, "#f0efe0", h.MirroredZ, quietAnnotations: map.QuietAnnotations);
         }
 
         // Outbuildings.
@@ -248,13 +249,13 @@ public static class SvgMapRenderer
                 else
                     sb.AppendLine($"<line class='thin' x1='{N(tl.X + wPx / 2f)}' y1='{N(tl.Y + 2)}' x2='{N(tl.X + wPx / 2f)}' y2='{N(tl.Y + hPx - 2)}' stroke-dasharray='5 4'/>");
             }
-            bool suppress = scale < 0.55f && o.Kind == OutbuildingKind.DetachedGarage;
+            bool suppress = map.QuietAnnotations && (o.Kind == OutbuildingKind.DetachedGarage || o.Kind == OutbuildingKind.Storefront);
             if (!string.IsNullOrEmpty(o.Label) && !suppress)
                 sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(tl.Y + hPx + 12)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
         }
 
         // Labels (hidden at countryside zoom; minor labels suppressed at smalltown zoom).
-        bool quiet = scale < 0.55f;
+        bool quiet = map.QuietAnnotations;
         foreach (var l in map.LodSimple ? Enumerable.Empty<MapLabel>() : map.Labels)
         {
             if (quiet && !l.Large) continue;

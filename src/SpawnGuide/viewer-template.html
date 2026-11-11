@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>SpawnGuide viewer — 1990s rural Iowa</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #221f1a; color: #e8e2d4; font-family: Georgia, serif; overflow: hidden; }
+  #bar { display: flex; gap: 8px; align-items: center; padding: 7px 10px; background: #2a2721; border-bottom: 1px solid #3a352c; height: 38px; box-sizing: content-box; }
+  #bar select, #bar button { background: #221f1a; color: #e8e2d4; border: 1px solid #57503f; border-radius: 6px; padding: 6px 10px; font-family: Georgia, serif; font-size: 13px; }
+  #bar button { cursor: pointer; min-width: 38px; }
+  #bar button:hover { background: #33302a; }
+  #bar .spacer { flex: 1; }
+  #stage { position: absolute; inset: 52px 0 0 0; overflow: hidden; touch-action: none; cursor: grab; background: #1c1a16; }
+  #stage:active { cursor: grabbing; }
+  .layer { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; }
+  #hud { position: absolute; right: 10px; bottom: 10px; background: rgba(34,31,26,.85); padding: 6px 10px; border-radius: 6px; font-size: 11px; color: #a89f8d; pointer-events: none; letter-spacing: .2px; }
+  #fname { color: #a89f8d; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <select id="mapSel" aria-label="map"></select>
+  <button id="zoomOut" title="zoom out">−</button>
+  <button id="zoomIn" title="zoom in">+</button>
+  <button id="reset" title="fit to window">fit</button>
+  <div class="spacer"></div>
+  <span id="fname"></span>
+</div>
+<div id="stage">
+  <img id="far" class="layer" draggable="false" alt="map (far view)">
+  <img id="near" class="layer" draggable="false" alt="map (detail)" style="opacity:0">
+</div>
+<div id="hud">wheel zoom · drag pan · pinch zoom · detail fades in when zoomed</div>
+<script>
+// Injected by the generator: [{ name, far, near, lodSwitch }]
+const MAPS = /*__MAPS__*/[];
+const stage = document.getElementById('stage');
+const far = document.getElementById('far');
+const near = document.getElementById('near');
+const sel = document.getElementById('mapSel');
+const fname = document.getElementById('fname');
+
+let cur = null;
+let s = 1, tx = 0, ty = 0, fitS = 1, natW = 1000, natH = 700;
+const pointers = new Map();
+let pinchPrev = null;
+
+function stageRect() { return stage.getBoundingClientRect(); }
+
+function apply() {
+  far.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+  near.style.transform = far.style.transform;
+  const detail = s >= fitS * (cur ? cur.lodSwitch : 1.7);
+  near.style.opacity = detail ? 1 : 0;
+  far.style.opacity = detail ? 0 : 1;
+}
+
+function clampView() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const margin = Math.min(w, h) * 0.25;
+  tx = Math.min(Math.max(tx, w - natW * s - margin), margin);
+  ty = Math.min(Math.max(ty, h - natH * s - margin), margin);
+}
+
+function fit() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  fitS = Math.min(w / natW, h / natH) * 0.97;
+  s = fitS;
+  tx = (w - natW * s) / 2;
+  ty = (h - natH * s) / 2;
+  apply();
+}
+
+function zoomAt(cx, cy, factor) {
+  const sMin = fitS * 0.5, sMax = fitS * 30;
+  const s2 = Math.min(Math.max(s * factor, sMin), sMax);
+  const k = s2 / s;
+  tx = cx - (cx - tx) * k;
+  ty = cy - (cy - ty) * k;
+  s = s2;
+  clampView();
+  apply();
+}
+
+stage.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = stageRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0016));
+}, { passive: false });
+
+stage.addEventListener('pointerdown', (e) => {
+  stage.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 2) {
+    const pts = [...pointers.values()];
+    pinchPrev = { d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), mx: (pts[0].x + pts[1].x) / 2, my: (pts[0].y + pts[1].y) / 2 };
+  }
+});
+stage.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  const r = stageRect();
+  if (pointers.size === 1) {
+    tx += e.clientX - prev.x;
+    ty += e.clientY - prev.y;
+    clampView();
+    apply();
+  } else if (pointers.size === 2) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pts = [...pointers.values()];
+    const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    const mx = (pts[0].x + pts[1].x) / 2 - r.left, my = (pts[0].y + pts[1].y) / 2 - r.top;
+    if (pinchPrev && pinchPrev.d > 0) {
+      // pan by midpoint delta, zoom by finger-distance ratio around the midpoint
+      tx += mx - pinchPrev.mx;
+      ty += my - pinchPrev.my;
+      zoomAt(mx, my, d / pinchPrev.d);
+    }
+    pinchPrev = { d, mx, my };
+    clampView();
+    apply();
+    return;
+  }
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+});
+const clearPointer = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinchPrev = null; };
+stage.addEventListener('pointerup', clearPointer);
+stage.addEventListener('pointercancel', clearPointer);
+
+document.getElementById('zoomIn').onclick = () => zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, 1.5);
+document.getElementById('zoomOut').onclick = () => zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, 1 / 1.5);
+document.getElementById('reset').onclick = fit;
+window.addEventListener('resize', () => { fitS = Math.min(stage.clientWidth / natW, stage.clientHeight / natH) * 0.97; clampView(); apply(); });
+
+MAPS.forEach((m, i) => {
+  const o = document.createElement('option');
+  o.value = i;
+  o.textContent = m.name;
+  sel.appendChild(o);
+});
+
+sel.onchange = () => loadMap(MAPS[+sel.value]);
+function loadMap(m) {
+  cur = m;
+  fname.textContent = m.file || m.far;
+  far.onload = () => { natW = far.naturalWidth; natH = far.naturalHeight; fit(); };
+  near.onload = () => apply();
+  far.src = m.far;
+  near.src = m.near;
+}
+if (MAPS.length) loadMap(MAPS[0]);
+</script>
+</body>
+</html>

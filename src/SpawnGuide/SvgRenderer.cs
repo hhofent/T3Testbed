@@ -56,7 +56,7 @@ public static class SvgRenderer
         {
             var a = map(wall.Start);
             var b = map(wall.End);
-            float thick = MathF.Max(wall.ThicknessFeet * scale, 5f);
+            float thick = MathF.Max(wall.ThicknessFeet * scale, scale < 0.15f ? 0.7f : 2.2f);
             sb.AppendLine($"<line class='wall' x1='{N(a.X)}' y1='{N(a.Y)}' x2='{N(b.X)}' y2='{N(b.Y)}' stroke-width='{N(thick)}'/>");
 
             var dir = (wall.End - wall.Start).Normalized();
@@ -136,7 +136,7 @@ public static class SvgRenderer
         string N(float v) => Format(v);
 
         var sb = new StringBuilder();
-        sb.AppendLine($"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {N(widthPx)} {N(heightPx)}' font-family='Georgia, serif'>");
+        sb.AppendLine($"<svg xmlns='http://www.w3.org/2000/svg' width='{N(widthPx)}' height='{N(heightPx)}' viewBox='0 0 {N(widthPx)} {N(heightPx)}' font-family='Georgia, serif'>");
         sb.AppendLine("<style>");
         sb.AppendLine(".wall{stroke:#3a332b;fill:none}");
         sb.AppendLine(".floor{fill:#e7dfd0}");

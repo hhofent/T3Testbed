@@ -40,11 +40,15 @@ houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of
 street, street trees, 2 parks + 1 school + 2 churches on the grid, per-row alleys
 (~55%), heavy canopy. Sizes: hamlet ~0.4 mi, boyden ~0.7 mi, hull ~1.1 mi.
 
-**Countryside view** (`--map country`, seed via `--seed`) — a 2-mile 2×2-section test
-cell with the town straddling the interior section-line junction, 1-mile grid roads,
-field fills, scattered farmstead clusters, and HWY 18 continuing to the cell edges.
-Generates one view per size class (hamlet/boyden/hull) so each test shows the town
-growing.
+**3-mile cell** (`--map country`, seed via `--seed`) — a 3-mile (15840 ft) test cell
+with the town straddling the interior section-line junction, 1-mile grid roads, field
+fills, farmstead clusters, HWY 18 to the cell edges. Generates one far + one detail
+view per size class (hamlet/boyden/hull).
+
+**Zoomable viewer** — `out/viewer.html` (~11 MB, fully self-contained, no server):
+pan/zoom across all six generated maps (smalltown ×3 seeds, 3 mi cell ×3 sizes), far
+↔ detail crossfade as you zoom. **Open in a desktop browser** — phones can't reach a
+local file. Trees are trunk dots; town silhouettes are seeded blobs, not rectangles.
 
 **Outputs** — ASCII houses to the console, one SVG per artifact, a self-contained
 `out/index.html` (everything) and `out/example.html` (single featured example —

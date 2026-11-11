@@ -77,6 +77,8 @@ public sealed class MapPlan
     public string RoadSurface { get; set; } = "";
     /// <summary>Level-of-detail: houses/outbuildings silhouette-only, no captions (countryside zoom).</summary>
     public bool LodSimple { get; set; }
+    /// <summary>Suppress in-plan captions (GARAGE DOOR/PORCH/etc.). Generators set this; NOT derived from scale anymore.</summary>
+    public bool QuietAnnotations { get; set; }
     /// <summary>Dashed lot boundary rectangles (town lots). Rural: the outer parcel line.</summary>
     public List<MapRect> LotLines { get; } = new();
     public List<PositionedHouse> Houses { get; } = new();

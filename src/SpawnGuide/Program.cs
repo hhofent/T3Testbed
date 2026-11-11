@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using SpawnGuide;
@@ -68,18 +69,22 @@ if (mapMode is "smalltown" or "all")
 {
     foreach (var s in smalltownSeeds)
     {
-        var m = SmallTownGenerator.Generate(s, townSize);
+        var m = SmallTownGenerator.Generate(s, townSize);               // embed layer (quiet)
         sections.Add(MapSection(m, $"smalltown-{s}.svg"));
+        var md = SmallTownGenerator.Generate(s, townSize, detail: true); // zoom-viewer detail layer
+        File.WriteAllText(Path.Combine(outDir, $"smalltown-{s}-detail.svg"), SvgMapRenderer.Render(md));
         if (smalltown == null) smalltown = m;   // featured: first seed
     }
 }
 if (mapMode is "country" or "all")
 {
-    // One countryside view per size class, so growth is visible test-to-test.
+    // One 3-mile cell per size class, so growth is visible test-to-test. Far + detail pair each.
     foreach (var sz in new[] { "hamlet", "boyden", "hull" })
     {
         var m = CountrysideMap.Generate(seed, sz);
         sections.Add(MapSection(m, $"country-{seed}-{sz}.svg"));
+        var md = CountrysideMap.Generate(seed, sz, detail: true);
+        File.WriteAllText(Path.Combine(outDir, $"country-{seed}-{sz}-detail.svg"), SvgMapRenderer.Render(md));
     }
 }
 
@@ -156,3 +161,30 @@ if (townSections.Count > 1)
 }
 foreach (var s in townSections)
     Console.WriteLine($"gallery: {s.FileName}");
+
+// Zoomable viewer: pan/zoom with far↔detail LOD crossfade. Maps inlined as data URIs so the
+// single viewer.html works everywhere (file://, t3 embed, any static host) with no sibling files.
+static string SvgDataUri(string fileName)
+    => "data:image/svg+xml;utf8," + File.ReadAllText(fileName)
+        .Replace("%", "%25").Replace("<", "%3C").Replace(">", "%3E").Replace("#", "%23")
+        .Replace("\"", "%22").Replace("'", "%27").Replace("\\", "%5C")
+        .Replace("\r", "").Replace("\n", "");
+static string ViewerMapJson(string name, string farFile, string nearFile, double lodSwitch, string outDir)
+    => $"{{\"name\":\"{name}\",\"far\":\"{SvgDataUri(Path.Combine(outDir, farFile))}\",\"near\":\"{SvgDataUri(Path.Combine(outDir, nearFile))}\",\"lodSwitch\":{lodSwitch.ToString(CultureInfo.InvariantCulture)},\"file\":\"{farFile}\"}}";
+{
+    var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "viewer-template.html");
+    if (File.Exists(templatePath))
+    {
+        var maps = new List<string>();
+        foreach (var s in smalltownSeeds)
+            maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", $"smalltown-{s}-detail.svg", 1.55, outDir));
+        foreach (var sz in new[] { "hamlet", "boyden", "hull" })
+            maps.Add(ViewerMapJson($"3 mi cell — {sz} — seed {seed}", $"country-{seed}-{sz}.svg", $"country-{seed}-{sz}-detail.svg", 2.6, outDir));
+        string viewer = File.ReadAllText(templatePath)
+            .Replace("/*__MAPS__*/[]", "[" + string.Join(",", maps) + "]");
+        string viewerPath = Path.Combine(outDir, "viewer.html");
+        File.WriteAllText(viewerPath, viewer);
+        Console.WriteLine($"wrote {viewerPath} ({new FileInfo(viewerPath).Length / 1024 / 1024} MB, self-contained)");
+    }
+    else Console.WriteLine("viewer-template.html not found; skipping viewer.html");
+}

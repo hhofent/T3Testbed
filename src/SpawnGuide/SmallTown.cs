@@ -47,7 +47,8 @@ public static class SmallTownGenerator
         ["hull"] = new TownSize { Columns = 15, EWStreets = 7, LotsMin = 3, LotsMax = 4, CommercialPads = 7, Label = "LARGE" },
     };
 
-    public static MapPlan Generate(uint seed, string sizeName)
+    /// <param name="detail">false → quiet annotations (natural-size embed). true → all captions on (zoom viewer's detail layer).</param>
+    public static MapPlan Generate(uint seed, string sizeName, bool detail = false)
     {
         if (!Sizes.TryGetValue(sizeName, out var size))
             throw new ArgumentException($"unknown town size '{sizeName}' (have: {string.Join(", ", Sizes.Keys)})");
@@ -101,6 +102,12 @@ public static class SmallTownGenerator
             return has;
         }
 
+        // --- seeded blob boundary: the town is an irregular silhouette, never a rectangle.
+        float blobCX = 0f, blobCZ = 0f, blobRX = 1f, blobRZ = 1f;
+        int hb1 = 0, hb2 = 0;
+        float ha1 = 0, ha2 = 0, hp1 = 0, hp2 = 0;
+        bool blobReady = false;
+
         // --- Z layout: highway, commercial band, then the cumulative E–W grid.
         float zBand = HighwayWidth;
         float zFirstStreet = zBand + BandDepth;
@@ -111,6 +118,28 @@ public static class SmallTownGenerator
         float lastStreetEnd = ewZ[size.EWStreets - 1] + StreetRow;
         float totalDepth = lastStreetEnd + lotDepth;   // final north-edge lot row is the town edge
 
+        blobCX = totalWidth / 2f;
+        blobCZ = totalDepth / 2f;
+        blobRX = totalWidth / 2f;
+        blobRZ = totalDepth / 2f;
+        hb1 = rng.RangeInt(2, 5);
+        hb2 = rng.RangeInt(5, 9);
+        ha1 = rng.Range(0.10f, 0.20f);
+        ha2 = rng.Range(0.04f, 0.10f);
+        hp1 = rng.Range(0f, MathF.PI * 2f);
+        hp2 = rng.Range(0f, MathF.PI * 2f);
+        blobReady = true;
+
+        bool InsideBlob(float x, float z)
+        {
+            if (!blobReady) return true;
+            float nx = (x - blobCX) / blobRX, nz = (z - blobCZ) / blobRZ;
+            float ang = MathF.Atan2(nz, nx);
+            float r = MathF.Sqrt(nx * nx + nz * nz);
+            float boundary = 0.86f + ha1 * MathF.Cos(hb1 * ang + hp1) + ha2 * MathF.Cos(hb2 * ang + hp2);
+            return r <= boundary;
+        }
+
         var map = new MapPlan
         {
             Title = $"SMALL TOWN — {townName} — SEED {seed} ({size.Label})",
@@ -118,6 +147,7 @@ public static class SmallTownGenerator
             WidthFeet = totalWidth,
             DepthFeet = totalDepth,
             RoadSurface = "asphalt",
+            QuietAnnotations = !detail,
         };
 
         // --- roads: highway (dashed), E–W grid streets, N–S streets.
@@ -161,7 +191,7 @@ public static class SmallTownGenerator
             {
                 float w = rng.Range(75f, 115f);
                 float gap = rng.Range(28f, 52f);
-                if (x + w <= totalWidth - 40f && (x + w < mainX - 12f || x > mainX + StreetRow + 12f))
+                if (x + w <= totalWidth - 40f && (x + w < mainX - 12f || x > mainX + StreetRow + 12f) && InsideBlob(x + w / 2f, zBand + 50f))
                 {
                     float d = rng.Range(52f, 72f);
                     map.Outbuildings.Add(new Outbuilding
@@ -238,6 +268,7 @@ public static class SmallTownGenerator
         {
             float streetZ = ewZ[streetIdx];
             float rowZ0 = facesSouth ? streetZ + StreetRow : streetZ - lotDepth;
+            if (!InsideBlob(lotX + frontage / 2f, rowZ0 + lotDepth / 2f)) return; // ragged town edge
             map.LotLines.Add(new MapRect(lotX, rowZ0, frontage, lotDepth));
 
             float setback = rng.Range(9f, 20f);
@@ -332,6 +363,7 @@ public static class SmallTownGenerator
             {
                 float f = rng.Range(58f, 76f);
                 if (z + f > bz1 - 3f) break;
+                if (!InsideBlob(lotX + SideLotDepth / 2f, z + f / 2f)) { z += f; continue; } // ragged town edge
                 map.LotLines.Add(new MapRect(lotX, z, SideLotDepth, f));
 
                 float setback = rng.Range(9f, 17f);
@@ -435,6 +467,7 @@ public static class SmallTownGenerator
             for (float x = 16f; x < totalWidth - 16f; x += rng.Range(30f, 46f))
             {
                 if (nsX.Any(sx => MathF.Abs(x - (sx + StreetRow / 2f)) < 26f)) continue;
+                if (!InsideBlob(x, z + StreetRow / 2f)) continue;
                 if (rng.Chance(0.72f)) map.Trees.Add(new Vec2(x, z + 8f));
                 if (rng.Chance(0.72f)) map.Trees.Add(new Vec2(x + 13f, z + StreetRow - 8f));
             }
