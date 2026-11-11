@@ -13,11 +13,14 @@ public static class HouseGenerator
 {
     public static readonly string[] Archetypes = { "ranch", "farmhouse", "split-level" };
 
-    public static HousePlan Generate(string archetype, uint seed) => archetype switch
+    /// <param name="garageMode">"integral" (default) | "detached" | "none" — integral bakes the
+    /// attached wing into the plan; detached/none produce a garage-free rectangle (the map layer
+    /// then places a pole-built detached garage, or none at all). Farmhouse has no integral mode.</param>
+    public static HousePlan Generate(string archetype, uint seed, string garageMode = "integral") => archetype switch
     {
-        "ranch" => Ranch(seed),
+        "ranch" => Ranch(seed, garageMode),
         "farmhouse" => Farmhouse(seed),
-        "split-level" => SplitLevel(seed),
+        "split-level" => SplitLevel(seed, garageMode),
         _ => throw new ArgumentException($"Unknown archetype '{archetype}'. Expected one of: {string.Join(", ", Archetypes)}"),
     };
 
@@ -27,7 +30,7 @@ public static class HouseGenerator
         "Beige vinyl", "Brick front + Ivory vinyl sides", "White vinyl",
     };
 
-    static HousePlan Ranch(uint seed)
+    static HousePlan Ranch(uint seed, string garageMode)
     {
         var rng = new Rng(seed);
         float w = rng.Range(36, 48);
@@ -40,8 +43,21 @@ public static class HouseGenerator
             roof: "3.5/12 gable, 3-tab asphalt shingle",
             siding: rng.Pick(Siding1990s));
 
-        BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng);
-        AnnotateGarage(plan, w, d, gw, gd, garageLeft);
+        if (garageMode == "integral")
+        {
+            BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng);
+            AnnotateGarage(plan, w, d, gw, gd, garageLeft);
+        }
+        else
+        {
+            // Garage-free rectangle; the map layer places a detached garage or none.
+            AddQuad(plan, new Vec2(0, 0), new Vec2(w, 0), new Vec2(w, d), new Vec2(0, d),
+                EdgeTag.MainFront, EdgeTag.Right, EdgeTag.Back, EdgeTag.Left);
+            PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false);
+            PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)));
+            PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+            PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+        }
         return Normalize(plan);
     }
 
@@ -76,7 +92,7 @@ public static class HouseGenerator
         return Normalize(plan);
     }
 
-    static HousePlan SplitLevel(uint seed)
+    static HousePlan SplitLevel(uint seed, string garageMode)
     {
         var rng = new Rng(seed);
         float w = rng.Range(28, 36);
@@ -89,10 +105,22 @@ public static class HouseGenerator
             roof: "4/12 offset gable, 3-tab asphalt shingle — split entry",
             siding: rng.Pick(Siding1990s));
 
-        // Same L footprint as the ranch, but the garage door faces the side
-        // (classic split-level with side-entry garage).
-        BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng, garageDoorOnSide: true);
-        AnnotateGarage(plan, w, d, gw, gd, garageLeft);
+        if (garageMode == "integral")
+        {
+            // Same L footprint as the ranch, but the garage door faces the side
+            // (classic split-level with side-entry garage).
+            BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng, garageDoorOnSide: true);
+            AnnotateGarage(plan, w, d, gw, gd, garageLeft);
+        }
+        else
+        {
+            AddQuad(plan, new Vec2(0, 0), new Vec2(w, 0), new Vec2(w, d), new Vec2(0, d),
+                EdgeTag.MainFront, EdgeTag.Right, EdgeTag.Back, EdgeTag.Left);
+            PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false);
+            PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)));
+            PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+            PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+        }
         return Normalize(plan);
     }
 

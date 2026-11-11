@@ -40,13 +40,20 @@ houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of
 street, street trees, 2 parks + 1 school + 2 churches on the grid, per-row alleys
 (~55%), heavy canopy. Sizes: hamlet ~0.4 mi, boyden ~0.7 mi, hull ~1.1 mi.
 
-**3-mile cell** (`--map country`, seed via `--seed`) — a 3-mile (15840 ft) test cell
-with the town straddling the interior section-line junction, 1-mile grid roads, field
-fills, farmstead clusters, HWY 18 to the cell edges. Generates one far + one detail
-view per size class (hamlet/boyden/hull).
+**Roads & lots discipline** — no building lands on another (AABB registry with pad),
+houses never reach into the alley row (clamped to the lot, else the lot goes vacant),
+n-street houses face both street orientations, commercial strip sits on **both** sides
+of HWY 18 (pads + 1–2 industrial boxes north, houses + a store/plant south), small
+sheds ~12% of houses. Garages: ~45% run detached, ~45% integral, ~10% none.
 
-**Zoomable viewer** — `out/viewer.html` (~11 MB, fully self-contained, no server):
-pan/zoom across all six generated maps (smalltown ×3 seeds, 3 mi cell ×3 sizes), far
+**3-mile cell** (`--map country`, seed via `--seed`) — a 3-mile (15840 ft) test cell
+with towns straddling the interior section-line junction or a cell boundary, 1-mile
+grid roads, field fills, farmstead clusters, HWY 18 to the cell edges. Four views per
+run: hamlet (centered), boyden (centered), hull (partial at the west edge), hamlet
+(partial at the north edge) — the "partial town, partial rural" framing.
+
+**Zoomable viewer** — `out/viewer.html` (fully self-contained, no server):
+pan/zoom across all six generated maps (smalltown ×3 seeds, 3 mi cell ×4 variants), far
 ↔ detail crossfade as you zoom. **Open in a desktop browser** — phones can't reach a
 local file. Trees are trunk dots; town silhouettes are seeded blobs, not rectangles.
 
@@ -70,7 +77,7 @@ cd src/SpawnGuide
 dotnet run -- --seed 1993                      # houses + rural lot + town block
 dotnet run -- --map rural                      # just the farmstead
 dotnet run -- --map smalltown --size hamlet    # the whole hamlet grid
-dotnet run -- --map country                    # 2-mi cell, town at the grid junction (3 sizes)
+dotnet run -- --map country                    # 3-mi cell — 4 variants (centered/partial)
 dotnet run -- --seeds 1993,42,2024             # multi-seed gallery → out/examples.html
 dotnet run -- --archetype ranch --seed 42      # one house archetype
 ```

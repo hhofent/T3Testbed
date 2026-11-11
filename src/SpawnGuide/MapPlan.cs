@@ -39,6 +39,8 @@ public sealed class RoadBulb
 {
     public Vec2 Center { get; set; }
     public float RadiusFeet { get; set; } = 44f;
+    /// <summary>Explicit fill; null → asphalt gray.</summary>
+    public string? Fill { get; set; }
 }
 
 public sealed class PositionedHouse

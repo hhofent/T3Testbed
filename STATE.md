@@ -76,9 +76,20 @@ no raw strings, no file-scoped namespaces) and ports later.
 - QuietAnnotations is generator-set, not scale-derived; wall min-stroke is 2.2px at
   natural size (was 5px).
 - Streets are clipped to the town's filled content — never to the bounding square
-  (user call). Cul-de-sacs: up to 2 seeded N–S stub ends with an asphalt bulb + a
-  flanking lot per side. Seeded vacant lots on the outskirts (heavier near the blob
-  edge; ~5% interior, ~30% outskirts); orphaned streets/alleys/sidewalks drop out.
+  (user call). Roads never end flat: every surviving terminus is a turnaround
+  (small gravel aprons; 2 seeded stubs per town are full 46-ft asphalt cul-de-sacs
+  with flanking lots). Seeded vacant lots, heavier at the outskirts.
+- Houses: ~45% detached garage / 45% integral / 10% none; ~12% get a small shed;
+  ~40% "half lots" (34–47 ft frontage, farmhouse forced — the condensed look).
+  Houses clamped clear of the alley row (offenders go vacant); occupancy registry
+  (AABB + 3 ft pad) — no building lands on another; side-lot houses also clamped
+  clear of the row depth.
+- Highway spine (HWY 18) now built out on BOTH sides: north band = elevator +
+  1–2 industrial boxes + pads kept clear of both; south band = sparse fringe with
+  industrial or store(s) + 1–3 highway-facing houses. Trees are trunk dots only.
+- Partial-town cells: `--map country` generates 4 views (hamlet + boyden centered,
+  hull partial-west, hamlet partial-north) — town clipped at the cell boundary,
+  cut hard at the frame: partial town + partial rural (user's ask).
 - Sequencing note: parallel thread (durability agent) committed mid-build twice;
   verify with `git status` before committing; STATE.md is the source of truth.
   Verified geometrically (bbox checks) and by user's eye via example.html.

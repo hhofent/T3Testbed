@@ -25,7 +25,9 @@ public static class CountrysideMap
     const float SectionRoad = 66f;             // 66-ft section-line ROW
     const float SectionMid = 7920f;            // one section-line cross at the middle
 
-    public static MapPlan Generate(uint seed, string sizeName, bool detail = false)
+    /// <param name="edge">null → town centered on the interior junction (full town);
+    /// "west"|"north" → town straddles that cell boundary — partial town, mostly rural (user's request).</param>
+    public static MapPlan Generate(uint seed, string sizeName, bool detail = false, string? edge = null)
     {
         var town = SmallTownGenerator.Generate(seed, sizeName, detail: detail);
 
@@ -61,9 +63,19 @@ public static class CountrysideMap
                 fi++;
             }
 
-        // --- town origin: centered on the section-line junction.
+        // --- town origin: centered on the section-line junction, or hugging a cell boundary.
         float townX0 = SectionMid - town.WidthFeet / 2f;
         float townZ0 = SectionMid - town.DepthFeet / 2f;
+        if (edge == "west")
+        {
+            townX0 = -town.WidthFeet * 0.35f;              // ~65% of the town inside the cell
+            townZ0 = SectionMid - town.DepthFeet / 2f;
+        }
+        else if (edge == "north")
+        {
+            townX0 = SectionMid - town.WidthFeet / 2f;
+            townZ0 = cell - town.DepthFeet * 0.45f;        // clipped by the cell's north boundary
+        }
         float townX1 = townX0 + town.WidthFeet;
         float townZ1 = townZ0 + town.DepthFeet;
 
@@ -165,6 +177,8 @@ public static class CountrysideMap
             if (rng.Chance(0.7f)) map.Trees.Add(new Vec2(SectionMid - 46f + rng.Range(-4f, 4f), z));
         }
 
+        if (edge != null) ClipToCell(map, cell);
+
         map.Labels.Add(new MapLabel
         {
             Position = new Vec2(cell - 30f, 40f),
@@ -172,6 +186,45 @@ public static class CountrysideMap
             Anchor = "end",
         });
         return map;
+    }
+
+    // Partial-town cells: everything not fully inside the cell is cut away — a cropped
+    // aerial view where the town continues past the frame, the way a lens sees it.
+    static void ClipToCell(MapPlan map, float cell)
+    {
+        bool In(float x, float z) => x > 4f && z > 4f && x < cell - 4f && z < cell - 4f;
+        bool Any(Driveway d) => d.Points.Any(p => In(p.X, p.Z));
+
+        map.Houses.RemoveAll(h =>
+        {
+            float cx = h.Plan.Footprint.Select(p => p.X).Average();
+            float cz = h.Plan.Footprint.Select(p => p.Z).Average();
+            return !In(cx, cz);
+        });
+        map.Outbuildings.RemoveAll(o => !In(o.Center.X, o.Center.Z));
+        map.LotLines.RemoveAll(r => !In(r.X + r.W / 2f, r.Z + r.H / 2f));
+        map.Alleys.RemoveAll(r => !In(r.X + r.W / 2f, r.Z + r.H / 2f));
+        map.Walks.RemoveAll(Any);
+        map.Driveways.RemoveAll(Any);
+        map.Trees.RemoveAll(t => !In(t.X, t.Z));
+        map.Labels.RemoveAll(l => !In(l.Position.X, l.Position.Z));
+        map.Bulbs.RemoveAll(b => !In(b.Center.X, b.Center.Z));
+
+        for (int i = map.Roads.Count - 1; i >= 0; i--)
+        {
+            var r = map.Roads[i];
+            float x0 = MathF.Max(r.X, 0f), x1 = MathF.Min(r.X + r.W, cell);
+            float z0 = MathF.Max(r.Z, 0f), z1 = MathF.Min(r.Z + r.H, cell);
+            if (x1 - x0 <= 0.5f || z1 - z0 <= 0.5f)
+            {
+                map.Roads.RemoveAt(i);
+                map.RoadDashed.RemoveAt(i);
+            }
+            else if (x0 != r.X || z0 != r.Z || x1 - x0 != r.W || z1 - z0 != r.H)
+            {
+                map.Roads[i] = new MapRect(x0, z0, x1 - x0, z1 - z0);
+            }
+        }
     }
 }
 }

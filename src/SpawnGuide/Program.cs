@@ -78,13 +78,15 @@ if (mapMode is "smalltown" or "all")
 }
 if (mapMode is "country" or "all")
 {
-    // One 3-mile cell per size class, so growth is visible test-to-test. Far + detail pair each.
-    foreach (var sz in new[] { "hamlet", "boyden", "hull" })
+    // The 3-mile cell, four ways: two full towns and two partial towns (town clipped by
+    // the cell boundary — partial town + rural land, as the real section grid looks).
+    foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("boyden", null), ("hull", "west"), ("hamlet", "north") })
     {
-        var m = CountrysideMap.Generate(seed, sz);
-        sections.Add(MapSection(m, $"country-{seed}-{sz}.svg"));
-        var md = CountrysideMap.Generate(seed, sz, detail: true);
-        File.WriteAllText(Path.Combine(outDir, $"country-{seed}-{sz}-detail.svg"), SvgMapRenderer.Render(md));
+        string stem = $"country-{seed}-{sz}{(es != null ? "-" + es : "")}";
+        var m = CountrysideMap.Generate(seed, sz, detail: false, edge: es);
+        sections.Add(MapSection(m, $"{stem}.svg"));
+        var md = CountrysideMap.Generate(seed, sz, detail: true, edge: es);
+        File.WriteAllText(Path.Combine(outDir, $"{stem}-detail.svg"), SvgMapRenderer.Render(md));
     }
 }
 
@@ -178,8 +180,12 @@ static string ViewerMapJson(string name, string farFile, string? nearFile, doubl
         var maps = new List<string>();
         foreach (var s in smalltownSeeds)
             maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", null, 1.55, outDir, s));
-        foreach (var sz in new[] { "hamlet", "boyden", "hull" })
-            maps.Add(ViewerMapJson($"3 mi cell — {sz} — seed {seed}", $"country-{seed}-{sz}.svg", $"country-{seed}-{sz}-detail.svg", 2.6, outDir));
+        foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("boyden", null), ("hull", "west"), ("hamlet", "north") })
+        {
+            string stem = $"country-{seed}-{sz}{(es != null ? "-" + es : "")}";
+            string label = $"3 mi cell — {sz}{(es != null ? " (partial " + es + " edge)" : "")} — seed {seed}";
+            maps.Add(ViewerMapJson(label, $"{stem}.svg", $"{stem}-detail.svg", 2.6, outDir));
+        }
         string viewer = File.ReadAllText(templatePath)
             .Replace("/*__MAPS__*/[]", "[" + string.Join(",", maps) + "]");
         string viewerPath = Path.Combine(outDir, "viewer.html");

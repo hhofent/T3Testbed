@@ -18,8 +18,15 @@ public static class SvgMapRenderer
         const float Margin = 30f;
         const float TitleH = 66f, FootH = 26f;
 
-        // Bounding box by scanning all content.
+        // Bounding box by scanning all content (fields included — layouts may reach negative z).
         float minX = 0, maxX = map.WidthFeet, minZ = 0, maxZ = map.DepthFeet;
+        if (map.Fields.Count > 0)
+        {
+            minX = map.Fields.Min(f => f.X);
+            maxX = map.Fields.Max(f => f.X + f.W);
+            minZ = map.Fields.Min(f => f.Z);
+            maxZ = map.Fields.Max(f => f.Z + f.H);
+        }
         void Box(float x, float z, float w = 0, float h = 0)
         {
             minX = MathF.Min(minX, x); maxX = MathF.Max(maxX, x + w);
@@ -146,7 +153,8 @@ public static class SvgMapRenderer
         foreach (var b in map.Bulbs)
         {
             var c = Map(b.Center);
-            sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(b.RadiusFeet * scale)}' fill='{(map.RoadSurface == "asphalt" ? "#8f8b83" : "#c8c3b5")}'/>");
+            string fill = b.Fill ?? (map.RoadSurface == "asphalt" ? "#8f8b83" : "#c8c3b5");
+            sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(b.RadiusFeet * scale)}' fill='{fill}'/>");
         }
 
         // Driveways (thick polylines), then walks. Hidden at countryside zoom.
