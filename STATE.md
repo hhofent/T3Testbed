@@ -75,10 +75,15 @@ no raw strings, no file-scoped namespaces) and ports later.
   rectangle (user call). Hamlet seed 1993 now 130 houses after blob cut (was 168).
 - QuietAnnotations is generator-set, not scale-derived; wall min-stroke is 2.2px at
   natural size (was 5px).
-- Streets are clipped to the town's filled content — never to the bounding square
-  (user call). Roads never end flat: every surviving terminus is a turnaround
-  (small gravel aprons; 2 seeded stubs per town are full 46-ft asphalt cul-de-sacs
-  with flanking lots). Seeded vacant lots, heavier at the outskirts.
+- ROADS MUST ATTACH TO ANOTHER ROAD, BOTH ENDS, EVERY TIME (user, hard rule,
+  2026-11-11). The network is a full grid: EW streets run the full grid width,
+  NS streets run from the highway out to the last surviving EW street. A row or
+  column with zero content yields its street (then it vanishes cleanly).
+  Cul-de-sacs: seeded ONE per town — a short N–S stub (<half a block, ~110–130 ft)
+  into an empty north-edge column, ending in a 46-ft bulb, flanked by 2 lots.
+  That is the only cul-de-sac legal under the rule.
+- NO trees alongside roads and none on lots (user call, 2026-11-11). Town is
+  tree-free; country has a few field-interior groves and farmstead belts only.
 - Houses: ~45% detached garage / 45% integral / 10% none; ~12% get a small shed;
   ~40% "half lots" (34–47 ft frontage, farmhouse forced — the condensed look).
   Houses clamped clear of the alley row (offenders go vacant); occupancy registry

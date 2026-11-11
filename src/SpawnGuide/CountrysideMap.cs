@@ -165,16 +165,23 @@ public static class CountrysideMap
             placedFarms++;
         }
 
-        // --- shelterbelt lines along the interior section roads (sparse gaps).
-        for (float x = 80f; x < cell; x += rng.Range(90f, 150f))
+        // --- a few grove clusters out in the fields — never on a lot, never beside a road.
+        // (The farmstead belts stay — the farmstead pattern is wanted; trees alongside
+        //  roads or on lots are not.)
+        bool InsideTown(float x, float z, float pad) =>
+            x >= townX0 - pad && x <= townX1 + pad && z >= townZ0 - pad && z <= townZ1 + pad;
+        for (int g = 0; g < 6; g++)
         {
-            if (rng.Chance(0.7f)) map.Trees.Add(new Vec2(x, SectionMid + 46f + rng.Range(-4f, 4f)));
-            if (rng.Chance(0.7f)) map.Trees.Add(new Vec2(x, SectionMid - 46f + rng.Range(-4f, 4f)));
-        }
-        for (float z = 80f; z < cell; z += rng.Range(90f, 150f))
-        {
-            if (rng.Chance(0.7f)) map.Trees.Add(new Vec2(SectionMid + 46f + rng.Range(-4f, 4f), z));
-            if (rng.Chance(0.7f)) map.Trees.Add(new Vec2(SectionMid - 46f + rng.Range(-4f, 4f), z));
+            float gx = rng.Range(600f, cell - 600f);
+            float gz = rng.Range(600f, cell - 600f);
+            if (MathF.Abs(gx - SectionMid) < 320f || MathF.Abs(gz - SectionMid) < 320f) continue;   // clear of the grid roads
+            if (InsideTown(gx, gz, 600f)) continue;
+            int n = rng.RangeInt(6, 13);
+            for (int i = 0; i < n; i++)
+            {
+                float ang = i * MathF.PI * 2f / n + rng.Range(-0.3f, 0.3f);
+                map.Trees.Add(new Vec2(gx + MathF.Cos(ang) * rng.Range(35f, 95f), gz + MathF.Sin(ang) * rng.Range(35f, 95f)));
+            }
         }
 
         if (edge != null) ClipToCell(map, cell);
