@@ -20,6 +20,11 @@ var archetype = GetString(args, "--archetype", "all");
 var mapMode = GetString(args, "--map", "all");   // rural | town | smalltown | all
 var townSize = GetString(args, "--size", "hamlet"); // hamlet (boyden/hull later)
 var seed = GetUInt(args, "--seed", 1993);
+var seedsArg = GetString(args, "--seeds", "");   // comma list, e.g. --seeds 1993,42,2024 (smalltown only)
+var extraSeeds = seedsArg.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+    .Select(s => uint.TryParse(s.Trim(), out var v) ? v : (uint?)null)
+    .Where(v => v.HasValue).Select(v => v!.Value).ToList();
+var smalltownSeeds = extraSeeds.Count > 0 ? extraSeeds : new List<uint> { seed };
 var outDir = GetString(args, "--out", Path.Combine(Directory.GetCurrentDirectory(), "out"));
 Directory.CreateDirectory(outDir);
 foreach (var stale in Directory.EnumerateFiles(outDir, "*.svg")) File.Delete(stale);
@@ -61,8 +66,12 @@ if (mapMode is "town" or "all")
 }
 if (mapMode is "smalltown" or "all")
 {
-    smalltown = SmallTownGenerator.Generate(seed, townSize);
-    sections.Add(MapSection(smalltown, $"smalltown-{seed}.svg"));
+    foreach (var s in smalltownSeeds)
+    {
+        var m = SmallTownGenerator.Generate(s, townSize);
+        sections.Add(MapSection(m, $"smalltown-{s}.svg"));
+        if (smalltown == null) smalltown = m;   // featured: first seed
+    }
 }
 
 // --- Houses. ---
@@ -113,10 +122,8 @@ if (town != null)
 {
     Console.WriteLine($"town block: {town.Houses.Count} houses, {town.LotLines.Count} lot lines, {(town.Alleys.Count > 0 ? "with alley" : "no alley")}, {town.Trees.Count} trees");
 }
-if (smalltown != null)
-{
-    Console.WriteLine($"smalltown ({townSize}): {smalltown.Houses.Count} houses, {smalltown.LotLines.Count} lots, {smalltown.Outbuildings.Count} buildings/anchors, {smalltown.Trees.Count} trees");
-}
+foreach (var s in sections.Where(s => s.FileName.StartsWith("smalltown-")))
+    Console.WriteLine($"{s.FileName}: {s.Facts.First(f => f.Item1 == "houses").Item2} houses, {s.Facts.First(f => f.Item1 == "outbuildings").Item2} buildings/anchors, {s.Facts.First(f => f.Item1 == "span").Item2}");
 
 string indexPath = Path.Combine(outDir, "index.html");
 File.WriteAllText(indexPath, HtmlIndex.Render(sections));
@@ -129,3 +136,12 @@ var featured = sections.FirstOrDefault(s => s.FileName.StartsWith("smalltown-"))
 string examplePath = Path.Combine(outDir, "example.html");
 File.WriteAllText(examplePath, HtmlIndex.Render(new List<HtmlSection> { featured }));
 Console.WriteLine($"wrote {examplePath}");
+
+// Multi-example gallery (links, not embeds) when more than one smalltown was generated.
+var townSections = sections.Where(s => s.FileName.StartsWith("smalltown-")).ToList();
+if (townSections.Count > 1)
+{
+    string galleryPath = Path.Combine(outDir, "examples.html");
+    File.WriteAllText(galleryPath, HtmlIndex.Render(townSections));
+    Console.WriteLine($"wrote {galleryPath}");
+}

@@ -56,6 +56,9 @@ no raw strings, no file-scoped namespaces) and ports later.
   114 houses from 119 lots (5 civic anchors: 2 parks, 1 school, 2 churches),
   elevator + bin row, highway-18 commercial strip w/ MAIN junction, IOWA..DAKOTA ×
   DIVISION..WILLIAMS grid, sidewalks + street trees + per-row alleys, 503 trees).
+  `--seeds a,b,c` generates multiple seeds in one run; >1 smalltown also writes
+  `out/examples.html` (gallery, for linking — not inline). example.html embeds
+  smalltown-1993. User asked for ≥3 examples linked, never shown inline.
   Verified geometrically, not visually — user's eyes are the check, via example.html.
 - Built: house archetypes (`ranch`, `farmhouse` two-story + porch, `split-level` offset-gable L);
   rural farmstead lot (section-line road, 66-ft ROW no centerline, setback house, machine
