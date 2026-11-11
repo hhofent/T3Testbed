@@ -60,9 +60,15 @@ function stageRect() { return stage.getBoundingClientRect(); }
 function apply() {
   far.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
   near.style.transform = far.style.transform;
-  const detail = s >= fitS * (cur ? cur.lodSwitch : 1.7);
-  near.style.opacity = detail ? 1 : 0;
-  far.style.opacity = detail ? 0 : 1;
+  const hasNear = !!(cur && cur.near);
+  const detail = hasNear && s >= fitS * (cur ? cur.lodSwitch : 1.7);
+  if (hasNear) {
+    near.style.opacity = detail ? 1 : 0;
+    far.style.opacity = detail ? 0 : 1;
+  } else {
+    near.style.opacity = 0;
+    far.style.opacity = 1;
+  }
 }
 
 function clampView() {
@@ -182,7 +188,7 @@ function loadMap(m) {
   far.onload = () => { natW = far.naturalWidth; natH = far.naturalHeight; fit(); };
   near.onload = () => apply();
   far.src = m.far;
-  near.src = m.near;
+  if (m.near) near.src = m.near; else near.src = '';
 }
 if (MAPS.length) loadMap(MAPS[0]);
 </script>

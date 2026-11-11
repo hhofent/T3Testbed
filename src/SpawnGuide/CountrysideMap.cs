@@ -40,7 +40,9 @@ public static class CountrysideMap
             DepthFeet = cell,
             RoadSurface = "asphalt",
             LodSimple = !detail,
-            QuietAnnotations = false,
+            // Captions stay off at every zoom — they are 11-FEET tall in plan units and smear
+            // the moment you zoom. Geometry is the detail layer's job. Floor plans come later as their own layer.
+            QuietAnnotations = true,
         };
 
         // --- fields: 1/3 and 2/3 split lines per axis, jittered off the grid, nine muted rects.

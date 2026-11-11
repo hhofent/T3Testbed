@@ -73,8 +73,6 @@ if (mapMode is "smalltown" or "all")
     {
         var m = SmallTownGenerator.Generate(s, townSize);               // embed layer (quiet)
         sections.Add(MapSection(m, $"smalltown-{s}.svg"));
-        var md = SmallTownGenerator.Generate(s, townSize, detail: true); // zoom-viewer detail layer
-        File.WriteAllText(Path.Combine(outDir, $"smalltown-{s}-detail.svg"), SvgMapRenderer.Render(md));
         if (smalltown == null) smalltown = m;   // featured: first seed
     }
 }
@@ -171,15 +169,15 @@ static string SvgDataUri(string fileName)
         .Replace("%", "%25").Replace("<", "%3C").Replace(">", "%3E").Replace("#", "%23")
         .Replace("\"", "%22").Replace("'", "%27").Replace("\\", "%5C")
         .Replace("\r", "").Replace("\n", "");
-static string ViewerMapJson(string name, string farFile, string nearFile, double lodSwitch, string outDir, uint? seedForJump = null)
-    => $"{{\"name\":\"{name}\",\"far\":\"{SvgDataUri(Path.Combine(outDir, farFile))}\",\"near\":\"{SvgDataUri(Path.Combine(outDir, nearFile))}\",\"lodSwitch\":{lodSwitch.ToString(CultureInfo.InvariantCulture)},\"file\":\"{farFile}\"{(seedForJump.HasValue ? $",\"seed\":{seedForJump.Value}" : "")}}}";
+static string ViewerMapJson(string name, string farFile, string? nearFile, double lodSwitch, string outDir, uint? seedForJump = null)
+    => $"{{\"name\":\"{name}\",\"far\":\"{SvgDataUri(Path.Combine(outDir, farFile))}\"{(nearFile != null ? $",\"near\":\"{SvgDataUri(Path.Combine(outDir, nearFile))}\"" : "")},\"lodSwitch\":{lodSwitch.ToString(CultureInfo.InvariantCulture)},\"file\":\"{farFile}\"{(seedForJump.HasValue ? $",\"seed\":{seedForJump.Value}" : "")}}}";
 {
     var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "viewer-template.html");
     if (File.Exists(templatePath))
     {
         var maps = new List<string>();
         foreach (var s in smalltownSeeds)
-            maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", $"smalltown-{s}-detail.svg", 1.55, outDir, s));
+            maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", null, 1.55, outDir, s));
         foreach (var sz in new[] { "hamlet", "boyden", "hull" })
             maps.Add(ViewerMapJson($"3 mi cell — {sz} — seed {seed}", $"country-{seed}-{sz}.svg", $"country-{seed}-{sz}-detail.svg", 2.6, outDir));
         string viewer = File.ReadAllText(templatePath)
