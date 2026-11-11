@@ -52,14 +52,21 @@ no raw strings, no file-scoped namespaces) and ports later.
 
 - `src/SpawnGuide/` ~2150 LOC, builds clean with .NET 5 SDK (`dotnet run -- --seed 1993`,
   also `--map rural|town|smalltown`, `--archetype ranch|farmhouse|split-level`). No external packages.
-- `--map smalltown --size hamlet` (`SmallTown.cs`, 2026-11-11, seed 1993 verified:
-  114 houses from 119 lots (5 civic anchors: 2 parks, 1 school, 2 churches),
-  elevator + bin row, highway-18 commercial strip w/ MAIN junction, IOWA..DAKOTA ×
-  DIVISION..WILLIAMS grid, sidewalks + street trees + per-row alleys, 503 trees).
-  `--seeds a,b,c` generates multiple seeds in one run; >1 smalltown also writes
-  `out/examples.html` (gallery, for linking — not inline). example.html embeds
-  smalltown-1993. User asked for ≥3 examples linked, never shown inline.
-  Verified geometrically, not visually — user's eyes are the check, via example.html.
+- `--map smalltown --size hamlet|boyden|hull` (`SmallTown.cs`, 2026-11-11):
+  seed 1993 hamlet = 168 houses (4-sided blocks ~72%, side lots face N–S streets,
+  rotated houses), Boyden 530, Hull 1034. Civic anchors on the grid (2 parks,
+  school, 2 churches), elevator + bin row, HWY-18 commercial strip, sidewalks on
+  both sides of every street, per-row alleys, heavy canopy. `--seeds a,b,c` =
+  multiple seeds per run; `out/examples.html` gallery = smalltown×3 + country×3.
+- `--map country` (`CountrysideMap.cs`): the 2-mile countryside test view — town
+  straddling the interior section-line junction, 1-mile section grid roads, field
+  fills, scattered farmstead clusters, HWY 18 continued to the cell edges. One view
+  per size class per run (hamlet/boyden/hull) so growth is visible test-to-test.
+  Renders houses as footprint silhouettes (LodSimple) with contour-free fields;
+  house-plan annotations suppressed below scale 0.55 px/ft.
+- Sequencing note: parallel thread (durability agent) committed mid-build twice;
+  verify with `git status` before committing; STATE.md is the source of truth.
+  Verified geometrically (bbox checks) and by user's eye via example.html.
 - Built: house archetypes (`ranch`, `farmhouse` two-story + porch, `split-level` offset-gable L);
   rural farmstead lot (section-line road, 66-ft ROW no centerline, setback house, machine
   shed, steel bins, optional shop / pole barn / rare labeled gambrel barn, LP tank,

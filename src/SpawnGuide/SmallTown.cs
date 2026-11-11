@@ -25,6 +25,8 @@ public static class SmallTownGenerator
     const float StreetRow = 36f;      // residential grid street ROW
     const float AlleyRow = 16f;
     const float BlockLotDepth = 122f; // back-to-back lot rows inside a block
+    const float SideLotDepth = 80f;   // depth of the E/W-facing lots in a 4-sided block
+    const float FourSideChance = 0.72f; // most blocks get houses on all four sides
     const float BandDepth = 175f;     // commercial band between highway and first grid street
 
     sealed class TownSize
@@ -38,9 +40,11 @@ public static class SmallTownGenerator
 
     static readonly Dictionary<string, TownSize> Sizes = new(StringComparer.OrdinalIgnoreCase)
     {
-        // Hamlet: George/Craig/Struble class, ~0.25 mi wide. Boyden and Hull presets
-        // (larger grids, more commercial) come after this tests clean.
+        // Hamlet: George/Craig/Struble class (~0.4 mi). Boyden: medium (~0.7 mi).
+        // Hull: large (~1.1 mi — a true 2-mile Hull-class would make unusable SVGs).
         ["hamlet"] = new TownSize { Columns = 5, EWStreets = 4, LotsMin = 3, LotsMax = 4, CommercialPads = 3, Label = "HAMLET" },
+        ["boyden"] = new TownSize { Columns = 9, EWStreets = 6, LotsMin = 3, LotsMax = 4, CommercialPads = 5, Label = "MEDIUM" },
+        ["hull"] = new TownSize { Columns = 15, EWStreets = 7, LotsMin = 3, LotsMax = 4, CommercialPads = 7, Label = "LARGE" },
     };
 
     public static MapPlan Generate(uint seed, string sizeName)
@@ -59,7 +63,7 @@ public static class SmallTownGenerator
 
         string townName = rng.Pick(new[] { "CEDAR BLUFF", "TWIN GROVE", "MARBLE JUNCTION", "PRAIRIE CENTER", "HALSTEAD", "NEW HOPE" });
         string[] ewNames = { "IOWA", "MICHIGAN", "MINNESOTA", "DAKOTA", "CALUMET", "OHIO" };
-        string[] nsNames = { "DIVISION", "LINCOLN", "MAIN", "WASHINGTON", "HARRIS", "WILLIAMS", "CHESTNUT", "BURROUGHS" };
+        string[] nsNames = { "DIVISION", "LINCOLN", "WASHINGTON", "HARRIS", "WILLIAMS", "CHESTNUT", "BURROUGHS", "ADA", "PARK", "ELEANOR", "VINE", "CHELSEA", "STONE", "HUGH", "LOCUST", "DELTA" };
         int mainStreetIndex = size.Columns / 2; // N–S street index; MAIN sits mid-town
 
         // --- column plan: shared lot frontages per column so facing rows align.
@@ -70,8 +74,9 @@ public static class SmallTownGenerator
             colFrontages[c] = new List<float>();
             for (int i = 0; i < n; i++) colFrontages[c].Add(rng.Range(55f, 80f));
         }
+        float BlockWidth(int col) => colFrontages[col].Sum() + 2 * SideLotDepth;
         float totalWidth = StreetRow * (size.Columns + 1);
-        foreach (var f in colFrontages) totalWidth += f.Sum();
+        for (int c = 0; c < size.Columns; c++) totalWidth += BlockWidth(c);
 
         var nsX = new float[size.Columns + 1];
         {
@@ -79,8 +84,21 @@ public static class SmallTownGenerator
             for (int s = 0; s <= size.Columns; s++)
             {
                 nsX[s] = x;
-                if (s < size.Columns) x += StreetRow + colFrontages[s].Sum();
+                if (s < size.Columns) x += StreetRow + BlockWidth(s);
             }
+        }
+
+        // Per (blockRow, col): 4-sided (side lots on N–S streets) or 2-sided (E–W faces only).
+        var fourSide = new Dictionary<(int row, int col), bool>();
+        bool IsFourSide(int blockRow, int col)
+        {
+            var key = (blockRow, col);
+            if (!fourSide.TryGetValue(key, out bool has))
+            {
+                has = rng.Chance(FourSideChance);
+                fourSide[key] = has;
+            }
+            return has;
         }
 
         // --- Z layout: highway, commercial band, then the cumulative E–W grid.
@@ -120,10 +138,11 @@ public static class SmallTownGenerator
 
         // Street names.
         for (int i = 0; i < size.EWStreets; i++)
-            map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, ewZ[i] + StreetRow / 2f), Text = ewNames[i] + " AVENUE" });
+            map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, ewZ[i] + StreetRow / 2f), Text = ewNames[i % ewNames.Length] + " AVENUE" });
         for (int s = 0; s <= size.Columns; s++)
         {
-            string nm = s == mainStreetIndex ? "MAIN" : nsNames[s < mainStreetIndex ? s : s - 1];
+            int ni = s < mainStreetIndex ? s : s - 1;
+            string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length];
             map.Labels.Add(new MapLabel
             {
                 Position = new Vec2(nsX[s] + StreetRow / 2f, zBand + (lastStreetEnd - zBand) * 0.62f),
@@ -210,7 +229,7 @@ public static class SmallTownGenerator
             for (int col = 0; col < size.Columns; col++)
             {
                 float bX = nsX[col] + StreetRow;
-                map.Alleys.Add(new MapRect(bX, aZ, colFrontages[col].Sum(), AlleyRow));
+                map.Alleys.Add(new MapRect(bX, aZ, BlockWidth(col), AlleyRow));
             }
         }
 
@@ -303,13 +322,62 @@ public static class SmallTownGenerator
             ScatterTrees(map, rng, rng.RangeInt(2, 5), lotX + 4f, lotX + frontage - 4f, rowZ0 + 5f, rowZ0 + lotDepth - 5f, new[] { house }, 5f);
         }
 
+        // Fill one E/W-facing lot on the side of a 4-sided block (x-axis frontage/facing).
+        void FillSideFace(int col, int side, float blockX0, float blockX1, float bz0, float bz1)
+        {
+            bool west = side == 0;
+            float lotX = west ? blockX0 : blockX1 - SideLotDepth;
+            float z = bz0 + 3f;
+            while (true)
+            {
+                float f = rng.Range(58f, 76f);
+                if (z + f > bz1 - 3f) break;
+                map.LotLines.Add(new MapRect(lotX, z, SideLotDepth, f));
+
+                float setback = rng.Range(9f, 17f);
+                uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+                string arch = Weighted(rng);
+                var house = HouseGenerator.Generate(arch, hSeed);
+                float wH = house.Footprint.Select(p => p.X).Max() - house.Footprint.Select(p => p.X).Min();
+                house = west ? house.Rotate90CW() : house.Rotate90CCW();
+                float hzMin = house.Footprint.Select(p => p.Z).Min();
+                float hzSpan = house.Footprint.Select(p => p.Z).Max() - hzMin;
+                float dx = west ? lotX + setback : lotX + SideLotDepth - setback;
+                float dz = z + f / 2f - (hzMin + hzSpan / 2f);
+                house = house.OffsetCopy(dx, dz);
+                map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+
+                var fd = FindFrontDoor(house);
+                float walkStartX = west ? blockX0 - 2.25f : blockX1 + 2.25f;
+                map.Walks.Add(new Driveway
+                {
+                    Surface = "concrete",
+                    WidthFeet = 4f,
+                    Points = { new Vec2(walkStartX, fd.Z), fd },
+                });
+
+                var (garageDoor, garageWall, runsE) = FindGarageDoor(house);
+                bool frontEntry = !runsE; // garage door on the front wall now faces ±x
+                float xStart = west ? blockX0 - 1.5f : blockX1 + 1.5f;
+                if (!float.IsNaN(garageDoor.X))
+                {
+                    float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f;
+                    bool garagePositiveZ = garageDoor.Z >= fc;
+                    map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, xStart, "concrete", 17f));
+                }
+
+                ScatterTrees(map, rng, rng.RangeInt(0, 3), lotX + 4f, lotX + SideLotDepth - 4f, z + 4f, z + f - 4f, new[] { house }, 4f);
+                z += f;
+            }
+        }
+
         // North row of EVERY street (faces south); south row of every street except the first.
         for (int s = 0; s < size.EWStreets; s++)
         {
             bool alley = s < blockRows && rowAlley[s];
             for (int col = 0; col < size.Columns; col++)
             {
-                float x = nsX[col] + StreetRow;
+                float x = nsX[col] + StreetRow + SideLotDepth;
                 for (int i = 0; i < colFrontages[col].Count; i++)
                 {
                     float f = colFrontages[col][i];
@@ -324,13 +392,35 @@ public static class SmallTownGenerator
             bool alley = rowAlley[s - 1];
             for (int col = 0; col < size.Columns; col++)
             {
-                float x = nsX[col] + StreetRow;
+                float x = nsX[col] + StreetRow + SideLotDepth;
                 for (int i = 0; i < colFrontages[col].Count; i++)
                 {
                     float f = colFrontages[col][i];
                     OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 1, col), out var k1) ? k1 : null;
                     FillTownLot(s, col, i, facesSouth: false, x, f, anchor, alley);
                     x += f;
+                }
+            }
+        }
+
+        // Side lots facing the N–S streets (4-sided blocks only); otherwise corner-yard trees.
+        for (int blockRow = 0; blockRow < blockRows; blockRow++)
+        {
+            float bz0 = ewZ[blockRow] + StreetRow;
+            float bz1 = ewZ[blockRow + 1];
+            for (int col = 0; col < size.Columns; col++)
+            {
+                float bx0 = nsX[col] + StreetRow;
+                float bx1 = bx0 + BlockWidth(col);
+                if (IsFourSide(blockRow, col))
+                {
+                    FillSideFace(col, 0, bx0, bx1, bz0, bz1);
+                    FillSideFace(col, 1, bx0, bx1, bz0, bz1);
+                }
+                else
+                {
+                    ScatterTrees(map, rng, rng.RangeInt(1, 4), bx0 + 4f, bx0 + SideLotDepth - 4f, bz0 + 6f, bz1 - 6f, null, 6f);
+                    ScatterTrees(map, rng, rng.RangeInt(1, 4), bx1 - SideLotDepth + 4f, bx1 - 4f, bz0 + 6f, bz1 - 6f, null, 6f);
                 }
             }
         }
@@ -347,6 +437,20 @@ public static class SmallTownGenerator
                 if (nsX.Any(sx => MathF.Abs(x - (sx + StreetRow / 2f)) < 26f)) continue;
                 if (rng.Chance(0.72f)) map.Trees.Add(new Vec2(x, z + 8f));
                 if (rng.Chance(0.72f)) map.Trees.Add(new Vec2(x + 13f, z + StreetRow - 8f));
+            }
+        }
+
+        // Public sidewalks both sides of every N–S street (houses face these now).
+        for (int s = 0; s <= size.Columns; s++)
+        {
+            foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + StreetRow - 2.25f })
+            {
+                map.Walks.Add(new Driveway
+                {
+                    Surface = "concrete",
+                    WidthFeet = 4.5f,
+                    Points = { new Vec2(wx, zBand), new Vec2(wx, lastStreetEnd) },
+                });
             }
         }
 
@@ -410,6 +514,25 @@ public static class SmallTownGenerator
     {
         float cx = (plan.Footprint.Select(p => p.X).Min() + plan.Footprint.Select(p => p.X).Max()) / 2f;
         return (wall.Start.X + wall.End.X) / 2f > cx;
+    }
+
+    // X-axis variant: the street is to the side (N–S facing lots).
+    static Driveway DrivewayToX(Vec2 garageDoor, bool frontEntry, bool garagePositiveZ, float xStart, string surface, float width)
+    {
+        var d = new Driveway { WidthFeet = width, Surface = surface };
+        if (frontEntry)
+        {
+            d.Points.Add(new Vec2(xStart, garageDoor.Z));
+            d.Points.Add(new Vec2(garageDoor.X, garageDoor.Z));
+        }
+        else
+        {
+            float laneZ = garageDoor.Z + (garagePositiveZ ? 9f : -9f);
+            d.Points.Add(new Vec2(xStart, laneZ));
+            d.Points.Add(new Vec2(garageDoor.X, laneZ));
+            d.Points.Add(new Vec2(garageDoor.X, garageDoor.Z));
+        }
+        return d;
     }
 
     static Driveway DrivewayTo(Vec2 garageDoor, bool frontEntry, bool garageRight, float zStart, string surface, float width)

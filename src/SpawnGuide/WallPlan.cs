@@ -95,6 +95,52 @@ public static class HousePlanExtensions
         return copy;
     }
 
+    /// <summary>Rotate 90° clockwise in the map plane: (x, z) → (z, −x).
+    /// A south-facing plan (front at −z) becomes a west-facing plan (front at −x).</summary>
+    public static HousePlan Rotate90CW(this HousePlan plan) => Rotate90(plan, cw: true);
+
+    /// <summary>Rotate 90° counter-clockwise in the map plane: (x, z) → (−z, x).
+    /// A south-facing plan (front at −z) becomes an east-facing plan (front at +x).</summary>
+    public static HousePlan Rotate90CCW(this HousePlan plan) => Rotate90(plan, cw: false);
+
+    static HousePlan Rotate90(HousePlan plan, bool cw)
+    {
+        Vec2 M(Vec2 v) => cw ? new Vec2(v.Z, -v.X) : new Vec2(-v.Z, v.X);
+        var copy = new HousePlan
+        {
+            Archetype = plan.Archetype,
+            Seed = plan.Seed,
+            Storeys = plan.Storeys,
+            RoofNote = plan.RoofNote,
+            SidingNote = plan.SidingNote,
+        };
+        foreach (var wall in plan.Walls)
+        {
+            var w = new WallSegment
+            {
+                Start = M(wall.Start),
+                End = M(wall.End),
+                Tag = wall.Tag,
+                IsExterior = wall.IsExterior,
+                HeightFeet = wall.HeightFeet,
+                ThicknessFeet = wall.ThicknessFeet,
+            };
+            w.Openings.AddRange(wall.Openings);
+            copy.Walls.Add(w);
+        }
+        foreach (var p in plan.Footprint) copy.Footprint.Add(M(p));
+        foreach (var ann in plan.Annotations)
+            copy.Annotations.Add(new PlanAnnotation
+            {
+                Position = M(ann.Position),
+                Text = ann.Text,
+                DashedHalfExtents = ann.DashedHalfExtents.HasValue
+                    ? new Vec2(ann.DashedHalfExtents.Value.Z, ann.DashedHalfExtents.Value.X)
+                    : null,
+            });
+        return copy;
+    }
+
     /// <summary>Deep-enough copy of a plan shifted by (dx, dz) feet for placement on a map.</summary>
     public static HousePlan OffsetCopy(this HousePlan plan, float dx, float dz)
     {

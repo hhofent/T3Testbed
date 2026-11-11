@@ -25,7 +25,7 @@ public static class SvgRenderer
     /// labels for a house plan, using the given coordinate map and scale. Everything the
     /// map renderer needs to embed a house in a larger scene.
     /// </summary>
-    public static void AppendHouse(StringBuilder sb, HousePlan plan, Func<Vec2, SvgPx> map, float scale, string gapColor, bool mirroredZ = false)
+    public static void AppendHouse(StringBuilder sb, HousePlan plan, Func<Vec2, SvgPx> map, float scale, string gapColor, bool mirroredZ = false, bool quietAnnotations = false)
     {
         string N(float v) => Format(v);
 
@@ -47,7 +47,8 @@ public static class SvgRenderer
             var c = map(ann.Position);
             var h = ann.DashedHalfExtents!.Value;
             sb.AppendLine($"<rect class='dash' x='{N(c.X - h.X * scale)}' y='{N(c.Y - h.Z * scale)}' width='{N(2 * h.X * scale)}' height='{N(2 * h.Z * scale)}'/>");
-            sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(c.Y + 3)}' text-anchor='middle'>{Esc(ann.Text)}</text>");
+            if (!quietAnnotations)
+                sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(c.Y + 3)}' text-anchor='middle'>{Esc(ann.Text)}</text>");
         }
 
         // Walls with opening gaps.
@@ -90,6 +91,7 @@ public static class SvgRenderer
                 }
                 else if (op.Kind == OpeningKind.GarageDoor)
                 {
+                    if (quietAnnotations) continue;
                     bool verticalWall = MathF.Abs(dir.Z) > MathF.Abs(dir.X);
                     if (verticalWall)
                         sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(c.Y)}' text-anchor='middle' transform='rotate(-90 {N(c.X)} {N(c.Y)})'>GARAGE DOOR {op.WidthFeet:0.#} FT</text>");
@@ -102,6 +104,7 @@ public static class SvgRenderer
         // Annotation labels (garage text etc.)
         foreach (var ann in plan.Annotations.Where(a => !a.DashedHalfExtents.HasValue))
         {
+            if (quietAnnotations) break;
             var c = map(ann.Position);
             sb.AppendLine($"<text class='txt' x='{N(c.X)}' y='{N(c.Y)}'>{Esc(ann.Text)}</text>");
         }

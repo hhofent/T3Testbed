@@ -32,14 +32,19 @@ driveways, occasional rear pole garage onto a seeded alley, or detached garage f
 farmhouses. Matched to the gridded unincorporated towns in the reference images
 (George, Craig, Struble — orthogonal streets, some lots alley-loaded, heavy canopy).
 
-**Small town** (`--map smalltown --size hamlet`) — a whole seeded hamlet grid,
-George/Craig/Struble class: highway along the south edge (commercial strip — Casey's,
-feed store, co-op, elevator with bin row east of MAIN), cardinal grid inside
-(IOWA/MICHIGAN/MINNESOTA/DAKOTA Aves × DIVISION/LINCOLN/MAIN/WASHINGTON/HARRIS Sts),
-blocks of back-to-back lots facing the E–W streets, 20–30 ft setbacks, sidewalks both
-sides of every E–W street, street trees, 2 parks + 1 school + 2 churches reserved on
-the grid, per-block-row alleys (~55%), heavy canopy. Lots face E–W streets only for
-now; N–S faces get no lots yet. Boyden/Hull presets are parameter bumps, not built.
+**Small town** (`--map smalltown --size hamlet|boyden|hull`) — a whole seeded grid
+town, George/Craig/Struble class: highway along the south edge (commercial strip — Casey's,
+feed store, co-op, elevator with bin row east of MAIN), cardinal grid inside,
+blocks with houses on **4 sides** (~72% of blocks; side lots face the N–S streets,
+houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of every
+street, street trees, 2 parks + 1 school + 2 churches on the grid, per-row alleys
+(~55%), heavy canopy. Sizes: hamlet ~0.4 mi, boyden ~0.7 mi, hull ~1.1 mi.
+
+**Countryside view** (`--map country`, seed via `--seed`) — a 2-mile 2×2-section test
+cell with the town straddling the interior section-line junction, 1-mile grid roads,
+field fills, scattered farmstead clusters, and HWY 18 continuing to the cell edges.
+Generates one view per size class (hamlet/boyden/hull) so each test shows the town
+growing.
 
 **Outputs** — ASCII houses to the console, one SVG per artifact, a self-contained
 `out/index.html` (everything) and `out/example.html` (single featured example —
@@ -61,6 +66,8 @@ cd src/SpawnGuide
 dotnet run -- --seed 1993                      # houses + rural lot + town block
 dotnet run -- --map rural                      # just the farmstead
 dotnet run -- --map smalltown --size hamlet    # the whole hamlet grid
+dotnet run -- --map country                    # 2-mi cell, town at the grid junction (3 sizes)
+dotnet run -- --seeds 1993,42,2024             # multi-seed gallery → out/examples.html
 dotnet run -- --archetype ranch --seed 42      # one house archetype
 ```
 

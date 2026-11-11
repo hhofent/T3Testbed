@@ -73,17 +73,27 @@ public static class SvgMapRenderer
         // Background: farmland / grass parchment.
         sb.AppendLine($"<rect x='0' y='0' width='{N(widthPx)}' height='{N(heightPx)}' fill='#f0efe0'/>");
 
+        // Field fills (countryside view), under everything else.
+        for (int i = 0; i < map.Fields.Count; i++)
+        {
+            var fr = map.Fields[i];
+            string fill = i < map.FieldFills.Count ? map.FieldFills[i] : "#ded9bd";
+            var a = Map(new Vec2(fr.X, fr.Z + fr.H));
+            sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(fr.W * scale)}' height='{N(fr.H * scale)}' fill='{fill}'/>");
+        }
+
         // Shelterbelt / trees under everything else.
         foreach (var t in map.Trees)
         {
             var c = Map(t);
-            float r = 5.5f * scale;
+            float r = map.LodSimple ? 2.8f : 5.5f * scale;
             sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(r)}' fill='#7d8b5f' fill-opacity='0.85' stroke='#5c6a43' stroke-width='1'/>");
         }
 
-        // Lot boundaries.
+        // Lot boundaries (hidden at countryside zoom).
         foreach (var r in map.LotLines)
         {
+            if (map.LodSimple) continue;
             var a = Map(new Vec2(r.X, r.Z + r.H));
             var b = Map(new Vec2(r.X + r.W, r.Z));
             sb.AppendLine($"<rect class='dash' x='{N(a.X)}' y='{N(a.Y)}' width='{N(r.W * scale)}' height='{N(r.H * scale)}'/>");
@@ -125,19 +135,19 @@ public static class SvgMapRenderer
                 sb.AppendLine($"<line x1='{N(a.X)}' y1='{N(y1 - 2)}' x2='{N(a.X + r.W * scale)}' y2='{N(y1 - 2)}' stroke='#a9a495' stroke-width='1.5'/>");
             }
         }
-        foreach (var r in map.Alleys)
+        foreach (var r in map.LodSimple ? Enumerable.Empty<MapRect>() : map.Alleys)
         {
             var a = Map(new Vec2(r.X, r.Z + r.H));
             sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(r.W * scale)}' height='{N(r.H * scale)}' fill='#c9c3b2'/>");
         }
 
-        // Driveways (thick polylines), then walks.
-        foreach (var d in map.Driveways)
+        // Driveways (thick polylines), then walks. Hidden at countryside zoom.
+        foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Driveways)
         {
             string color = d.Surface == "concrete" ? "#dcd9d2" : "#d6c9a3";
             sb.AppendLine(Polyline(Map, d.Points, color, MathF.Max(2.5f, d.WidthFeet * scale)));
         }
-        foreach (var d in map.Walks)
+        foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Walks)
         {
             sb.AppendLine(Polyline(Map, d.Points, "#e3e0d8", MathF.Max(2f, d.WidthFeet * scale)));
         }
@@ -145,18 +155,51 @@ public static class SvgMapRenderer
         // Houses.
         foreach (var h in map.Houses)
         {
+            if (map.LodSimple)
+            {
+                // Footprint silhouette only — walls/openings/captions vanish at this zoom.
+                var sil = new StringBuilder();
+                sil.Append("M");
+                foreach (var p in h.Plan.Footprint)
+                {
+                    var m = Map(p);
+                    sil.Append(N(m.X)).Append(' ').Append(N(m.Y)).Append('L');
+                }
+                sil.Length--;
+                sil.Append("Z");
+                sb.AppendLine($"<path d='{sil}' fill='#45413a' fill-opacity='0.95'/>");
+                continue;
+            }
             SvgPx HouseMap(Vec2 p)
             {
                 var q = Map(p);
                 return q;
             }
-            SvgRenderer.AppendHouse(sb, h.Plan, HouseMap, scale, "#f0efe0", h.MirroredZ);
+            SvgRenderer.AppendHouse(sb, h.Plan, HouseMap, scale, "#f0efe0", h.MirroredZ, quietAnnotations: scale < 0.55f);
         }
 
         // Outbuildings.
         foreach (var o in map.Outbuildings)
         {
             var c = Map(o.Center);
+            if (map.LodSimple)
+            {
+                if (o.Kind == OutbuildingKind.GrainBin)
+                {
+                    float r2 = MathF.Max(1.6f, o.DiameterFeet * scale / 2f);
+                    sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(r2)}' fill='#3f3b34'/>");
+                    continue;
+                }
+                if (o.Kind == OutbuildingKind.CityPark)
+                {
+                    var pa = Map(new Vec2(o.Center.X - o.WidthFeet / 2f, o.Center.Z + o.DepthFeet / 2f));
+                    sb.AppendLine($"<rect x='{N(pa.X)}' y='{N(pa.Y)}' width='{N(o.WidthFeet * scale)}' height='{N(o.DepthFeet * scale)}' fill='#7d8b5f' fill-opacity='0.8'/>");
+                    continue;
+                }
+                var sa = Map(new Vec2(o.Center.X - o.WidthFeet / 2f, o.Center.Z + o.DepthFeet / 2f));
+                sb.AppendLine($"<rect x='{N(sa.X)}' y='{N(sa.Y)}' width='{N(o.WidthFeet * scale)}' height='{N(o.DepthFeet * scale)}' fill='#3f3b34' fill-opacity='0.95'/>");
+                continue;
+            }
             if (o.Kind == OutbuildingKind.GrainBin)
             {
                 float r = o.DiameterFeet * scale / 2f;
@@ -205,13 +248,16 @@ public static class SvgMapRenderer
                 else
                     sb.AppendLine($"<line class='thin' x1='{N(tl.X + wPx / 2f)}' y1='{N(tl.Y + 2)}' x2='{N(tl.X + wPx / 2f)}' y2='{N(tl.Y + hPx - 2)}' stroke-dasharray='5 4'/>");
             }
-            if (!string.IsNullOrEmpty(o.Label))
+            bool suppress = scale < 0.55f && o.Kind == OutbuildingKind.DetachedGarage;
+            if (!string.IsNullOrEmpty(o.Label) && !suppress)
                 sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(tl.Y + hPx + 12)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
         }
 
-        // Labels.
-        foreach (var l in map.Labels)
+        // Labels (hidden at countryside zoom; minor labels suppressed at smalltown zoom).
+        bool quiet = scale < 0.55f;
+        foreach (var l in map.LodSimple ? Enumerable.Empty<MapLabel>() : map.Labels)
         {
+            if (quiet && !l.Large) continue;
             var p = Map(l.Position);
             string cls = l.Large ? "roadlabel" : "small";
             string rotate = MathF.Abs(l.RotateDeg) > 0.01f ? $" transform='rotate({N(l.RotateDeg)} {N(p.X)} {N(p.Y)})'" : "";

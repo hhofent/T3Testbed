@@ -17,7 +17,7 @@ static string GetString(string[] args, string name, string fallback)
 }
 
 var archetype = GetString(args, "--archetype", "all");
-var mapMode = GetString(args, "--map", "all");   // rural | town | smalltown | all
+var mapMode = GetString(args, "--map", "all");   // rural | town | smalltown | country | all
 var townSize = GetString(args, "--size", "hamlet"); // hamlet (boyden/hull later)
 var seed = GetUInt(args, "--seed", 1993);
 var seedsArg = GetString(args, "--seeds", "");   // comma list, e.g. --seeds 1993,42,2024 (smalltown only)
@@ -73,6 +73,15 @@ if (mapMode is "smalltown" or "all")
         if (smalltown == null) smalltown = m;   // featured: first seed
     }
 }
+if (mapMode is "country" or "all")
+{
+    // One countryside view per size class, so growth is visible test-to-test.
+    foreach (var sz in new[] { "hamlet", "boyden", "hull" })
+    {
+        var m = CountrysideMap.Generate(seed, sz);
+        sections.Add(MapSection(m, $"country-{seed}-{sz}.svg"));
+    }
+}
 
 // --- Houses. ---
 var archetypes = archetype == "all" ? HouseGenerator.Archetypes : new[] { archetype };
@@ -122,7 +131,7 @@ if (town != null)
 {
     Console.WriteLine($"town block: {town.Houses.Count} houses, {town.LotLines.Count} lot lines, {(town.Alleys.Count > 0 ? "with alley" : "no alley")}, {town.Trees.Count} trees");
 }
-foreach (var s in sections.Where(s => s.FileName.StartsWith("smalltown-")))
+foreach (var s in sections.Where(s => s.FileName.StartsWith("smalltown-") || s.FileName.StartsWith("country-")))
     Console.WriteLine($"{s.FileName}: {s.Facts.First(f => f.Item1 == "houses").Item2} houses, {s.Facts.First(f => f.Item1 == "outbuildings").Item2} buildings/anchors, {s.Facts.First(f => f.Item1 == "span").Item2}");
 
 string indexPath = Path.Combine(outDir, "index.html");
@@ -138,10 +147,12 @@ File.WriteAllText(examplePath, HtmlIndex.Render(new List<HtmlSection> { featured
 Console.WriteLine($"wrote {examplePath}");
 
 // Multi-example gallery (links, not embeds) when more than one smalltown was generated.
-var townSections = sections.Where(s => s.FileName.StartsWith("smalltown-")).ToList();
+var townSections = sections.Where(s => s.FileName.StartsWith("smalltown-") || s.FileName.StartsWith("country-")).ToList();
 if (townSections.Count > 1)
 {
     string galleryPath = Path.Combine(outDir, "examples.html");
     File.WriteAllText(galleryPath, HtmlIndex.Render(townSections));
     Console.WriteLine($"wrote {galleryPath}");
 }
+foreach (var s in townSections)
+    Console.WriteLine($"gallery: {s.FileName}");

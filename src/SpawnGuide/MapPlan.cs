@@ -67,11 +67,16 @@ public sealed class MapPlan
     public List<MapRect> Roads { get; } = new();
     /// <summary>Gravel alleys behind town lots.</summary>
     public List<MapRect> Alleys { get; } = new();
+    /// <summary>Large terrain fills (fields), drawn under everything else. Parallel with FieldFills.</summary>
+    public List<MapRect> Fields { get; } = new();
+    public List<string> FieldFills { get; } = new();
     public bool RoadCenterDashes { get; set; }
     /// <summary>Per-road yellow-centerline flag, parallel to Roads. Falls back to RoadCenterDashes when empty.</summary>
     public List<bool> RoadDashed { get; } = new();
     /// <summary>"asphalt" | "gravel" | "" (derive from dash flags, back-compat).</summary>
     public string RoadSurface { get; set; } = "";
+    /// <summary>Level-of-detail: houses/outbuildings silhouette-only, no captions (countryside zoom).</summary>
+    public bool LodSimple { get; set; }
     /// <summary>Dashed lot boundary rectangles (town lots). Rural: the outer parcel line.</summary>
     public List<MapRect> LotLines { get; } = new();
     public List<PositionedHouse> Houses { get; } = new();
