@@ -62,9 +62,13 @@ no raw strings, no file-scoped namespaces) and ports later.
   the interior section-line junction, 1-mile section grid, field fills, 6 farmstead
   clusters, HWY 18 to the cell edges. One far-LOD (silhouettes, trunk dots) AND one
   detail (walls + captions, trunk dots r≈2 ft) per size class per run.
-- `out/viewer.html` (~11 MB, self-contained data-URI maps, no server needed — open in
-  a desktop browser): pan/zoom viewer, wheel+drag+pinch, far↔detail LOD crossfade at
-  1.55× (smalltown) / 2.6× (cell) fit zoom. Floor plans for houses are NOT built yet —
+- `out/viewer.html` (~24 MB, self-contained data-URI maps, no server — open in a
+  desktop browser): pan/zoom viewer, wheel+drag+pinch, far↔detail LOD crossfade at
+  1.55× (smalltown) / 2.6× (cell) fit zoom. Controls: dropdown, 🎲 random button,
+  seed entry box (jump to any baked seed; unknown seeds flash "seed N not baked").
+  Bake pool: 13 hamlet seeds (1993, 42, 2024, 7, 97, 123, 555, 777, 1001, 1337,
+  1999, 2718, 4096) via `--bake`; arbitrary seeds need `dotnet run -- --bake` with the
+  seed added to `bakedPool` in Program.cs. Floor plans for houses are NOT built yet —
   the detail zoom is the target layer for them when they come.
 - Trees render as trunk-location dots only, no canopy disks (user call, 2026-11-11).
 - Town silhouettes are seeded superellipse-wobble blobs (edge lots dropped), never a

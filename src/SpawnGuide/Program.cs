@@ -25,7 +25,9 @@ var seedsArg = GetString(args, "--seeds", "");   // comma list, e.g. --seeds 199
 var extraSeeds = seedsArg.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
     .Select(s => uint.TryParse(s.Trim(), out var v) ? v : (uint?)null)
     .Where(v => v.HasValue).Select(v => v!.Value).ToList();
-var smalltownSeeds = extraSeeds.Count > 0 ? extraSeeds : new List<uint> { seed };
+var bake = args.Contains("--bake");   // bake the full random-seed pool for the viewer
+var bakedPool = new List<uint> { 1993, 42, 2024, 7, 97, 123, 555, 777, 1001, 1337, 1999, 2718, 4096 };
+var smalltownSeeds = extraSeeds.Count > 0 ? extraSeeds : bake ? bakedPool : new List<uint> { seed };
 var outDir = GetString(args, "--out", Path.Combine(Directory.GetCurrentDirectory(), "out"));
 Directory.CreateDirectory(outDir);
 foreach (var stale in Directory.EnumerateFiles(outDir, "*.svg")) File.Delete(stale);
@@ -169,15 +171,15 @@ static string SvgDataUri(string fileName)
         .Replace("%", "%25").Replace("<", "%3C").Replace(">", "%3E").Replace("#", "%23")
         .Replace("\"", "%22").Replace("'", "%27").Replace("\\", "%5C")
         .Replace("\r", "").Replace("\n", "");
-static string ViewerMapJson(string name, string farFile, string nearFile, double lodSwitch, string outDir)
-    => $"{{\"name\":\"{name}\",\"far\":\"{SvgDataUri(Path.Combine(outDir, farFile))}\",\"near\":\"{SvgDataUri(Path.Combine(outDir, nearFile))}\",\"lodSwitch\":{lodSwitch.ToString(CultureInfo.InvariantCulture)},\"file\":\"{farFile}\"}}";
+static string ViewerMapJson(string name, string farFile, string nearFile, double lodSwitch, string outDir, uint? seedForJump = null)
+    => $"{{\"name\":\"{name}\",\"far\":\"{SvgDataUri(Path.Combine(outDir, farFile))}\",\"near\":\"{SvgDataUri(Path.Combine(outDir, nearFile))}\",\"lodSwitch\":{lodSwitch.ToString(CultureInfo.InvariantCulture)},\"file\":\"{farFile}\"{(seedForJump.HasValue ? $",\"seed\":{seedForJump.Value}" : "")}}}";
 {
     var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "viewer-template.html");
     if (File.Exists(templatePath))
     {
         var maps = new List<string>();
         foreach (var s in smalltownSeeds)
-            maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", $"smalltown-{s}-detail.svg", 1.55, outDir));
+            maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", $"smalltown-{s}-detail.svg", 1.55, outDir, s));
         foreach (var sz in new[] { "hamlet", "boyden", "hull" })
             maps.Add(ViewerMapJson($"3 mi cell — {sz} — seed {seed}", $"country-{seed}-{sz}.svg", $"country-{seed}-{sz}-detail.svg", 2.6, outDir));
         string viewer = File.ReadAllText(templatePath)

@@ -21,10 +21,14 @@
 <body>
 <div id="bar">
   <select id="mapSel" aria-label="map"></select>
+  <input id="seedInput" type="number" min="0" placeholder="seed…" aria-label="seed" style="width:86px;background:#221f1a;color:#e8e2d4;border:1px solid #57503f;border-radius:6px;padding:6px 8px;font-size:13px">
+  <button id="seedGo" title="load the entered seed">go</button>
+  <button id="random" title="random seed">🎲 random</button>
   <button id="zoomOut" title="zoom out">−</button>
   <button id="zoomIn" title="zoom in">+</button>
   <button id="reset" title="fit to window">fit</button>
   <div class="spacer"></div>
+  <span id="seedErr" style="color:#e0705f;font-size:12px;display:none"></span>
   <span id="fname"></span>
 </div>
 <div id="stage">
@@ -40,6 +44,11 @@ const far = document.getElementById('far');
 const near = document.getElementById('near');
 const sel = document.getElementById('mapSel');
 const fname = document.getElementById('fname');
+const seedInput = document.getElementById('seedInput');
+const seedGo = document.getElementById('seedGo');
+const randomBtn = document.getElementById('random');
+const seedErr = document.getElementById('seedErr');
+const seedToIndex = new Map();
 
 let cur = null;
 let s = 1, tx = 0, ty = 0, fitS = 1, natW = 1000, natH = 700;
@@ -138,7 +147,33 @@ MAPS.forEach((m, i) => {
   o.value = i;
   o.textContent = m.name;
   sel.appendChild(o);
+  if (typeof m.seed === 'number' && !seedToIndex.has(m.seed)) seedToIndex.set(m.seed, i);
 });
+
+function showSeedError(text) {
+  seedErr.textContent = text;
+  seedErr.style.display = 'inline';
+  setTimeout(() => { seedErr.style.display = 'none'; }, 2600);
+}
+function jumpToSeed(seed) {
+  const idx = seedToIndex.get(seed);
+  if (idx === undefined) { showSeedError(`seed ${seed} not baked`); return; }
+  sel.value = idx;
+  loadMap(MAPS[idx]);
+}
+seedGo.onclick = () => {
+  const v = Math.floor(Number(seedInput.value));
+  if (!Number.isFinite(v) || seedInput.value.trim() === '') { showSeedError('enter a number'); return; }
+  jumpToSeed(v >>> 0);
+};
+seedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') seedGo.click(); });
+randomBtn.onclick = () => {
+  if (MAPS.length < 2) return;
+  let idx;
+  do { idx = Math.floor(Math.random() * MAPS.length); } while (idx === sel.selectedIndex);
+  sel.value = idx;
+  loadMap(MAPS[idx]);
+};
 
 sel.onchange = () => loadMap(MAPS[+sel.value]);
 function loadMap(m) {
