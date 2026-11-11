@@ -10,10 +10,10 @@ Confirm with the user before implementing.
 
 Destination: an **infinite, seed-reproducible map** streaming around a slowly moving
 lens, built from **3-mile-square cells**. Town density ladder from the user's
-calibration: Hull-class every ~100 miles, Boyden-class every ~30 miles, George-class
-hamlets more frequent still (Struble/Craig/George spacing suggested every ~8–12 mi —
-not yet confirmed with the user), farmsteads scattered, most of the map empty fields
-on the section grid. Towns sit on the 1-mile section grid; George had one diagonal
+calibration (locked by user 2026-11-11): Hull-class every ~100 miles (the largest a
+town ever gets), Boyden-class every ~30 miles, George-class hamlets every ~30 miles
+on average — very rare under ~10 miles apart, essentially guaranteed by ~50 miles —
+farmsteads scattered, most of the map empty fields on the section grid. Towns sit on the 1-mile section grid; George had one diagonal
 "old rail" avenue — that pattern (grid town + a diagonal rail-corridor street) is
 worth replicating as an optional town feature.
 
@@ -22,7 +22,8 @@ worth replicating as an optional town feature.
 - World seed → per-cell RNG via hash(worldSeed, cellX, cellZ). Cell = 3 mi square.
 - Cell content classes: (a) farmland+section grid (default), (b) hamlet, (c) Boyden-class,
   (d) Hull-class — placed by a low-frequency "town field" (e.g. jittered Poisson /
-  blue-noise with class radii ~100 mi / ~30 mi / ~8–12 mi), independent of cell edges so
+  blue-noise with class radii ~100 mi / ~30 mi / ~30 mi with min-spacing ~10 mi and
+  saturation by ~50 mi), independent of cell edges so
   towns can straddle cells.
 - Each cell independently generates: section-line roads (global 1-mi lattice), fields,
   creek corridor (low-freq noise ribbon), farmstead placements (hashed per section),

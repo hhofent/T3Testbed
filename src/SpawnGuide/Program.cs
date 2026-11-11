@@ -17,7 +17,8 @@ static string GetString(string[] args, string name, string fallback)
 }
 
 var archetype = GetString(args, "--archetype", "all");
-var mapMode = GetString(args, "--map", "all");   // rural | town | all
+var mapMode = GetString(args, "--map", "all");   // rural | town | smalltown | all
+var townSize = GetString(args, "--size", "hamlet"); // hamlet (boyden/hull later)
 var seed = GetUInt(args, "--seed", 1993);
 var outDir = GetString(args, "--out", Path.Combine(Directory.GetCurrentDirectory(), "out"));
 Directory.CreateDirectory(outDir);
@@ -47,7 +48,7 @@ HtmlSection MapSection(MapPlan map, string fileName)
 }
 
 // --- Maps first: that's the current focus. ---
-MapPlan? rural = null, town = null;
+MapPlan? rural = null, town = null, smalltown = null;
 if (mapMode is "rural" or "all")
 {
     rural = MapGenerator.RuralLot(seed);
@@ -57,6 +58,11 @@ if (mapMode is "town" or "all")
 {
     town = MapGenerator.TownBlock(seed);
     sections.Add(MapSection(town, $"town-{seed}.svg"));
+}
+if (mapMode is "smalltown" or "all")
+{
+    smalltown = SmallTownGenerator.Generate(seed, townSize);
+    sections.Add(MapSection(smalltown, $"smalltown-{seed}.svg"));
 }
 
 // --- Houses. ---
@@ -107,13 +113,19 @@ if (town != null)
 {
     Console.WriteLine($"town block: {town.Houses.Count} houses, {town.LotLines.Count} lot lines, {(town.Alleys.Count > 0 ? "with alley" : "no alley")}, {town.Trees.Count} trees");
 }
+if (smalltown != null)
+{
+    Console.WriteLine($"smalltown ({townSize}): {smalltown.Houses.Count} houses, {smalltown.LotLines.Count} lots, {smalltown.Outbuildings.Count} buildings/anchors, {smalltown.Trees.Count} trees");
+}
 
 string indexPath = Path.Combine(outDir, "index.html");
 File.WriteAllText(indexPath, HtmlIndex.Render(sections));
 Console.WriteLine($"wrote {indexPath}");
 
 // Default phone-friendly output: the rural farmstead alone.
-var featured = sections.FirstOrDefault(s => s.FileName.StartsWith("rural-")) ?? sections[0];
+var featured = sections.FirstOrDefault(s => s.FileName.StartsWith("smalltown-"))
+    ?? sections.FirstOrDefault(s => s.FileName.StartsWith("rural-"))
+    ?? sections[0];
 string examplePath = Path.Combine(outDir, "example.html");
 File.WriteAllText(examplePath, HtmlIndex.Render(new List<HtmlSection> { featured }));
 Console.WriteLine($"wrote {examplePath}");

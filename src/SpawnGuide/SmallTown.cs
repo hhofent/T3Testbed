@@ -10,12 +10,14 @@ namespace SpawnGuide
 /// references (George, Craig, Struble, Boyden, Hull):
 ///   - commercial strip on the highway along the SOUTH edge (main street = the highway)
 ///   - cardinal grid inside; blocks ~200–330 ft; lots ~50–80 ft frontage
-///   - civic anchors on the grid: school, church(es), park, grain elevator
+///   - civic anchors on the grid: school, church(es), parks, grain elevator
 ///   - heavy tree canopy; abrupt end into fields on all sides
-/// Hamlet preset is implemented; Boyden/Hull presets are parameter bumps to come.
-/// Size is deliberately decoupled from spawn FREQUENCY — the town field (how often
-/// hamlets/towns appear per 30/100 miles) is NOT implemented here yet.
+/// Hamlet preset implemented first; Boyden/Hull are parameter bumps to come.
+/// Town SIZE is deliberately decoupled from spawn FREQUENCY — the town field
+/// (how often hamlets/towns appear per 10/30/50/100 miles) is NOT here yet.
 /// Lots face the E–W streets only in this version (N–S street faces get no lots yet).
+/// Alleys are decided per block ROW (all columns in a row share the decision) so the
+/// street spacing stays uniform within the row.
 /// </summary>
 public static class SmallTownGenerator
 {
@@ -36,8 +38,8 @@ public static class SmallTownGenerator
 
     static readonly Dictionary<string, TownSize> Sizes = new(StringComparer.OrdinalIgnoreCase)
     {
-        // Hamlet: George/Craig/Struble class. ~0.25 mi wide. Boyden and Hull presets
-        // (larger grids, school+park+more commercial) come after this tests clean.
+        // Hamlet: George/Craig/Struble class, ~0.25 mi wide. Boyden and Hull presets
+        // (larger grids, more commercial) come after this tests clean.
         ["hamlet"] = new TownSize { Columns = 5, EWStreets = 4, LotsMin = 3, LotsMax = 4, CommercialPads = 3, Label = "HAMLET" },
     };
 
@@ -48,29 +50,29 @@ public static class SmallTownGenerator
 
         var rng = new Rng(seed);
         float lotDepth = BlockLotDepth + rng.Range(-6f, 6f);
-        float blockDepth = 2 * lotDepth + AlleyRow;   // one alley per block, shared
-        float streetSpacing = StreetRow + blockDepth;
+        int blockRows = size.EWStreets - 1;
+
+        // Per-block-row alley decision (row-level so street spacing is uniform per row).
+        var rowAlley = new bool[blockRows];
+        for (int r = 0; r < blockRows; r++) rowAlley[r] = rng.Chance(0.55f);
+        float BlockDepth(int row) => 2 * lotDepth + (rowAlley[row] ? AlleyRow : 0f);
 
         string townName = rng.Pick(new[] { "CEDAR BLUFF", "TWIN GROVE", "MARBLE JUNCTION", "PRAIRIE CENTER", "HALSTEAD", "NEW HOPE" });
         string[] ewNames = { "IOWA", "MICHIGAN", "MINNESOTA", "DAKOTA", "CALUMET", "OHIO" };
         string[] nsNames = { "DIVISION", "LINCOLN", "MAIN", "WASHINGTON", "HARRIS", "WILLIAMS", "CHESTNUT", "BURROUGHS" };
-        int mainStreetIndex = size.Columns / 2; // N–S streets index 0..Columns; MAIN sits in the middle
+        int mainStreetIndex = size.Columns / 2; // N–S street index; MAIN sits mid-town
 
-        // --- column plan: shared lot frontages per column, so facing rows align in all block rows.
+        // --- column plan: shared lot frontages per column so facing rows align.
         var colFrontages = new List<float>[size.Columns];
-        var colLotCounts = new int[size.Columns];
         for (int c = 0; c < size.Columns; c++)
         {
             int n = rng.RangeInt(size.LotsMin, size.LotsMax + 1);
-            colLotCounts[c] = n;
             colFrontages[c] = new List<float>();
             for (int i = 0; i < n; i++) colFrontages[c].Add(rng.Range(55f, 80f));
         }
-        float totalWidth = 0f;
+        float totalWidth = StreetRow * (size.Columns + 1);
         foreach (var f in colFrontages) totalWidth += f.Sum();
-        totalWidth += StreetRow * (size.Columns + 1);
 
-        // --- N–S street x positions.
         var nsX = new float[size.Columns + 1];
         {
             float x = 0f;
@@ -81,14 +83,15 @@ public static class SmallTownGenerator
             }
         }
 
-        // --- Z layout: highway, commercial band, then the E–W grid.
-        float zHighway = 0f;
+        // --- Z layout: highway, commercial band, then the cumulative E–W grid.
         float zBand = HighwayWidth;
         float zFirstStreet = zBand + BandDepth;
-        float[] ewZ = new float[size.EWStreets];
-        for (int i = 0; i < size.EWStreets; i++) ewZ[i] = zFirstStreet + i * streetSpacing;
+        var ewZ = new float[size.EWStreets];
+        ewZ[0] = zFirstStreet;
+        for (int i = 1; i < size.EWStreets; i++)
+            ewZ[i] = ewZ[i - 1] + StreetRow + BlockDepth(i - 1);
         float lastStreetEnd = ewZ[size.EWStreets - 1] + StreetRow;
-        float totalDepth = lastStreetEnd + lotDepth;   // final north-facing lot row is the town edge
+        float totalDepth = lastStreetEnd + lotDepth;   // final north-edge lot row is the town edge
 
         var map = new MapPlan
         {
@@ -99,10 +102,10 @@ public static class SmallTownGenerator
             RoadSurface = "asphalt",
         };
 
-        // --- roads: highway (dashed), then E–W grid streets (no paint), then N–S mains.
-        map.Roads.Add(new MapRect(0, zHighway, totalWidth, HighwayWidth));
+        // --- roads: highway (dashed), E–W grid streets, N–S streets.
+        map.Roads.Add(new MapRect(0, 0, totalWidth, HighwayWidth));
         map.RoadDashed.Add(true);
-        map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, zHighway + HighwayWidth / 2f), Text = "HIGHWAY 18", Large = true });
+        map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, HighwayWidth / 2f), Text = "HIGHWAY 18", Large = true });
         foreach (var z in ewZ)
         {
             map.Roads.Add(new MapRect(0, z, totalWidth, StreetRow));
@@ -129,38 +132,31 @@ public static class SmallTownGenerator
             });
         }
 
-        // --- commercial band along the highway. Main street extends south through it.
+        // --- commercial band along the highway. Main street extends south to it.
         float mainX = nsX[mainStreetIndex];
         var padLabels = new List<string> { "CASEY'S", "FEED & SEED", "CO-OP", "HARDWARE", "BAR & GRILL", "AUTO ELECTRIC" };
-        var padXs = new List<float>();
         {
-            // pads on both sides of the main-street junction, avoiding the roadway
-            float x = 60f;
-            int guard = 0;
-            while (padXs.Count < size.CommercialPads && guard++ < 40)
+            float x = 55f;
+            int placed = 0, guard = 0;
+            while (placed < size.CommercialPads && guard++ < 40)
             {
-                float w = rng.Range(75f, 130f);
-                float gap = rng.Range(28f, 55f);
-                if (x < mainX - 10f || x > mainX + StreetRow + 10f)
-                    padXs.Add(x);
+                float w = rng.Range(75f, 115f);
+                float gap = rng.Range(28f, 52f);
+                if (x + w <= totalWidth - 40f && (x + w < mainX - 12f || x > mainX + StreetRow + 12f))
+                {
+                    float d = rng.Range(52f, 72f);
+                    map.Outbuildings.Add(new Outbuilding
+                    {
+                        Kind = OutbuildingKind.Storefront,
+                        Center = new Vec2(x + w / 2f, zBand + d / 2f + 8f),
+                        WidthFeet = w,
+                        DepthFeet = d,
+                        Label = padLabels[placed % padLabels.Count],
+                    });
+                    placed++;
+                }
                 x += w + gap;
-                if (x + w > totalWidth - 40f) break;
             }
-        }
-        int pi = 0;
-        foreach (float px in padXs)
-        {
-            float w = rng.Range(75f, 115f);
-            float d = rng.Range(52f, 72f);
-            map.Outbuildings.Add(new Outbuilding
-            {
-                Kind = OutbuildingKind.Storefront,
-                Center = new Vec2(px + w / 2f, zBand + d / 2f + 8f),
-                WidthFeet = w,
-                DepthFeet = d,
-                Label = padLabels[pi % padLabels.Count],
-            });
-            pi++;
         }
         // Grain elevator + bin row, east of the main street — the Iowa marker.
         {
@@ -179,6 +175,7 @@ public static class SmallTownGenerator
             float binD = 22f, spacing = binD + 8f;
             float binRowW = bins * spacing - 8f;
             float binX = evX + (evW - binRowW) / 2f;
+            if (binX + binRowW > totalWidth - 8f) binX = totalWidth - 8f - binRowW;
             for (int i = 0; i < bins; i++)
                 map.Outbuildings.Add(new Outbuilding
                 {
@@ -189,52 +186,39 @@ public static class SmallTownGenerator
                 });
         }
 
-        // --- decide civic reserve lots (one anchor each): park, school, two churches.
-        // Face index: row (0..2*EWStreets-2) × col. Rows: for street pair (i, i+1),
-        // face A = north row of street i (faces south), face B = south row of street i+1.
-        int faceRows = 2 * (size.EWStreets - 1);
-        var faceIds = new List<(int row, int col)>();
-        for (int r = 0; r < faceRows; r++)
-            for (int c = 0; c < size.Columns; c++)
-                faceIds.Add((r, c));
-        var civic = new Dictionary<(int, int), OutbuildingKind>();
-        var civicPicks = new List<(int, int)>();
-        while (civicPicks.Count < 5 && faceIds.Count > 0)
+        // --- civic reserve faces: face (s, side, col) — s = street index, side 0 = north
+        // row (faces south), side 1 = south row (faces north, s ≥ 1), col = column index.
+        var faceIds = new List<(int s, int side, int col)>();
+        for (int s = 0; s < size.EWStreets; s++)
+            for (int col = 0; col < size.Columns; col++) faceIds.Add((s, 0, col));
+        for (int s = 1; s < size.EWStreets; s++)
+            for (int col = 0; col < size.Columns; col++) faceIds.Add((s, 1, col));
+        var civic = new Dictionary<(int s, int side, int col), OutbuildingKind>();
+        OutbuildingKind[] civicKinds = { OutbuildingKind.CityPark, OutbuildingKind.School, OutbuildingKind.Church, OutbuildingKind.Church, OutbuildingKind.CityPark };
+        for (int i = 0; i < civicKinds.Length && faceIds.Count > 0; i++)
         {
             int idx = rng.RangeInt(0, faceIds.Count);
-            civicPicks.Add(faceIds[idx]);
+            civic[faceIds[idx]] = civicKinds[i];
             faceIds.RemoveAt(idx);
         }
-        OutbuildingKind[] civicKinds = { OutbuildingKind.CityPark, OutbuildingKind.School, OutbuildingKind.Church, OutbuildingKind.Church, OutbuildingKind.CityPark };
-        for (int i = 0; i < civicPicks.Count; i++) civic[civicPicks[i]] = civicKinds[i];
 
-        // --- per-block alleys (seeded ~55%), per blockFace fill.
-        var alleyCache = new Dictionary<(int, int), bool>();
-        bool BlockAlley(int blockRow, int col)
+        // --- draw alleys (row-level decision, one rect per column segment).
+        for (int row = 0; row < blockRows; row++)
         {
-            var key = (blockRow, col);
-            if (!alleyCache.TryGetValue(key, out bool has))
+            if (!rowAlley[row]) continue;
+            float aZ = ewZ[row] + StreetRow + lotDepth;
+            for (int col = 0; col < size.Columns; col++)
             {
-                has = rng.Chance(0.55f);
-                alleyCache[key] = has;
-                if (has)
-                {
-                    float aZ = ewZ[blockRow] + StreetRow + lotDepth;
-                    float bX = nsX[col] + StreetRow;
-                    map.Alleys.Add(new MapRect(bX, aZ, colFrontages[col].Sum(), AlleyRow));
-                }
+                float bX = nsX[col] + StreetRow;
+                map.Alleys.Add(new MapRect(bX, aZ, colFrontages[col].Sum(), AlleyRow));
             }
-            return has;
         }
 
-        float lotX0(int col) => nsX[col] + StreetRow;
-
-        // Fill one lot facing an E–W street.
         uint houseSeed = seed * 2654435761u + 97u;
-        void FillTownLot(int faceRow, int streetIdx, int col, int lotIdx, bool facesSouth, float lotX, float frontage, OutbuildingKind? anchor, bool alley)
+        void FillTownLot(int streetIdx, int col, int lotIdx, bool facesSouth, float lotX, float frontage, OutbuildingKind? anchor, bool alley)
         {
             float streetZ = ewZ[streetIdx];
-            float rowZ0 = facesSouth ? streetZ + StreetRow : streetZ - lotDepth; // back-to-front handled below
+            float rowZ0 = facesSouth ? streetZ + StreetRow : streetZ - lotDepth;
             map.LotLines.Add(new MapRect(lotX, rowZ0, frontage, lotDepth));
 
             float setback = rng.Range(9f, 20f);
@@ -243,9 +227,14 @@ public static class SmallTownGenerator
 
             if (anchor.HasValue)
             {
-                var a = PlaceAnchor(anchor.Value, lotX, rowZ0, frontage, lotDepth, frontLineZ, facesSouth);
+                var a = PlaceAnchor(anchor.Value, lotX, rowZ0, frontage, lotDepth);
                 map.Outbuildings.Add(a);
-                map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 5f, Points = { new Vec2(a.Center.X, frontLineZ), new Vec2(a.Center.X, a.Center.Z) } });
+                map.Walks.Add(new Driveway
+                {
+                    Surface = "concrete",
+                    WidthFeet = 5f,
+                    Points = { new Vec2(a.Center.X, frontLineZ), new Vec2(a.Center.X, a.Center.Z) },
+                });
                 ScatterTrees(map, rng, rng.RangeInt(3, 6), lotX + 5f, lotX + frontage - 5f, rowZ0 + 5f, rowZ0 + lotDepth - 5f, null, 6f);
                 return;
             }
@@ -314,36 +303,39 @@ public static class SmallTownGenerator
             ScatterTrees(map, rng, rng.RangeInt(2, 5), lotX + 4f, lotX + frontage - 4f, rowZ0 + 5f, rowZ0 + lotDepth - 5f, new[] { house }, 5f);
         }
 
-        // faceRow encoding: blockRow = faceRow/2, faceIdx = faceRow%2 (0 = north row of street blockRow, faces south; 1 = south row of street blockRow+1, faces north)
-        for (int blockRow = 0; blockRow < size.EWStreets - 1; blockRow++)
+        // North row of EVERY street (faces south); south row of every street except the first.
+        for (int s = 0; s < size.EWStreets; s++)
         {
-            int sa = blockRow;          // street whose north row this is
-            int sb2 = blockRow + 1;     // street whose south row this is
-            bool alley = col => BlockAlley(blockRow, col);
+            bool alley = s < blockRows && rowAlley[s];
             for (int col = 0; col < size.Columns; col++)
             {
-                float x = lotX0(col);
-                // North row of street sa (faces south, toward sa).
+                float x = nsX[col] + StreetRow;
                 for (int i = 0; i < colFrontages[col].Count; i++)
                 {
                     float f = colFrontages[col][i];
-                    var anchor = civic.TryGetValue((blockRow * 2, col), out var k0) && i == 0 ? (OutbuildingKind?)k0 : null;
-                    FillTownLot(blockRow * 2, sa, col, i, facesSouth: true, x, f, anchor, alley(col));
+                    OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 0, col), out var k0) ? k0 : null;
+                    FillTownLot(s, col, i, facesSouth: true, x, f, anchor, alley);
                     x += f;
                 }
-                // South row of street sb2 (faces north, toward sb2).
-                x = lotX0(col);
+            }
+        }
+        for (int s = 1; s < size.EWStreets; s++)
+        {
+            bool alley = rowAlley[s - 1];
+            for (int col = 0; col < size.Columns; col++)
+            {
+                float x = nsX[col] + StreetRow;
                 for (int i = 0; i < colFrontages[col].Count; i++)
                 {
                     float f = colFrontages[col][i];
-                    var anchor = civic.TryGetValue((blockRow * 2 + 1, col), out var k1) && i == 0 ? (OutbuildingKind?)k1 : null;
-                    FillTownLot(blockRow * 2 + 1, sb2, col, i, facesSouth: false, x, f, anchor, alley(col));
+                    OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 1, col), out var k1) ? k1 : null;
+                    FillTownLot(s, col, i, facesSouth: false, x, f, anchor, alley);
                     x += f;
                 }
             }
         }
 
-        // --- public sidewalks both sides of every E–W street; street trees on both sides.
+        // --- public sidewalks both sides of every E–W street; street trees.
         foreach (var z in ewZ)
         {
             foreach (var wz in new[] { z + 2.25f, z + StreetRow - 2.25f })
@@ -373,7 +365,7 @@ public static class SmallTownGenerator
         return r < 0.50f ? "ranch" : r < 0.80f ? "split-level" : "farmhouse";
     }
 
-    static Outbuilding PlaceAnchor(OutbuildingKind kind, float lotX, float rowZ0, float frontage, float lotDepth, float frontLineZ, bool facesSouth)
+    static Outbuilding PlaceAnchor(OutbuildingKind kind, float lotX, float rowZ0, float frontage, float lotDepth)
     {
         float cx = lotX + frontage / 2f;
         float midZ = rowZ0 + lotDepth / 2f;
