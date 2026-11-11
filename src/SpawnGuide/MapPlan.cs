@@ -34,6 +34,13 @@ public sealed class Driveway
     public string Surface { get; set; } = "gravel";
 }
 
+/// <summary>Cul-de-sac bulb: asphalt turnaround at the clipped end of a street.</summary>
+public sealed class RoadBulb
+{
+    public Vec2 Center { get; set; }
+    public float RadiusFeet { get; set; } = 44f;
+}
+
 public sealed class PositionedHouse
 {
     public HousePlan Plan { get; set; } = null!;
@@ -70,6 +77,8 @@ public sealed class MapPlan
     /// <summary>Large terrain fills (fields), drawn under everything else. Parallel with FieldFills.</summary>
     public List<MapRect> Fields { get; } = new();
     public List<string> FieldFills { get; } = new();
+    /// <summary>Cul-de-sac bulbs drawn on top of the road surface.</summary>
+    public List<RoadBulb> Bulbs { get; } = new();
     public bool RoadCenterDashes { get; set; }
     /// <summary>Per-road yellow-centerline flag, parallel to Roads. Falls back to RoadCenterDashes when empty.</summary>
     public List<bool> RoadDashed { get; } = new();

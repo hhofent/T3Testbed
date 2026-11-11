@@ -142,6 +142,13 @@ public static class SvgMapRenderer
             sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(r.W * scale)}' height='{N(r.H * scale)}' fill='#c9c3b2'/>");
         }
 
+        // Cul-de-sac bulbs (asphalt turnarounds) on top of road ends.
+        foreach (var b in map.Bulbs)
+        {
+            var c = Map(b.Center);
+            sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(b.RadiusFeet * scale)}' fill='{(map.RoadSurface == "asphalt" ? "#8f8b83" : "#c8c3b5")}'/>");
+        }
+
         // Driveways (thick polylines), then walks. Hidden at countryside zoom.
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Driveways)
         {

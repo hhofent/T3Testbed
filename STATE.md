@@ -75,6 +75,10 @@ no raw strings, no file-scoped namespaces) and ports later.
   rectangle (user call). Hamlet seed 1993 now 130 houses after blob cut (was 168).
 - QuietAnnotations is generator-set, not scale-derived; wall min-stroke is 2.2px at
   natural size (was 5px).
+- Streets are clipped to the town's filled content — never to the bounding square
+  (user call). Cul-de-sacs: up to 2 seeded N–S stub ends with an asphalt bulb + a
+  flanking lot per side. Seeded vacant lots on the outskirts (heavier near the blob
+  edge; ~5% interior, ~30% outskirts); orphaned streets/alleys/sidewalks drop out.
 - Sequencing note: parallel thread (durability agent) committed mid-build twice;
   verify with `git status` before committing; STATE.md is the source of truth.
   Verified geometrically (bbox checks) and by user's eye via example.html.

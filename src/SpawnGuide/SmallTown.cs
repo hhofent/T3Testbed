@@ -102,6 +102,7 @@ public static class SmallTownGenerator
             return has;
         }
 
+
         // --- seeded blob boundary: the town is an irregular silhouette, never a rectangle.
         float blobCX = 0f, blobCZ = 0f, blobRX = 1f, blobRZ = 1f;
         int hb1 = 0, hb2 = 0;
@@ -140,6 +141,49 @@ public static class SmallTownGenerator
             return r <= boundary;
         }
 
+        // --- content tracking: streets end at the town's houses, never at the bounding square.
+        var streetZ = Enumerable.Range(0, size.Columns + 1).Select(_ => (z0: float.MaxValue, z1: float.MinValue)).ToArray();
+        var streetX = Enumerable.Range(0, size.EWStreets).Select(_ => (x0: float.MaxValue, x1: float.MinValue)).ToArray();
+        var rowFilled = new bool[blockRows];
+        var colFilled = new bool[blockRows, size.Columns];
+        void RecordContent(int districtRow, int col, float x0, float x1, float z0, float z1)
+        {
+            for (int s = col; s <= col + 1 && s <= size.Columns; s++)
+            {
+                streetZ[s].z0 = MathF.Min(streetZ[s].z0, z0);
+                streetZ[s].z1 = MathF.Max(streetZ[s].z1, z1);
+            }
+            if (districtRow >= 0)
+            {
+                for (int s = districtRow; s <= districtRow + 1 && s < size.EWStreets; s++)
+                {
+                    streetX[s].x0 = MathF.Min(streetX[s].x0, x0);
+                    streetX[s].x1 = MathF.Max(streetX[s].x1, x1);
+                }
+                if (districtRow < blockRows) rowFilled[districtRow] = true;
+                if (col < size.Columns && districtRow < blockRows) colFilled[districtRow, col] = true;
+            }
+            else
+            {
+                // commercial band contributes to the first E–W street only
+                streetX[0].x0 = MathF.Min(streetX[0].x0, x0);
+                streetX[0].x1 = MathF.Max(streetX[0].x1, x1);
+            }
+        }
+
+        float BlobNormR(float x, float z)
+        {
+            float nx = (x - blobCX) / blobRX, nz = (z - blobCZ) / blobRZ;
+            return MathF.Sqrt(nx * nx + nz * nz);
+        }
+        // Out-of-town-edge lots go vacant more often than interior ones.
+        bool IsVacantLot(float cx, float cz)
+        {
+            float r = BlobNormR(cx, cz);
+            float p = r > 0.66f ? 0.30f : r > 0.48f ? 0.12f : 0.05f;
+            return rng.Chance(p);
+        }
+
         var map = new MapPlan
         {
             Title = $"SMALL TOWN — {townName} — SEED {seed} ({size.Label})",
@@ -166,21 +210,6 @@ public static class SmallTownGenerator
             map.RoadDashed.Add(false);
         }
 
-        // Street names.
-        for (int i = 0; i < size.EWStreets; i++)
-            map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, ewZ[i] + StreetRow / 2f), Text = ewNames[i % ewNames.Length] + " AVENUE" });
-        for (int s = 0; s <= size.Columns; s++)
-        {
-            int ni = s < mainStreetIndex ? s : s - 1;
-            string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length];
-            map.Labels.Add(new MapLabel
-            {
-                Position = new Vec2(nsX[s] + StreetRow / 2f, zBand + (lastStreetEnd - zBand) * 0.62f),
-                Text = nm + " STREET",
-                RotateDeg = -90f,
-            });
-        }
-
         // --- commercial band along the highway. Main street extends south to it.
         float mainX = nsX[mainStreetIndex];
         var padLabels = new List<string> { "CASEY'S", "FEED & SEED", "CO-OP", "HARDWARE", "BAR & GRILL", "AUTO ELECTRIC" };
@@ -193,6 +222,7 @@ public static class SmallTownGenerator
                 float gap = rng.Range(28f, 52f);
                 if (x + w <= totalWidth - 40f && (x + w < mainX - 12f || x > mainX + StreetRow + 12f) && InsideBlob(x + w / 2f, zBand + 50f))
                 {
+                    RecordContent(-1, 0, x, x + w, zBand, zBand + 80f);
                     float d = rng.Range(52f, 72f);
                     map.Outbuildings.Add(new Outbuilding
                     {
@@ -251,24 +281,21 @@ public static class SmallTownGenerator
             faceIds.RemoveAt(idx);
         }
 
-        // --- draw alleys (row-level decision, one rect per column segment).
-        for (int row = 0; row < blockRows; row++)
-        {
-            if (!rowAlley[row]) continue;
-            float aZ = ewZ[row] + StreetRow + lotDepth;
-            for (int col = 0; col < size.Columns; col++)
-            {
-                float bX = nsX[col] + StreetRow;
-                map.Alleys.Add(new MapRect(bX, aZ, BlockWidth(col), AlleyRow));
-            }
-        }
-
         uint houseSeed = seed * 2654435761u + 97u;
-        void FillTownLot(int streetIdx, int col, int lotIdx, bool facesSouth, float lotX, float frontage, OutbuildingKind? anchor, bool alley)
+        void FillTownLot(int streetIdx, int col, int lotIdx, bool facesSouth, int districtRow, float lotX, float frontage, OutbuildingKind? anchor, bool alley)
         {
             float streetZ = ewZ[streetIdx];
             float rowZ0 = facesSouth ? streetZ + StreetRow : streetZ - lotDepth;
-            if (!InsideBlob(lotX + frontage / 2f, rowZ0 + lotDepth / 2f)) return; // ragged town edge
+            float cx = lotX + frontage / 2f, cz = rowZ0 + lotDepth / 2f;
+            if (!InsideBlob(cx, cz)) return; // ragged town edge
+            RecordContent(districtRow, col, lotX, lotX + frontage, rowZ0, rowZ0 + lotDepth);
+            // Seeded vacancy, weighted toward the ragged outskirts.
+            if (!anchor.HasValue && IsVacantLot(cx, cz))
+            {
+                map.LotLines.Add(new MapRect(lotX, rowZ0, frontage, lotDepth));
+                ScatterTrees(map, rng, rng.RangeInt(1, 4), lotX + 6f, lotX + frontage - 6f, rowZ0 + 6f, rowZ0 + lotDepth - 6f, null, 6f);
+                return;
+            }
             map.LotLines.Add(new MapRect(lotX, rowZ0, frontage, lotDepth));
 
             float setback = rng.Range(9f, 20f);
@@ -354,7 +381,7 @@ public static class SmallTownGenerator
         }
 
         // Fill one E/W-facing lot on the side of a 4-sided block (x-axis frontage/facing).
-        void FillSideFace(int col, int side, float blockX0, float blockX1, float bz0, float bz1)
+        void FillSideFace(int blockRow, int col, int side, float blockX0, float blockX1, float bz0, float bz1)
         {
             bool west = side == 0;
             float lotX = west ? blockX0 : blockX1 - SideLotDepth;
@@ -363,44 +390,58 @@ public static class SmallTownGenerator
             {
                 float f = rng.Range(58f, 76f);
                 if (z + f > bz1 - 3f) break;
-                if (!InsideBlob(lotX + SideLotDepth / 2f, z + f / 2f)) { z += f; continue; } // ragged town edge
-                map.LotLines.Add(new MapRect(lotX, z, SideLotDepth, f));
-
-                float setback = rng.Range(9f, 17f);
-                uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
-                string arch = Weighted(rng);
-                var house = HouseGenerator.Generate(arch, hSeed);
-                float wH = house.Footprint.Select(p => p.X).Max() - house.Footprint.Select(p => p.X).Min();
-                house = west ? house.Rotate90CW() : house.Rotate90CCW();
-                float hzMin = house.Footprint.Select(p => p.Z).Min();
-                float hzSpan = house.Footprint.Select(p => p.Z).Max() - hzMin;
-                float dx = west ? lotX + setback : lotX + SideLotDepth - setback;
-                float dz = z + f / 2f - (hzMin + hzSpan / 2f);
-                house = house.OffsetCopy(dx, dz);
-                map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
-
-                var fd = FindFrontDoor(house);
-                float walkStartX = west ? blockX0 - 2.25f : blockX1 + 2.25f;
-                map.Walks.Add(new Driveway
+                float cx = lotX + SideLotDepth / 2f, cz = z + f / 2f;
+                if (!InsideBlob(cx, cz)) { z += f; continue; } // ragged town edge
+                if (IsVacantLot(cx, cz))
                 {
-                    Surface = "concrete",
-                    WidthFeet = 4f,
-                    Points = { new Vec2(walkStartX, fd.Z), fd },
-                });
-
-                var (garageDoor, garageWall, runsE) = FindGarageDoor(house);
-                bool frontEntry = !runsE; // garage door on the front wall now faces ±x
-                float xStart = west ? blockX0 - 1.5f : blockX1 + 1.5f;
-                if (!float.IsNaN(garageDoor.X))
-                {
-                    float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f;
-                    bool garagePositiveZ = garageDoor.Z >= fc;
-                    map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, xStart, "concrete", 17f));
+                    RecordContent(blockRow, col, lotX, lotX + SideLotDepth, z, z + f);
+                    map.LotLines.Add(new MapRect(lotX, z, SideLotDepth, f));
+                    ScatterTrees(map, rng, rng.RangeInt(0, 3), lotX + 4f, lotX + SideLotDepth - 4f, z + 4f, z + f - 4f, null, 6f);
+                    z += f;
+                    continue;
                 }
-
-                ScatterTrees(map, rng, rng.RangeInt(0, 3), lotX + 4f, lotX + SideLotDepth - 4f, z + 4f, z + f - 4f, new[] { house }, 4f);
+                PlaceSideLot(blockRow, col, lotX, z, f, west);
                 z += f;
             }
+        }
+
+        void PlaceSideLot(int districtRow, int col, float lotX, float z0, float f, bool west)
+        {
+            RecordContent(districtRow, col, lotX, lotX + SideLotDepth, z0, z0 + f);
+            map.LotLines.Add(new MapRect(lotX, z0, SideLotDepth, f));
+
+            float setback = rng.Range(9f, 17f);
+            uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+            string arch = Weighted(rng);
+            var house = HouseGenerator.Generate(arch, hSeed);
+            house = west ? house.Rotate90CW() : house.Rotate90CCW();
+            float dx = west ? lotX + setback : lotX + SideLotDepth - setback;
+            float hzMin = house.Footprint.Select(p => p.Z).Min();
+            float hzSpan = house.Footprint.Select(p => p.Z).Max() - hzMin;
+            float dz = z0 + f / 2f - (hzMin + hzSpan / 2f);
+            house = house.OffsetCopy(dx, dz);
+            map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+
+            var fd = FindFrontDoor(house);
+            float walkStartX = west ? lotX - 2.25f : lotX + SideLotDepth + 2.25f;
+            map.Walks.Add(new Driveway
+            {
+                Surface = "concrete",
+                WidthFeet = 4f,
+                Points = { new Vec2(walkStartX, fd.Z), fd },
+            });
+
+            var (garageDoor, garageWall, runsE) = FindGarageDoor(house);
+            bool frontEntry = !runsE; // garage door on the front wall now faces ±x
+            float xStart = west ? lotX - 1.5f : lotX + SideLotDepth + 1.5f;
+            if (!float.IsNaN(garageDoor.X))
+            {
+                float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f;
+                bool garagePositiveZ = garageDoor.Z >= fc;
+                map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, xStart, "concrete", 17f));
+            }
+
+            ScatterTrees(map, rng, rng.RangeInt(0, 3), lotX + 4f, lotX + SideLotDepth - 4f, z0 + 4f, z0 + f - 4f, new[] { house }, 4f);
         }
 
         // North row of EVERY street (faces south); south row of every street except the first.
@@ -414,7 +455,7 @@ public static class SmallTownGenerator
                 {
                     float f = colFrontages[col][i];
                     OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 0, col), out var k0) ? k0 : null;
-                    FillTownLot(s, col, i, facesSouth: true, x, f, anchor, alley);
+                    FillTownLot(s, col, i, facesSouth: true, districtRow: s, x, f, anchor, alley);
                     x += f;
                 }
             }
@@ -429,7 +470,7 @@ public static class SmallTownGenerator
                 {
                     float f = colFrontages[col][i];
                     OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 1, col), out var k1) ? k1 : null;
-                    FillTownLot(s, col, i, facesSouth: false, x, f, anchor, alley);
+                    FillTownLot(s, col, i, facesSouth: false, districtRow: s - 1, x, f, anchor, alley);
                     x += f;
                 }
             }
@@ -446,8 +487,8 @@ public static class SmallTownGenerator
                 float bx1 = bx0 + BlockWidth(col);
                 if (IsFourSide(blockRow, col))
                 {
-                    FillSideFace(col, 0, bx0, bx1, bz0, bz1);
-                    FillSideFace(col, 1, bx0, bx1, bz0, bz1);
+                    FillSideFace(blockRow, col, 0, bx0, bx1, bz0, bz1);
+                    FillSideFace(blockRow, col, 1, bx0, bx1, bz0, bz1);
                 }
                 else
                 {
@@ -457,14 +498,67 @@ public static class SmallTownGenerator
             }
         }
 
-        // --- public sidewalks both sides of every E–W street; street trees.
-        foreach (var z in ewZ)
+        // --- alleys, only through blocks that actually ended up with content.
+        for (int row = 0; row < blockRows; row++)
         {
+            if (!rowAlley[row]) continue;
+            float aZ = ewZ[row] + StreetRow + lotDepth;
+            for (int col = 0; col < size.Columns; col++)
+            {
+                if (!colFilled[row, col]) continue;
+                float bX = nsX[col] + StreetRow;
+                map.Alleys.Add(new MapRect(bX, aZ, BlockWidth(col), AlleyRow));
+            }
+        }
+
+        // --- clip streets to the town's content: no street runs past the last house into a square fringe.
+        (float x0, float x1)?[] ewClip = new (float x0, float x1)?[size.EWStreets];
+        bool[] ewKeep = new bool[size.EWStreets];
+        for (int s = 0; s < size.EWStreets; s++)
+        {
+            ewKeep[s] = streetX[s].x1 >= streetX[s].x0;
+            if (ewKeep[s]) ewClip[s] = (streetX[s].x0, streetX[s].x1);
+        }
+        float[] nsZ1 = new float[size.Columns + 1];
+        bool[] nsKeep = new bool[size.Columns + 1];
+        for (int s = 0; s <= size.Columns; s++)
+        {
+            nsZ1[s] = MathF.Min(MathF.Max(streetZ[s].z1, ewZ[0] + StreetRow + lotDepth * 0.5f), lastStreetEnd);
+            nsKeep[s] = streetZ[s].z1 > zBand + 40f;
+        }
+        {
+            var newRoads = new List<MapRect> { map.Roads[0] };
+            var newDashed = new List<bool> { map.RoadDashed[0] };
+            for (int s = 0; s < size.EWStreets; s++)
+            {
+                if (!ewKeep[s]) continue;
+                var c = ewClip[s]!.Value;
+                newRoads.Add(new MapRect(c.x0, ewZ[s], c.x1 - c.x0, StreetRow));
+                newDashed.Add(false);
+            }
+            for (int s = 0; s <= size.Columns; s++)
+            {
+                if (!nsKeep[s]) continue;
+                newRoads.Add(new MapRect(nsX[s], zBand, StreetRow, nsZ1[s] - zBand));
+                newDashed.Add(false);
+            }
+            map.Roads.Clear();
+            map.Roads.AddRange(newRoads);
+            map.RoadDashed.Clear();
+            map.RoadDashed.AddRange(newDashed);
+        }
+
+        // --- sidewalks, clipped to each street's surviving span; street trees in the same span.
+        for (int i = 0; i < size.EWStreets; i++)
+        {
+            if (!ewKeep[i]) continue;
+            var c = ewClip[i]!.Value;
+            float z = ewZ[i];
             foreach (var wz in new[] { z + 2.25f, z + StreetRow - 2.25f })
             {
-                map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(0, wz), new Vec2(totalWidth, wz) } });
+                map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(c.x0, wz), new Vec2(c.x1, wz) } });
             }
-            for (float x = 16f; x < totalWidth - 16f; x += rng.Range(30f, 46f))
+            for (float x = c.x0 + 16f; x < c.x1 - 16f; x += rng.Range(30f, 46f))
             {
                 if (nsX.Any(sx => MathF.Abs(x - (sx + StreetRow / 2f)) < 26f)) continue;
                 if (!InsideBlob(x, z + StreetRow / 2f)) continue;
@@ -472,19 +566,58 @@ public static class SmallTownGenerator
                 if (rng.Chance(0.72f)) map.Trees.Add(new Vec2(x + 13f, z + StreetRow - 8f));
             }
         }
-
-        // Public sidewalks both sides of every N–S street (houses face these now).
         for (int s = 0; s <= size.Columns; s++)
         {
+            if (!nsKeep[s]) continue;
             foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + StreetRow - 2.25f })
             {
                 map.Walks.Add(new Driveway
                 {
                     Surface = "concrete",
                     WidthFeet = 4.5f,
-                    Points = { new Vec2(wx, zBand), new Vec2(wx, lastStreetEnd) },
+                    Points = { new Vec2(wx, zBand), new Vec2(wx, nsZ1[s]) },
                 });
             }
+        }
+
+        // Street names, from surviving spans.
+        for (int i = 0; i < size.EWStreets; i++)
+        {
+            if (!ewKeep[i]) continue;
+            var c = ewClip[i]!.Value;
+            map.Labels.Add(new MapLabel { Position = new Vec2((c.x0 + c.x1) / 2f, ewZ[i] + StreetRow / 2f), Text = ewNames[i % ewNames.Length] + " AVENUE" });
+        }
+        for (int s = 0; s <= size.Columns; s++)
+        {
+            if (!nsKeep[s]) continue;
+            int ni = s < mainStreetIndex ? s : s - 1;
+            string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length];
+            map.Labels.Add(new MapLabel
+            {
+                Position = new Vec2(nsX[s] + StreetRow / 2f, zBand + (nsZ1[s] - zBand) * 0.62f),
+                Text = nm + " STREET",
+                RotateDeg = -90f,
+            });
+        }
+
+        // --- cul-de-sac stubs: seeded N–S stub ends get an asphalt bulb + one flanking lot per side.
+        var nsOrder = Enumerable.Range(0, size.Columns + 1).OrderBy(_ => rng.NextUInt()).ToList();
+        int bulbsPlaced = 0;
+        foreach (int s in nsOrder)
+        {
+            if (bulbsPlaced >= 2) break;
+            if (!nsKeep[s]) continue;
+            float z1 = nsZ1[s];
+            if (z1 - zBand < 160f) continue;       // stub too short to bother
+            if (z1 >= lastStreetEnd - 1f) continue; // not a stub — runs to the town's edge
+            if (!rng.Chance(0.65f)) continue;
+            float stubX = nsX[s];
+            float bulbZ = z1 - 6f;
+            map.Bulbs.Add(new RoadBulb { Center = new Vec2(stubX + StreetRow / 2f, bulbZ), RadiusFeet = 46f });
+            float f = 62f, zl = bulbZ - 16f - f;
+            PlaceSideLot(blockRows, 0, stubX - SideLotDepth, zl, f, west: false); // west flank faces EAST onto the stub
+            PlaceSideLot(blockRows, 1, stubX + StreetRow, zl, f, west: true);     // east flank faces WEST onto the stub
+            bulbsPlaced++;
         }
 
         map.Labels.Add(new MapLabel
