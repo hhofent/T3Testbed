@@ -84,6 +84,29 @@ public static class MapGenerator
         return p.X >= minX && p.X <= maxX && p.Z >= minZ && p.Z <= maxZ;
     }
 
+    /// <summary>True if a candidate outbuilding would land on the house or another building.</summary>
+    static bool FootprintCollides(MapPlan map, HousePlan house, Outbuilding candidate, float pad)
+    {
+        float cw = candidate.Kind == OutbuildingKind.GrainBin ? candidate.DiameterFeet : candidate.WidthFeet;
+        float cd = candidate.Kind == OutbuildingKind.GrainBin ? candidate.DiameterFeet : candidate.DepthFeet;
+        float x0 = candidate.Center.X - cw / 2f - pad, x1 = candidate.Center.X + cw / 2f + pad;
+        float z0 = candidate.Center.Z - cd / 2f - pad, z1 = candidate.Center.Z + cd / 2f + pad;
+
+        float hx0 = house.Footprint.Min(p => p.X), hx1 = house.Footprint.Max(p => p.X);
+        float hz0 = house.Footprint.Min(p => p.Z), hz1 = house.Footprint.Max(p => p.Z);
+        if (x0 < hx1 && x1 > hx0 && z0 < hz1 && z1 > hz0) return true;
+
+        foreach (var o in map.Outbuildings)
+        {
+            float ow = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet : o.WidthFeet;
+            float od = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet : o.DepthFeet;
+            float ox0 = o.Center.X - ow / 2f, ox1 = o.Center.X + ow / 2f;
+            float oz0 = o.Center.Z - od / 2f, oz1 = o.Center.Z + od / 2f;
+            if (x0 < ox1 && x1 > ox0 && z0 < oz1 && z1 > oz0) return true;
+        }
+        return false;
+    }
+
     static void ScatterTrees(MapPlan map, Rng rng, int count, float minX, float maxX, float minZ, float maxZ,
         IReadOnlyList<HousePlan> avoid, float pad)
     {
@@ -192,14 +215,15 @@ public static class MapGenerator
             float shopW = 22f, shopD = 28f;
             float shopX = shedX + shedW + 10f;
             if (shopX + shopW > lotW - 6f) shopX = shedX - 10f - shopW;
-            map.Outbuildings.Add(new Outbuilding
+            var shop = new Outbuilding
             {
                 Kind = OutbuildingKind.PoleBarn,
                 Center = new Vec2(shopX + shopW / 2f, shedZ + shedD / 2f),
                 WidthFeet = shopW,
                 DepthFeet = shopD,
                 Label = "SHOP 22×28",
-            });
+            };
+            if (!FootprintCollides(map, house, shop, 3f)) map.Outbuildings.Add(shop);
         }
 
         // Steel bins in a row directly behind the shed — the signature aerial pattern.
@@ -227,14 +251,15 @@ public static class MapGenerator
         {
             float pbW = 28f, pbD = 44f;
             float pbX = Math.Clamp(shedX + shedW / 2f - pbW / 2f + rng.Range(-30, 30), 8, lotW - pbW - 8);
-            map.Outbuildings.Add(new Outbuilding
+            var pb = new Outbuilding
             {
                 Kind = OutbuildingKind.PoleBarn,
                 Center = new Vec2(pbX + pbW / 2f, pbZ + pbD / 2f),
                 WidthFeet = pbW,
                 DepthFeet = pbD,
                 Label = "POLE BARN 28×44",
-            });
+            };
+            if (!FootprintCollides(map, house, pb, 3f)) map.Outbuildings.Add(pb);
         }
 
         // Rare existing pre-1990s building, kept for storage, honestly labeled.
@@ -243,14 +268,15 @@ public static class MapGenerator
             float gW = 32f, gD = 54f;
             float gX = lotW * rng.Range(0.60f, 0.80f);
             float gZ = lotD - gD - 14f;
-            map.Outbuildings.Add(new Outbuilding
+            var barn = new Outbuilding
             {
                 Kind = OutbuildingKind.GambrelBarnExisting,
                 Center = new Vec2(Math.Clamp(gX, 8, lotW - gW - 8) + gW / 2f, gZ),
                 WidthFeet = gW,
                 DepthFeet = gD,
                 Label = "GAMBREL BARN — EXISTING",
-            });
+            };
+            if (!FootprintCollides(map, house, barn, 4f)) map.Outbuildings.Add(barn);
         }
 
         // LP gas tank near the house, away from the shed.

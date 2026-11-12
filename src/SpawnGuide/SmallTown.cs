@@ -210,6 +210,7 @@ public static class SmallTownGenerator
         {
             Title = $"SMALL TOWN — {townName} — SEED {seed} ({size.Label})",
             Seed = seed,
+            PlaceName = townName,
             WidthFeet = totalWidth,
             DepthFeet = totalDepth,
             RoadSurface = "asphalt",

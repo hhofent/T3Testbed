@@ -52,16 +52,34 @@ grid roads, field fills, farmstead clusters, HWY 18 to the cell edges. Four view
 run: hamlet (centered), boyden (centered), hull (partial at the west edge), hamlet
 (partial at the north edge) — the "partial town, partial rural" framing.
 
-**Zoomable viewer** — `out/viewer.html` (self-contained, no server required):
-pan/zoom across all generated maps, far ↔ detail crossfade as you zoom. **Open in a
-desktop browser** — phones can't reach a local file. Trees are trunk dots; town
-silhouettes are seeded blobs, not rectangles.
+**Infinite world** (`--map world`) — the destination architecture. A window is a pure
+query `(seed, cx, cz, span)`; the 3-mile cell is the lens request unit, not an
+independent tile, so seams never duplicate roads or split farmsteads. Towns are a
+queryable 10-mile lattice on 24-mile east-west highway corridors (10% Hull / 30%
+Boyden / 36% hamlet / 24% empty per slot, forced ≥10 miles apart), centered in a
+section with the highway continuous through town. County section roads are clipped
+around town footprints. Farmsteads stamp the rural-lot leaf from per-section RNG
+streams (0–3 per section), fields are quarter-section fills, creeks are global
+meandering ribbons with tree banks. `--verify` runs the geometric ladder: byte
+determinism, 100-mile reproducibility, overlapping-window equality, cell-vs-window
+equality, town spacing, and zero building overlaps.
+
+**Zoomable viewer** — `out/viewer.html` (self-contained; no server required for the
+baked maps): pan/zoom, far ↔ detail crossfade, wheel/drag/pinch. In world mode with
+`--serve` running it streams live windows as you pan: the old image stays until the new
+one decodes, then the same world point is re-anchored under the viewport, so there is
+no pop. Zooming in requests smaller windows (down to 1 mile) instead of upscaling a
+9-mile image, keeping houses and captions crisp. Trees are trunk dots; town silhouettes
+are seeded blobs, not rectangles. **Open in a desktop browser** — phones can't reach a
+local file.
 
 **Live seeds from the spawner** — `dotnet run -- --serve` starts the built-in HTTP
-server on 127.0.0.1:8735. With it running, the 🎲 random button and the seed box
-generate ANY seed on demand — no baking needed. `GET /` serves the viewer,
-`GET /gen?seed=N&size=hamlet|boyden|hull` generates an SVG fresh. Without the server,
-the baked dropdown still works offline.
+server on 127.0.0.1:8735. With it running, the 🎲 random button and seed box generate
+ANY seed on demand — no baking needed. `GET /` serves the viewer,
+`GET /gen?seed=N&size=hamlet|boyden|hull` generates a fixed map fresh,
+`GET /world?seed&cx&cz&span&lod` renders any infinite-world window, and
+`GET /world-center?seed` returns the nearest town's center so a new seed opens on a
+town. Baked maps still work offline.
 
 **Outputs** — ASCII houses to the console, one SVG per artifact, a self-contained
 `out/index.html` (everything) and `out/example.html` (single featured example —
@@ -84,6 +102,9 @@ dotnet run -- --seed 1993                      # houses + rural lot + town block
 dotnet run -- --map rural                      # just the farmstead
 dotnet run -- --map smalltown --size hamlet    # the whole hamlet grid
 dotnet run -- --map country                    # 3-mi cell — 4 variants (centered/partial)
+dotnet run -- --map world --seed 1993          # infinite world: 9-mi window + 3-mi cell + viewer
+dotnet run -- --verify --seed 1993             # world determinism / seam / town / collision checks
+dotnet run -- --serve                          # live seeds + streaming world windows
 dotnet run -- --seeds 1993,42,2024             # multi-seed gallery → out/examples.html
 dotnet run -- --archetype ranch --seed 42      # one house archetype
 ```
@@ -117,7 +138,9 @@ Requires the .NET SDK (built with 5.0; no external packages).
 3. Coop corner archetype (grain elevator + bin cluster at a section-line corner —
    the Lyon County signature) and trailer-court archetype (curved street, 40×70
    pads at town fringe) — both visible in the reference images, not built yet.
-4. Multiple adjacent farm blocks / neighborhood assembly, roads between, creek
-   corridors (West Branch Floyd River) and field boundary lines.
+4. Infinite world follow-ups: north-south highway corridors, bridge decks where roads
+   cross creeks, cross-window town cache, optional diagonal rail-corridor street.
+   Adjacent farm blocks, creek corridors and the section grid are now built in
+   `WorldMap.cs`.
 5. Unity port: same plan dataclasses → spawns already-fastened wall prefabs.
    Keep this console app as the rule reference.

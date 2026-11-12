@@ -34,6 +34,13 @@ public sealed class Driveway
     public string Surface { get; set; } = "gravel";
 }
 
+/// <summary>A creek / drainage ribbon. Drawn as a wide water-colored polyline under roads and trees.</summary>
+public sealed class WaterCourse
+{
+    public List<Vec2> Points { get; } = new();
+    public float WidthFeet { get; set; } = 50f;
+}
+
 /// <summary>Cul-de-sac bulb: asphalt turnaround at the clipped end of a street.</summary>
 public sealed class RoadBulb
 {
@@ -69,8 +76,16 @@ public sealed class MapPlan
 {
     public string Title { get; set; } = "";
     public uint Seed { get; set; }
+    /// <summary>Optional place name (town / crossroads), used by the world stamper.</summary>
+    public string PlaceName { get; set; } = "";
     public float WidthFeet { get; set; }
     public float DepthFeet { get; set; }
+    /// <summary>
+    /// World-window mode: the plan is exactly 0..Width × 0..Depth; content outside is
+    /// clipped by the SVG viewBox and never expands the drawing bounds. This is what
+    /// makes adjacent lens windows line up pixel-for-pixel.
+    /// </summary>
+    public bool ExactBounds { get; set; }
 
     /// <summary>Road/street bands. Negative Z.</summary>
     public List<MapRect> Roads { get; } = new();
@@ -79,6 +94,8 @@ public sealed class MapPlan
     /// <summary>Large terrain fills (fields), drawn under everything else. Parallel with FieldFills.</summary>
     public List<MapRect> Fields { get; } = new();
     public List<string> FieldFills { get; } = new();
+    /// <summary>Creek / drainage ribbons, drawn above fields and under roads, trees and buildings.</summary>
+    public List<WaterCourse> Waters { get; } = new();
     /// <summary>Cul-de-sac bulbs drawn on top of the road surface.</summary>
     public List<RoadBulb> Bulbs { get; } = new();
     public bool RoadCenterDashes { get; set; }
@@ -90,6 +107,9 @@ public sealed class MapPlan
     public bool LodSimple { get; set; }
     /// <summary>Suppress in-plan captions (GARAGE DOOR/PORCH/etc.). Generators set this; NOT derived from scale anymore.</summary>
     public bool QuietAnnotations { get; set; }
+    /// <summary>Hide per-building labels (MACHINE SHED, GAMBREL BARN, ...) while keeping geometry.
+    /// World windows need this: at nine miles a farm label is a dozen pixels of noise.</summary>
+    public bool SuppressOutbuildingLabels { get; set; }
     /// <summary>Dashed lot boundary rectangles (town lots). Rural: the outer parcel line.</summary>
     public List<MapRect> LotLines { get; } = new();
     public List<PositionedHouse> Houses { get; } = new();

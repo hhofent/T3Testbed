@@ -13,14 +13,22 @@ namespace SpawnGuide
 /// </summary>
 public static class SvgMapRenderer
 {
-    public static string Render(MapPlan map)
+    /// <param name="bare">World-window mode: no margins, title, footer or north arrow, and
+    /// the viewBox is exactly the plan bounds so an SVG maps 1:1 onto a world rectangle.</param>
+    /// <param name="targetWidth">Natural SVG width in pixels (bare mode).</param>
+    public static string Render(MapPlan map, bool bare = false, float targetWidth = 920f)
     {
-        const float Margin = 30f;
-        const float TitleH = 66f, FootH = 26f;
+        float Margin = bare ? 0f : 30f;
+        float TitleH = bare ? 0f : 66f, FootH = bare ? 0f : 26f;
 
-        // Bounding box by scanning all content (fields included — layouts may reach negative z).
+        // Bounding box. ExactBounds windows are fixed by definition; ordinary plans scan
+        // all content (fields included — layouts may reach negative z).
         float minX = 0, maxX = map.WidthFeet, minZ = 0, maxZ = map.DepthFeet;
-        if (map.Fields.Count > 0)
+        if (map.ExactBounds)
+        {
+            // Nothing outside the window may widen the frame.
+        }
+        else if (map.Fields.Count > 0)
         {
             minX = map.Fields.Min(f => f.X);
             maxX = map.Fields.Max(f => f.X + f.W);
@@ -29,12 +37,15 @@ public static class SvgMapRenderer
         }
         void Box(float x, float z, float w = 0, float h = 0)
         {
+            if (map.ExactBounds) return;
             minX = MathF.Min(minX, x); maxX = MathF.Max(maxX, x + w);
             minZ = MathF.Min(minZ, z); maxZ = MathF.Max(maxZ, z + h);
         }
         foreach (var r in map.Roads) Box(r.X, r.Z, r.W, r.H);
         foreach (var r in map.Alleys) Box(r.X, r.Z, r.W, r.H);
         foreach (var r in map.LotLines) Box(r.X, r.Z, r.W, r.H);
+        foreach (var w in map.Waters)
+            foreach (var p in w.Points) Box(p.X - w.WidthFeet, p.Z - w.WidthFeet, 2 * w.WidthFeet, 2 * w.WidthFeet);
         foreach (var h in map.Houses)
             foreach (var p in h.Plan.Footprint) Box(p.X - 1, p.Z - 1, 2, 2);
         foreach (var o in map.Outbuildings)
@@ -50,16 +61,15 @@ public static class SvgMapRenderer
 
         float spanX = Math.Max(1f, maxX - minX);
         float spanZ = Math.Max(1f, maxZ - minZ);
-        const float TargetW = 920f;
-        float scale = (TargetW - 2 * Margin) / spanX;
+        float scale = (targetWidth - 2 * Margin) / spanX;
         const float MaxH = 900f;
-        if (spanZ * scale > MaxH) scale = MaxH / spanZ;
+        if (!bare && spanZ * scale > MaxH) scale = MaxH / spanZ;
 
-        float widthPx = MathF.Ceiling(spanX * scale + 2 * Margin);
-        float heightPx = MathF.Ceiling(spanZ * scale + TitleH + FootH);
+        float widthPx = bare ? MathF.Round(spanX * scale) : MathF.Ceiling(spanX * scale + 2 * Margin);
+        float heightPx = bare ? MathF.Round(spanZ * scale) : MathF.Ceiling(spanZ * scale + TitleH + FootH);
 
         float ox = Margin - minX * scale;
-        float oy = TitleH + (heightPx - TitleH - FootH - spanZ * scale) / 2f;
+        float oy = bare ? (heightPx - spanZ * scale) : TitleH + (heightPx - TitleH - FootH - spanZ * scale) / 2f;
 
         SvgPx Map(Vec2 p) => new(ox + p.X * scale, oy + (maxZ - p.Z) * scale);
         string N(float v) => SvgRenderer.Format(v);
@@ -87,6 +97,20 @@ public static class SvgMapRenderer
             string fill = i < map.FieldFills.Count ? map.FieldFills[i] : "#ded9bd";
             var a = Map(new Vec2(fr.X, fr.Z + fr.H));
             sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(fr.W * scale)}' height='{N(fr.H * scale)}' fill='{fill}'/>");
+        }
+
+        // Creeks / drainage ribbons: low-contrast blue-gray, with a darker edge. Roads are
+        // drawn over them (culverts/bridges read as crossing pavement).
+        foreach (var w in map.Waters)
+        {
+            if (w.Points.Count < 2) continue;
+            var pts = string.Join(" ", w.Points.Select(p =>
+            {
+                var m = Map(p);
+                return $"{N(m.X)},{N(m.Y)}";
+            }));
+            sb.AppendLine($"<polyline points='{pts}' fill='none' stroke='#7f989b' stroke-width='{N(MathF.Max(0.8f, w.WidthFeet * scale))}' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.9'/>");
+            sb.AppendLine($"<polyline points='{pts}' fill='none' stroke='#a8bfc0' stroke-width='{N(MathF.Max(0.4f, w.WidthFeet * scale * 0.45f))}' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.6'/>");
         }
 
         // Shelterbelt / trees under everything else.
@@ -228,7 +252,8 @@ public static class SvgMapRenderer
             {
                 var a = Map(new Vec2(o.Center.X - o.WidthFeet / 2f, o.Center.Z + o.DepthFeet / 2f));
                 sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(o.WidthFeet * scale)}' height='{N(o.DepthFeet * scale)}' rx='{N(o.WidthFeet * scale / 2f)}' fill='#d8d8d0' stroke='#57503f' stroke-width='1.5'/>");
-                sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(c.Y + 3)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
+                if (!map.SuppressOutbuildingLabels)
+                    sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(c.Y + 3)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
                 continue;
             }
 
@@ -264,7 +289,8 @@ public static class SvgMapRenderer
                 else
                     sb.AppendLine($"<line class='thin' x1='{N(tl.X + wPx / 2f)}' y1='{N(tl.Y + 2)}' x2='{N(tl.X + wPx / 2f)}' y2='{N(tl.Y + hPx - 2)}' stroke-dasharray='5 4'/>");
             }
-            bool suppress = map.QuietAnnotations && (o.Kind == OutbuildingKind.DetachedGarage || o.Kind == OutbuildingKind.Storefront);
+            bool suppress = map.SuppressOutbuildingLabels
+                || (map.QuietAnnotations && (o.Kind == OutbuildingKind.DetachedGarage || o.Kind == OutbuildingKind.Storefront));
             if (!string.IsNullOrEmpty(o.Label) && !suppress)
                 sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(tl.Y + hPx + 12)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
         }
@@ -281,18 +307,24 @@ public static class SvgMapRenderer
         }
 
         // North arrow.
-        float naX = widthPx - 34f, naY = 40f;
-        sb.AppendLine($"<circle cx='{N(naX)}' cy='{N(naY)}' r='13' fill='none' stroke='#57503f' stroke-width='1.5'/>");
-        sb.AppendLine($"<line x1='{N(naX)}' y1='{N(naY + 9)}' x2='{N(naX)}' y2='{N(naY - 9)}' stroke='#57503f' stroke-width='1.5'/>");
-        sb.AppendLine($"<path d='M {N(naX)} {N(naY - 10)} L {N(naX - 4)} {N(naY - 2)} L {N(naX + 4)} {N(naY - 2)} Z' fill='#57503f'/>");
-        sb.AppendLine($"<text class='small' x='{N(naX)}' y='{N(naY + 24)}' text-anchor='middle'>N</text>");
+        if (!bare)
+        {
+            float naX = widthPx - 34f, naY = 40f;
+            sb.AppendLine($"<circle cx='{N(naX)}' cy='{N(naY)}' r='13' fill='none' stroke='#57503f' stroke-width='1.5'/>");
+            sb.AppendLine($"<line x1='{N(naX)}' y1='{N(naY + 9)}' x2='{N(naX)}' y2='{N(naY - 9)}' stroke='#57503f' stroke-width='1.5'/>");
+            sb.AppendLine($"<path d='M {N(naX)} {N(naY - 10)} L {N(naX - 4)} {N(naY - 2)} L {N(naX + 4)} {N(naY - 2)} Z' fill='#57503f'/>");
+            sb.AppendLine($"<text class='small' x='{N(naX)}' y='{N(naY + 24)}' text-anchor='middle'>N</text>");
+        }
 
         // Title block.
-        int buildings = map.Outbuildings.Count;
-        int houses = map.Houses.Count;
-        sb.AppendLine($"<text class='title' x='{N(Margin)}' y='26'>{SvgRenderer.Esc(map.Title)}</text>");
-        sb.AppendLine($"<text class='small' x='{N(Margin)}' y='45'>seed {map.Seed} · {houses} {(houses == 1 ? "house" : "houses")} · {buildings} outbuilding{(buildings == 1 ? "" : "s")} · drive aisles and walks shown — placement guide, not construction</text>");
-        sb.AppendLine($"<text class='small' x='{N(Margin)}' y='59'>grid: section lines 1 mi · front doors open to walks · garage aprons face the lane (gravel rural / concrete town)</text>");
+        if (!bare)
+        {
+            int buildings = map.Outbuildings.Count;
+            int houses = map.Houses.Count;
+            sb.AppendLine($"<text class='title' x='{N(Margin)}' y='26'>{SvgRenderer.Esc(map.Title)}</text>");
+            sb.AppendLine($"<text class='small' x='{N(Margin)}' y='45'>seed {map.Seed} · {houses} {(houses == 1 ? "house" : "houses")} · {buildings} outbuilding{(buildings == 1 ? "" : "s")} · drive aisles and walks shown — placement guide, not construction</text>");
+            sb.AppendLine($"<text class='small' x='{N(Margin)}' y='59'>grid: section lines 1 mi · front doors open to walks · garage aprons face the lane (gravel rural / concrete town)</text>");
+        }
 
         sb.AppendLine("</svg>");
         return sb.ToString();

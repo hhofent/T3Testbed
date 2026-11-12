@@ -13,9 +13,10 @@ towns); walls spawn **already fastened** — this is a placement guide, not a co
 sim (no raise mechanic, no anchoring, no nails — user removed the raise flow).
 
 Eventual goal: an infinite, seed-reproducible map around a slowly moving lens, in
-3-mile-square cells (see `docs/proposal-infinite-map.md`). Unity is installed but the
-game project lives elsewhere; this testbed stays engine-agnostic C# (.NET 5, C# 9 —
-no raw strings, no file-scoped namespaces) and ports later.
+3-mile-square cells (see `docs/proposal-infinite-map.md`). **Built 2026-11-11** in
+`WorldMap.cs`; Unity is installed but the game project lives elsewhere, so this testbed
+stays engine-agnostic C# (.NET 5, C# 9 — no raw strings, no file-scoped namespaces) and
+ports later.
 
 ## User corrections / constraints (do not regress)
 
@@ -47,11 +48,20 @@ no raw strings, no file-scoped namespaces) and ports later.
 - Build order (user answer 2026-11-11): ONE small town first, then grow it bigger
   for testing (hamlet → boyden → hull as parameter bumps). NO spawn-frequency
   field yet — frequency comes after the sizes look right.
+- Infinite-world rule (2026-11-11): a 3-mile cell is the lens **request unit**, not an
+  independent render tile. Content is pure in world coordinates; windows are rendered as
+  one rectangle and clipped. Independent cell images would duplicate seams and split
+  boundary buildings.
+- Town field is a queryable lattice, not a sequential Poisson pass: one candidate per
+  10-mi slot per 24-mi east-west highway corridor, priority suppression inside 10 mi.
+  The highway through a town is continuous; county roads are clipped inside town
+  footprints; the town's south-of-highway fringe is dropped in world mode.
 
 ## Current status (verified on disk)
 
-- `src/SpawnGuide/` ~2150 LOC, builds clean with .NET 5 SDK (`dotnet run -- --seed 1993`,
-  also `--map rural|town|smalltown`, `--archetype ranch|farmhouse|split-level`). No external packages.
+- `src/SpawnGuide/` ~2700 LOC, builds clean with .NET 5 SDK (`dotnet run -- --seed 1993`,
+  also `--map rural|town|smalltown|country|world`, `--archetype ranch|farmhouse|split-level`,
+  `--verify`, `--serve`). No external packages.
 - `--map smalltown --size hamlet|boyden|hull` (`SmallTown.cs`, 2026-11-11):
   seed 1993 hamlet = 168 houses (4-sided blocks ~72%, side lots face N–S streets,
   rotated houses), Boyden 530, Hull 1034. Civic anchors on the grid (2 parks,
@@ -62,15 +72,31 @@ no raw strings, no file-scoped namespaces) and ports later.
   the interior section-line junction, 1-mile section grid, field fills, 6 farmstead
   clusters, HWY 18 to the cell edges. One far-LOD (silhouettes, trunk dots) AND one
   detail (walls + captions, trunk dots r≈2 ft) per size class per run.
-- `out/viewer.html` (~10 MB, self-contained data-URI maps, no server required —
-  open in a desktop browser): pan/zoom viewer, wheel+drag+pinch, far↔detail LOD
-  crossfade at 1.55× (smalltown) / 2.6× (cell) fit zoom. Controls: dropdown, 🎲
-  random button, seed entry box. Bake pool: 13 hamlet seeds (same 13) baked via
-  --bake` for offline use. SpawnGuide --serve [--port N] starts the built-in spawner
-  on 127.0.0.1:N (default 8735); when running, the viewer auto-detects it and the 🎲
-  random button / seed input generate ANY seed live (hamlet/boyden/hull via
-  /gen?seed=N&size=...). Floor plans for houses are NOT built yet — the detail zoom
-  is the target layer for them when they come.
+- **Infinite world** (`WorldMap.cs`, 2026-11-11): pure `(seed, cx, cz, span)` query.
+  Queryable town lattice: one candidate per 10-mi slot on each 24-mi EW highway
+  corridor, hashed class (10% Hull / 30% Boyden / 36% hamlet / 24% empty), priority
+  suppression guarantees ≥10-mi spacing. Towns are centered in a section; the highway
+  through town is never clipped; county section roads are clipped around town
+  footprints; south-of-highway fringe dropped. Per-section farmsteads stamp/rotate the
+  existing `RuralLot` leaf (0–3 per section), fields are four quarter fills, creeks are
+  global meandering ribbons with tree banks. `ExactBounds` + bare SVG maps pixels 1:1
+  to the world rectangle. `--verify --seed 1993` passes all 6 checks (byte determinism,
+  100-mi reproducibility, overlapping-window equality, cell-vs-window equality, town
+  spacing, zero building overlaps). `--map world` writes a 9-mi window, a 3-mi cell and
+  the viewer; seed 1993 = 1 town, 64 farms, 424 houses, 776 outbuildings, 3 creek runs.
+- `out/viewer.html` (~2 MB for `--map world`; ~10 MB with all maps baked): pan/zoom
+  viewer, wheel+drag+pinch, far↔detail LOD crossfade for old fixed maps. In world mode
+  it streams live windows: pan debounces and fetches `/world?seed&cx&cz&span`, keeps the
+  old image until the new one decodes, then anchors the same world point under the
+  viewport (no pop). The lens is zoom-adaptive — 9-mi windows at fit, then 6/4/2/1-mi
+  windows as you zoom so buildings stay crisp instead of upscaling a 34-ft/px image.
+  `/world-center?seed` puts a live seed on its nearest town. Baked maps still work
+  offline; the server is optional for old maps and required for live world panning.
+- SpawnGuide --serve [--port N] starts the built-in spawner on 127.0.0.1:N (default
+  8735): `/` viewer, `/gen?seed=N&size=hamlet|boyden|hull` old fixed maps,
+  `/world?seed&cx&cz&span&lod` world windows, `/world-center?seed`. CORS + HEAD are
+  handled so a `file://` viewer can detect the server. World SVG cache = 24 windows.
+  Controls: dropdown, 🎲 random button, seed entry box. Bake pool: 13 hamlet seeds.
 - Trees render as trunk-location dots only, no canopy disks (user call, 2026-11-11).
 - Town silhouettes are seeded superellipse-wobble blobs (edge lots dropped), never a
   rectangle (user call). Hamlet seed 1993 now 130 houses after blob cut (was 168).
@@ -115,15 +141,15 @@ no raw strings, no file-scoped namespaces) and ports later.
 
 1. ~~Study the four calibration links~~ — done 2026-11-11; see
    `docs/research/2026-11-11-ia-calibration-references.md`.
-2. Iterate the hamlet render (eyeball `example.html`): label noise, anchor
-   placement, canopy density; optional: lots on N–S faces, curved rail-corridor
-   avenue (George's Boiler Ave / Boyden's Railroad St). Then Boyden preset, then
-   Hull — testing small → big. No frequency field yet.
-3. Confirm/lock `docs/proposal-infinite-map.md` (ladder numbers updated 2026-11-11);
-   then the 3-mile-cell architecture. Cattle-yard archetype still unconfirmed.
-4. Note: a parallel agent's restructure (2026-11-11, commits be652e2 + 15693f3)
-   swept in-flight SmallTown work into git mid-edit; the civic-anchor key bug it
-   captured was fixed afterward and verified on disk.
+2. ~~Lock the 3-mile-cell architecture and build the infinite world~~ — done
+   2026-11-11; `WorldMap.cs` + `--verify` + live `/world` streaming.
+3. World follow-ups: north-south highway corridors; bridge/culvert decks where roads
+   cross creeks; cache materialized towns across windows; optional diagonal
+   rail-corridor street (George's Boiler Ave / Boyden's Railroad St). Cattle-yard
+   archetype still unconfirmed.
+4. Keep `dotnet run -- --verify --seed 1993` green after every generation change.
+   Floor plans and the Unity port are still future work; the world query API is the
+   porting boundary.
 
 ## Recovery protocol (when a thread dies)
 
@@ -141,6 +167,6 @@ no raw strings, no file-scoped namespaces) and ports later.
 
 - `STATE.md` — this file.
 - `docs/research/` — dated, write-once observations (calibration links, town anatomy).
-- `docs/proposal-infinite-map.md` — 3-mile-cell architecture, unbuilt.
+- `docs/proposal-infinite-map.md` — built world architecture + grilling findings.
 - `docs/archive/handoff-2026-11-11.md` — frozen original handoff (verbatim).
 - `out/` — generated embeds (gitignored).
