@@ -107,10 +107,20 @@ Each stage is independently committable and keeps `--verify` green.
       planted median*. Both need the town's surroundings (the rail line's position and
       bearing) to be threaded into `SmallTownGenerator`, which does not know about them
       today. See "Stage 7" below.
-- [ ] **Stage 4 — todo item 3a (fill every street with lots).** Final pass platting
+- [x] **Stage 4 — todo item 3a (fill every street with lots).** Final pass platting
       lots along every street segment, leaving a few deliberately empty.
-- [ ] **Stage 5 — todo item 1 (surface alignment).** Front-door walks and garage drives
+      *Done:* `SmallTown.PlatStreetFrontage` walks every street in the town and, for
+      each side that is completely empty, plats a row of lots and builds most of
+      them — 22% are left empty on purpose. Each lot is checked on its own, so one
+      occupied spot does not stop the row. The pass is bounded by the town's own
+      ground (`plattedMaxZ`, and the lot must stay inside the town's width), so it
+      does not spill into the fields.
+- [x] **Stage 5 — todo item 1 (surface alignment).** Front-door walks and garage drives
       start on the sidewalk line; drives cross the walk to the kerb.
+      *Done:* the walk and the drive now start on the sidewalk (2.25 ft inside the
+      street's edge) instead of 4.5 ft past the lot line, which had left a measured
+      6.75-ft gap between the walk and the sidewalk. The side lots were already
+      right and were left alone.
 - [ ] **Stage 6 — docs.** Update `docs/todo.md` (tick what is done), `STATE.md`,
       `README.md`, and this file.
 - [ ] **Stage 7 — the rail-corridor street (still to do).** The research is clear that
@@ -125,6 +135,14 @@ Each stage is independently committable and keeps `--verify` green.
         rail line, with small manufacturing on it;
       - add a **rail spur** into the elevator yard.
       This is the biggest remaining realism gap in the generator.
+
+## Verification fix worth knowing about
+
+The "overlapping windows agree" check compared canonical element *strings* built with
+one decimal place. A tree whose world position sat on a 0.05-ft rounding boundary
+printed differently from two windows whose origins differed, and the check failed even
+though nothing had moved. The check now compares numerically with a half-foot
+tolerance and reports the worst drift. Seed 2024 and 555 were the ones that hit it.
 
 ## Notes / gotchas already discovered
 

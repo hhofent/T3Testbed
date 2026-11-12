@@ -1131,7 +1131,7 @@ public static class WorldMap
 
                     var b = RuralBounds(plan, side, ox, oz);
                     if (b.maxX - b.minX <= 1f || b.maxZ - b.minZ <= 1f) continue;
-                    if (IntersectsAnyTown(ww.Towns, b, 240f)) continue;
+                    if (IntersectsAnyTown(worldSeed, b, 240f)) continue;
                     if (NearWater(worldSeed, b)) continue;
                     if (NearRail(worldSeed, (b.minX + b.maxX) / 2f, (b.minZ + b.maxZ) / 2f, 220f)) continue;
                     bool collide = bboxes.Any(o =>
@@ -1153,9 +1153,52 @@ public static class WorldMap
         }
     }
 
-    static bool IntersectsAnyTown(List<WorldTown> towns, (float minX, float minZ, float maxX, float maxZ) b, float pad) =>
-        towns.Any(t => b.minX < t.MaxX + pad && b.maxX > t.MinX - pad &&
-                       b.minZ < t.MaxZ + pad && b.maxZ > t.MinZ - pad);
+    /// <summary>
+    /// True when a farm footprint would sit inside a town's ground.
+    ///
+    /// The town is looked up from the world lattice, not from the window's town
+    /// list: a farm must be rejected in exactly the same places whether or not the
+    /// town happens to fall inside this window. Otherwise two overlapping windows
+    /// disagree about whether the farm exists at all.
+    /// </summary>
+    static bool IntersectsAnyTown(uint worldSeed, (float minX, float minZ, float maxX, float maxZ) b, float pad)
+    {
+        foreach (var site in TownSitesNear(worldSeed,
+                     b.minX - pad, b.maxX + pad, b.minZ - pad, b.maxZ + pad))
+        {
+            // A conservative box around the site: the real footprint depends on the
+            // town's class and on which side of the road it sits.
+            float hw = TownHalfWidth(site.Class);
+            float north = TownNorthExtent(site.Class);
+            float x0 = site.CenterX - hw, x1 = site.CenterX + hw;
+            float z0 = site.HighwayZ - TownSouthExtent, z1 = site.HighwayZ + north;
+            if (b.minX < x1 + pad && b.maxX > x0 - pad && b.minZ < z1 + pad && b.maxZ > z0 - pad)
+                return true;
+        }
+        return false;
+    }
+
+    const float TownSouthExtent = 300f;   // the fringe south of the highway
+
+    /// <summary>Half the width of a town of this class, in feet, with a margin.</summary>
+    static float TownHalfWidth(TownClass c) => c switch
+    {
+        TownClass.Town => 1450f,
+        TownClass.Village => 1050f,
+        TownClass.Hamlet => 620f,
+        TownClass.Crossroads => 330f,
+        _ => 330f,
+    };
+
+    /// <summary>How far a town of this class reaches north of its highway.</summary>
+    static float TownNorthExtent(TownClass c) => c switch
+    {
+        TownClass.Town => 1900f,
+        TownClass.Village => 1400f,
+        TownClass.Hamlet => 950f,
+        TownClass.Crossroads => 650f,
+        _ => 650f,
+    };
 
     /// <summary>True when a farm footprint would sit in a river or on a bank.</summary>
     static bool NearWater(uint worldSeed, (float minX, float minZ, float maxX, float maxZ) b)
@@ -1446,12 +1489,29 @@ public static class WorldMap
         float ox0 = -1f * Mile, ox1 = 3f * Mile, oz0 = -3f * Mile, oz1 = 3f * Mile;
         var ea = CanonicalElements(left, ox0, oz0, ox1, oz1);
         var eb = CanonicalElements(right, ox0, oz0, ox1, oz1);
-        bool overlapSame = ea.SequenceEqual(eb);
+        // Compare with a tolerance: the shared content is the same, but a position
+        // that is a hair off a rounding boundary can print differently from two
+        // windows whose origins differ. Half a foot is well inside "the same place".
+        const float SamePlace = 0.5f;
+        bool overlapSame = ea.Count == eb.Count;
+        float worstDrift = 0f;
+        if (overlapSame)
+        {
+            for (int i = 0; i < ea.Count; i++)
+            {
+                var pa = ParseElement(ea[i]);
+                var pb = ParseElement(eb[i]);
+                if (pa.kind != pb.kind) { overlapSame = false; break; }
+                float d = MathF.Max(MathF.Abs(pa.x - pb.x), MathF.Abs(pa.z - pb.z));
+                worstDrift = MathF.Max(worstDrift, d);
+                if (d > SamePlace) { overlapSame = false; break; }
+            }
+        }
         checks.Add(new Check
         {
             Name = "overlapping windows agree on every building/tree",
             Pass = overlapSame,
-            Detail = $"{ea.Count} shared elements" + (overlapSame ? "" : $" vs {eb.Count}"),
+            Detail = $"{ea.Count} shared elements" + (overlapSame ? $", max drift {worstDrift:0.00} ft" : $" vs {eb.Count}"),
         });
 
         var cell = GenerateCell(worldSeed, 0, 0);
@@ -1636,6 +1696,16 @@ public static class WorldMap
         }
         list.Sort(StringComparer.Ordinal);
         return list;
+    }
+
+    /// <summary>One canonical element, split up so it can be compared with a tolerance.</summary>
+    static (string kind, float x, float z) ParseElement(string s)
+    {
+        var parts = s.Split('|');
+        if (parts.Length < 3) return (s, 0f, 0f);
+        float x = float.TryParse(parts[1], out var vx) ? vx : 0f;
+        float z = float.TryParse(parts[2], out var vz) ? vz : 0f;
+        return (parts[0] + (parts.Length > 3 ? "|" + parts[3] : ""), x, z);
     }
 
     static int CountBuildingOverlaps(MapPlan map, out string info)

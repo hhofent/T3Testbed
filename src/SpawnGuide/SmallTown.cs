@@ -645,11 +645,15 @@ public static class SmallTownGenerator
             RegisterOccupied(FootprintBounds(house));
 
             var fd = FindFrontDoor(house);
+            // The walk starts on the sidewalk — which is drawn 2.25 ft inside the
+            // street's edge — and runs to the door. It used to start 4.5 ft past the
+            // lot line, leaving a gap you could see at any zoom.
+            float walkStartZ = facesSouth ? frontLineZ - 2.25f : frontLineZ + 2.25f;
             map.Walks.Add(new Driveway
             {
                 Surface = "concrete",
                 WidthFeet = 4f,
-                Points = { new Vec2(fd.X, facesSouth ? frontLineZ + 4.5f : frontLineZ - 4.5f), fd },
+                Points = { new Vec2(fd.X, walkStartZ), fd },
             });
 
             // ~12% of houses get a small pole shed at the back of the lot, away from the garage side.
@@ -722,7 +726,9 @@ public static class SmallTownGenerator
                 if (!float.IsNaN(garageDoor.X))
                 {
                     bool garageRight = !frontEntry && GarageSideIsRight(house, garageWall!);
-                    float zStart = facesSouth ? frontLineZ + 2f : frontLineZ - 2f;
+                    // The drive starts on the sidewalk and crosses it to the kerb,
+                    // the way a real Iowa driveway does.
+                    float zStart = facesSouth ? frontLineZ - 2.25f : frontLineZ + 2.25f;
                     map.Driveways.Add(DrivewayTo(garageDoor, frontEntry, garageRight, zStart, "concrete", 17f));
                 }
             }
@@ -783,7 +789,8 @@ public static class SmallTownGenerator
 
             var (garageDoor, garageWall, runsE) = FindGarageDoor(house);
             bool frontEntry = !runsE; // garage door on the front wall now faces ±x
-            float xStart = west ? lotX - 1.5f : lotX + SideLotDepth + 1.5f;
+            // The drive starts on the sidewalk and crosses it to the kerb.
+            float xStart = west ? lotX - 2.25f : lotX + SideLotDepth + 2.25f;
             if (!float.IsNaN(garageDoor.X))
             {
                 float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f;
@@ -1052,9 +1059,9 @@ public static class SmallTownGenerator
         for (int s = 0; s < nsX.Count; s++)
         {
             if (!nsKeep[s]) continue;
+            // The walk stops with the town's street. The run out to an outlying road
+            // is country, and a sidewalk across a field looks like a mistake.
             float zEnd = PerimZ(nsX[s]) + StreetRow;
-            if (hasOuterRoad && (s == 0 || s == nsX.Count - 1))
-                zEnd = outerRoadZ + StreetRow;
             foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + StreetRow - 2.25f })
             {
                 map.Walks.Add(new Driveway
@@ -1215,6 +1222,182 @@ public static class SmallTownGenerator
                 }
             }
         }
+
+        // --- the final "plat and build" pass --------------------------------------
+        // The town's own ground: the plat ends here, and the streets beyond it are
+        // country roads, not town.
+        float plattedMaxZ = builtMaxZ + 200f;
+
+        // Walks every street in the town and, for each side that is completely
+        // empty, plats a row of lots and builds most of them. A few are left empty
+        // on purpose: real towns have vacant lots.
+        bool RectFree(float x0, float z0, float x1, float z1)
+        {
+            foreach (var r in map.LotLines)
+                if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false;
+            foreach (var r in map.Alleys)
+                if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false;
+            foreach (var r in map.Roads)
+                if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false;
+            foreach (var h in map.Houses)
+            {
+                float hx0 = h.Plan.Footprint.Min(p => p.X), hx1 = h.Plan.Footprint.Max(p => p.X);
+                float hz0 = h.Plan.Footprint.Min(p => p.Z), hz1 = h.Plan.Footprint.Max(p => p.Z);
+                if (hx0 < x1 && hx1 > x0 && hz0 < z1 && hz1 > z0) return false;
+            }
+            foreach (var o in map.Outbuildings)
+            {
+                float ow = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet : o.WidthFeet;
+                float od = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet : o.DepthFeet;
+                if (o.Center.X - ow / 2f < x1 && o.Center.X + ow / 2f > x0 &&
+                    o.Center.Z - od / 2f < z1 && o.Center.Z + od / 2f > z0) return false;
+            }
+            return true;
+        }
+
+        // Plat a row of lots along one side of a street and build most of them.
+        // Each lot is checked on its own, so one occupied spot (a cul-de-sac stub,
+        // say) does not stop the whole row.
+        void PlatEWStrip(float x0, float x1, float streetEdgeZ, bool northSide)
+        {
+            if (x0 < 2f || x1 > totalWidth - 2f) return;
+            float lotZ0 = northSide ? streetEdgeZ : streetEdgeZ - lotDepth;
+            // The town's own ground ends here; a strip that would reach out into the
+            // fields is not platted.
+            float depth = northSide
+                ? MathF.Min(lotDepth, plattedMaxZ - lotZ0)
+                : MathF.Min(lotDepth, lotZ0 - zBand);
+            if (depth < 40f) return;
+            float lotZ1 = lotZ0 + depth;
+            float walkZ = northSide ? streetEdgeZ - 2.25f : streetEdgeZ + 2.25f;
+            float cursor = x0;
+            int guard = 0;
+            while (cursor < x1 - 30f && guard++ < 30)
+            {
+                float frontage = MathF.Min(rng.Range(52f, 82f), x1 - cursor);
+                if (frontage < 34f) break;
+                float a = cursor + 3f, b = cursor + frontage - 3f;
+                cursor += frontage;
+                if (b - a < 30f) continue;
+                if (!RectFree(a, lotZ0, b, lotZ1)) continue;
+                map.LotLines.Add(new MapRect(a, lotZ0, b - a, depth));
+                // A few plats stay empty — a town with no vacant lot reads as a
+                // pattern, not a place.
+                if (rng.Chance(0.22f)) continue;
+                uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+                var house = HouseGenerator.Generate(Weighted(rng), hSeed);
+                float setback = rng.Range(9f, 16f);
+                float hx = a + MathF.Max(2f, ((b - a) - house.WidthFeet) / 2f);
+                bool mirrored = !northSide;                 // a south-side lot faces north
+                if (mirrored) house = house.FlipZ();
+                house = house.OffsetCopy(hx, mirrored ? streetEdgeZ - setback : streetEdgeZ + setback);
+                // The house has to fit inside its own plat, or it lands on its
+                // neighbour. If it does not, the plat stays empty.
+                float fhx0 = house.Footprint.Min(p => p.X), fhx1 = house.Footprint.Max(p => p.X);
+                float fhz0 = house.Footprint.Min(p => p.Z), fhz1 = house.Footprint.Max(p => p.Z);
+                if (fhx0 < a - 2f || fhx1 > b + 2f || fhz0 < lotZ0 - 2f || fhz1 > lotZ1 + 2f)
+                    continue;
+                map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = mirrored });
+                var fd = FindFrontDoor(house);
+                map.Walks.Add(new Driveway
+                {
+                    Surface = "concrete",
+                    WidthFeet = 4f,
+                    Points = { new Vec2(fd.X, walkZ), fd },
+                });
+                var (garageDoor, garageWall, frontEntry) = FindGarageDoor(house);
+                if (!float.IsNaN(garageDoor.X))
+                {
+                    bool gr = !frontEntry && GarageSideIsRight(house, garageWall!);
+                    map.Driveways.Add(DrivewayTo(garageDoor, frontEntry, gr, walkZ, "concrete", 17f));
+                }
+            }
+        }
+
+        // The same, along the side of a north–south street.
+        void PlatNSStrip(float z0, float z1, float streetEdgeX, bool eastSide)
+        {
+            if (z0 < zBand - 1f) return;
+            float depth = SideLotDepth;
+            float lotX0 = eastSide ? streetEdgeX : streetEdgeX - depth;
+            float lotX1 = eastSide ? streetEdgeX + depth : streetEdgeX;
+            // The town's own ground: the outer face of the boundary streets is the
+            // edge of the plat, and the long run out to the country road is not town.
+            if (lotX0 < 2f || lotX1 > totalWidth - 2f) return;
+            float cap = MathF.Min(z1, plattedMaxZ);
+            if (cap - z0 < 40f) return;
+            float walkX = eastSide ? streetEdgeX - 2.25f : streetEdgeX + 2.25f;
+            float cursor = z0;
+            int guard = 0;
+            while (cursor < cap - 30f && guard++ < 30)
+            {
+                float frontage = MathF.Min(rng.Range(52f, 82f), cap - cursor);
+                if (frontage < 34f) break;
+                float a = cursor + 3f, b = cursor + frontage - 3f;
+                cursor += frontage;
+                if (b - a < 30f) continue;
+                if (!RectFree(lotX0, a, lotX1, b)) continue;
+                map.LotLines.Add(new MapRect(lotX0, a, depth, b - a));
+                if (rng.Chance(0.22f)) continue;
+                uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+                var house = HouseGenerator.Generate(Weighted(rng), hSeed);
+                house = eastSide ? house.Rotate90CCW() : house.Rotate90CW();
+                float setback = rng.Range(9f, 16f);
+                float hx = eastSide ? lotX1 - setback : lotX0 + setback;
+                float hz = a + MathF.Max(2f, ((b - a) - house.DepthFeet) / 2f);
+                house = house.OffsetCopy(hx, hz);
+                float gx0 = house.Footprint.Min(p => p.X), gx1 = house.Footprint.Max(p => p.X);
+                float gz0 = house.Footprint.Min(p => p.Z), gz1 = house.Footprint.Max(p => p.Z);
+                if (gx0 < lotX0 - 2f || gx1 > lotX1 + 2f || gz0 < a - 2f || gz1 > b + 2f)
+                    continue;
+                map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+                var fd = FindFrontDoor(house);
+                map.Walks.Add(new Driveway
+                {
+                    Surface = "concrete",
+                    WidthFeet = 4f,
+                    Points = { new Vec2(walkX, fd.Z), fd },
+                });
+                var (garageDoor, garageWall, frontEntry) = FindGarageDoor(house);
+                if (!float.IsNaN(garageDoor.X))
+                {
+                    bool gr = !frontEntry && GarageSideIsRight(house, garageWall!);
+                    map.Driveways.Add(DrivewayTo(garageDoor, frontEntry, gr, walkX, "concrete", 17f));
+                }
+            }
+        }
+
+        void PlatStreetFrontage()
+        {
+            // The town's own roads only — the highway band is the paved corridor and
+            // is not the town's to plat.
+            for (int i = 0; i < map.Roads.Count; i++)
+            {
+                var r = map.Roads[i];
+                // The town's highway band is the paved corridor itself — not the
+                // town's to plat.
+                if (MathF.Abs(r.Z) < 0.5f && MathF.Abs(r.H - HighwayWidth) < 0.5f) continue;
+                bool horizontal = r.W >= r.H;
+                if (horizontal)
+                {
+                    PlatEWStrip(r.X, r.X + r.W, r.Z, false);              // south side
+                    PlatEWStrip(r.X, r.X + r.W, r.Z + r.H, true);          // north side
+                }
+                else
+                {
+                    PlatNSStrip(r.Z, r.Z + r.H, r.X, false);                // west side
+                    PlatNSStrip(r.Z, r.Z + r.H, r.X + r.W, true);           // east side
+                }
+            }
+        }
+
+        // --- final pass: plat every street that has nothing facing it ------------
+        // The street network was laid after the lots, so the perimeter loop and the
+        // extra streets started out with no frontage at all — they read as roads
+        // going nowhere. A real town is built out to its streets. This pass walks
+        // every street and plats a row of lots along any side that is completely
+        // empty, then builds most of them, leaving a few plats empty on purpose.
+        PlatStreetFrontage();
 
         // Loop bounds: county roads stop here so they meet a town street. The loop runs
         // from the town's north-of-highway edge out to the perimeter street.

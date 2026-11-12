@@ -179,12 +179,15 @@ ports later.
 2. ~~Lock the 3-mile-cell architecture and build the infinite world~~ — done
    2026-11-11; `WorldMap.cs` + `--verify` + live `/world` streaming.
 3. **Fill out towns** — `docs/todo.md` is the working list, with the research behind it in
-   `docs/research/2026-11-11-iowa-town-composition.md`. Headline items: sidewalks and
-   drives that actually reach the houses and garages; dirt field entrances on rural
-   gravel roads; a final "platted but not built" lot pass over every town street; a real
-   business catalogue so towns stop sharing one fixed set of six shops; and moving the
-   grain elevator + industrial buildings onto the **rail spur** (an elevator with no
-   railroad 9 miles away is the current worst realism bug).
+   `docs/research/2026-11-11-iowa-town-composition.md`. Done 2026-11-12: the business
+   catalogue (no two towns share a shop row), randomised civic buildings and street
+   names, the six characteristic town extras (outlying road, bypassed highway,
+   industrial side-street, cul-de-sac court, plat-edge street, town square), a final
+   "plat and build" pass over every street, sidewalks and drives that actually reach
+   the houses, one driveway per farm lot, and dirt field entrances on the section
+   lines. **Still to do:** the diagonal rail-corridor street, the curved street, the
+   boulevard median, and moving the grain elevator onto a **rail spur** (an elevator
+   with no railroad 9 miles away is the current worst realism bug).
 4. World follow-ups: bridge/culvert decks where roads cross rivers; cache materialized
    towns across windows; a real place-name list (the 40 generic names repeat).
    Cattle-yard archetype still unconfirmed.
@@ -208,6 +211,8 @@ ports later.
 
 - `STATE.md` — this file.
 - `docs/todo.md` — working to-do list (town filling-out, with research links).
+- `docs/work-in-progress.md` — the staged plan for the town work, with the decisions
+  made and what is left; read this first if the town work needs resuming.
 - `docs/research/` — dated, write-once observations (calibration links, town anatomy,
   Iowa town composition + county entrance rules).
 - `docs/proposal-infinite-map.md` — built world architecture + grilling findings.

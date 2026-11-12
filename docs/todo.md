@@ -14,68 +14,48 @@ visit order.
 
 ---
 
-## 1. Sidewalks leading to the houses  *(user, 2026-11-11)*
+## 1. Sidewalks leading to the houses  *(user, 2026-11-11)* — **DONE 2026-11-12**
 
 > "have sidewalks leading to the houses, have driveways leading to the garages.
 > have dirt paths for rural lots on gravel roads."
 
 **Where it stands.** `SmallTown.cs` draws 4.5-ft concrete sidewalks along both sides of
 every grid street, and every lot gets a 4-ft walk to its front door and a 17-ft concrete
-drive to its garage. The pieces all exist — **but they don't quite meet.**
+drive to its garage. The pieces all exist — **but they didn't quite meet.**
 
 Measured on a rendered town (`out/town4k.svg`, 0.318 px/ft): the median gap between a
-front-door walk's street end and the nearest sidewalk line is **6.75 ft**. Cause: the
-sidewalk is drawn 2.25 ft *inside* the street's edge line (`ewZ + 2.25` /
-`ewZ + StreetRow − 2.25`), while the walk starts 4.5 ft *past* the lot's front line
-(`frontLineZ ± 4.5`). Side-lot walks, which face a N–S street, are correct — gap 0.
+front-door walk's street end and the nearest sidewalk line was **6.75 ft**. Cause: the
+sidewalk is drawn 2.25 ft *inside* the street's edge line, while the walk started 4.5 ft
+*past* the lot's front line. Side-lot walks, which face a N–S street, were already
+correct.
 
-**To do.**
-- `FillTownLot`: start the front-door walk **on the sidewalk line** (`frontLineZ ∓ 2.25`),
-  not `frontLineZ ± 4.5`.
-- `FillTownLot` / `PlaceSideLot`: start the garage drive **on the sidewalk line** and let
-  it cross the walk to the kerb. `zStart` is currently 2 ft (E–W) / 1.5 ft (side) past
-  the front line, so every drive stops in the yard instead of at the street. In real
-  Iowa the drive crosses the sidewalk and runs to the kerb — the walk is continuous
-  across it and the drive is the lower surface.
-- Driveway widths and angle per county practice: 20–40 ft top width for a rural
-  entrance, ~90° to the centreline; town residential drives are 10–14 ft concrete.
-- Keep the walk as a distinct **spur** that visibly leaves the sidewalk and reaches the
-  door, rather than merging into it.
+**Fixed.** The walk and the drive now start on the sidewalk line (2.25 ft inside the
+street's edge) and the drive crosses the walk to the kerb, the way a real Iowa driveway
+does. Side-lot walks were already right and were left alone.
 
-**Also:** real Iowa sidewalk networks are patchy — "there are not sidewalks everywhere",
-"no sidewalks along any of the streets that cross US". Consider dropping the walk on one
-side of the quieter residential streets on some towns, rather than a uniform network.
+## 2. Dirt paths for rural lots on gravel roads  *(user, 2026-11-11)* — **DONE 2026-11-12**
 
-## 2. Dirt paths for rural lots on gravel roads  *(user, 2026-11-11)*
+**Where it stood.** `MapGenerator.RuralLot` gave the farmstead a 12-ft gravel drive to
+the garage *and* a separate 10-ft lane to the machine shed — two entrances — and a
+concrete walk that ran in a straight line from the road to the front door, ignoring the
+drive.
 
-**Where it stands.** `MapGenerator.RuralLot` gives the farmstead a 12-ft gravel drive to
-the garage and a 10-ft gravel lane to the machine shed. Both start at z = −58, which is
-*inside* the 66-ft ROW (the road occupies z −66…0), and they leave the road at ~90° —
-both correct. The front-door walk reaches the road too.
+**Fixed.**
+- **One driveway per lot.** It leaves the road at ~90°, runs up the side of the house,
+  carries on past it to the machine shed and the bin row, and the garage is a short
+  branch off it in the yard — "a farm property may be served by a single driveway for
+  the residence, plus a second driveway to allow access to farm buildings or grain
+  bins" (Woodbury County).
+- **The walk follows the drive** and curves off to the front door.
+- **Field entrances added**: `WorldMap.AddFieldEntrances` puts one or two dirt
+  entrances per quarter section, hashed off the world coordinates so they never move
+  as the lens moves, 26 ft wide, 95–170 ft long, set back 110 ft from an intersection,
+  skipped where the section line has no road on it or where a farmyard or a town is in
+  the way. They draw on a new "dirt" surface colour.
 
-**The real gap is the field entrances.** Every Iowa section line in the world is a clean
-edge between two fields with nothing on it. Reality:
+**Files:** `MapGenerator.cs` (`RuralLot`), `WorldMap.cs` (`AddFieldEntrances`).
 
-- **One or two dirt field entrances per quarter section** (Woodbury County: "up to two
-  field entrances may be allowed per forty (40) acre field"), each **20–40 ft top
-  width**, **3:1 side slopes**, offset **≥100 ft** from an intersecting road.
-- Surfaces: **earth with vegetation, or a minimum 4 in depth of 1⅛" crushed rock**
-  (Clarke County) — so they read as a different, paler surface than the gravel road.
-- **A farm's residence entrance is a *separate* entrance from its field entrances** —
-  "a farm property may be served by a single driveway for the residence, plus a second
-  driveway to allow access to farm buildings or grain bins" (Woodbury).
-- The county lays gravel on the farm's entrance along a paved road and on occupied
-  building sites on a gravel road (O'Brien) — so the farmstead drive is the *gravel*
-  one and the field entrances are the *dirt* ones.
-
-**To do.** Add field entrances to `WorldMap.AddRoads` / `AddFields`: per section, 1–2
-dirt entrances off the gravel section road, hashed per section so they are stable across
-windows, offset from intersections, and drawn as an earth-tone surface distinct from
-the road. Keep the farmstead's own gravel drive separate.
-
-**Files:** `MapGenerator.cs` (`RuralLot`), `WorldMap.cs` (`AddFarms`, `AddRoads`).
-
-## 3. Towns still have extra roads — fill them with lots  *(user, 2026-11-11)*
+## 3. Towns still have extra roads — fill them with lots  *(user, 2026-11-11)* — **PART DONE 2026-11-12**
 
 > "towns still have extra roads. maybe add a final step to fill with lots all roads in
 > towns, save the few empty ones"
@@ -92,53 +72,47 @@ and characteristic — they are not a defect to be erased:
 - **Sparse rural-residential along an outlying road** — Hull: "North side has sparse
   rural-residential along 310th St outside the grid."
 
-**So the to-do is two-part, not one:**
+**(a) The final "plat and build" pass — DONE.** `SmallTown.PlatStreetFrontage` walks
+every street in the town and, for each side that is completely empty, plats a row of
+lots and builds most of them — 22% are left empty on purpose, because a town with no
+vacant lot reads as a pattern rather than a place. Each lot is checked on its own, so
+one occupied spot (a cul-de-sac stub) does not stop the row. The pass is bounded by the
+town's own ground so it does not spill into the fields.
 
-- **(a) Add a final "platted but not built" pass.** Verified in `SmallTown.Generate`:
-  the lots are placed (step 2) *before* the street network is laid (step 4), and the lot
-  fill only ever faces the **E–W grid streets** (plus the side faces of 4-sided blocks,
-  which face the N–S streets). So three kinds of street end up with **no frontage at
-  all**:
-  - the whole **perimeter loop** — both halves and the jog step;
-  - the **outer faces** of the west and east boundary N–S streets;
-  - the N–S streets' far ends, past the last E–W street.
+**(b) The characteristic extra streets — MOSTLY DONE.** Each town now draws 0–2 extras
+from a shuffled pool (35% of towns get none):
 
-  A final pass should walk every street segment and platt lots along both sides wherever
-  there is room, then deliberately leave **a few** empty — the dead-end's four lots are
-  already the town's one deliberate vacancy, so add 1–3 more on a random street so a
-  town reads as having a vacant lot (real Iowa towns are full of them).
-- **(b) Add the characteristic extra streets** — one diagonal rail-corridor street, one
-  curved street, or one outlying rural-residential road per town, chosen by seed. This is
-  the thing that makes a town read as *Iowa* rather than as a grid.
+| Extra | What it is |
+|---|---|
+| OutlyingRoad | a road beyond the town edge with 3–6 farm houses on it, reached by the two boundary streets |
+| BypassedHighway | the same street, with a few shops left on it |
+| IndustrialSideStreet | a short street running from the highway up into the grid; the shops keep clear of it |
+| Court | a cul-de-sac off the perimeter with houses built along it |
+| PlatEdge | a street that runs out of town and stops at the edge of the plat |
+| TownSquare | the park goes on the most central face, so the middle streets frame the green |
 
-**Files:** `SmallTown.cs` (street network + a new final lot pass), `WorldMap.cs`
+**Still to do:** the **diagonal rail-corridor street** and the **boulevard with a
+planted median**. Both need the town's surroundings threaded into
+`SmallTownGenerator`, which does not know where the rail is. See the next stage in
+`docs/work-in-progress.md`.
+
+**Files:** `SmallTown.cs` (street network + the final lot pass), `WorldMap.cs`
 (`RoadClip` — the loop bounds must grow to enclose the new streets, or county roads
 will run through them).
 
-## 4. More commercial
+## 4. More commercial — **DONE 2026-11-12**
 
-**Gap.** The commercial band is a fixed list of six labels reused in the same order in
+**Was:** the commercial band was a fixed list of six labels reused in the same order in
 every town in the world: `CASEY'S`, `FEED & SEED`, `CO-OP`, `HARDWARE`, `BAR & GRILL`,
-`AUTO ELECTRIC`. So every town has the same shops, and no town has a bank, post office,
-pharmacy, hardware, insurance or restaurant as *distinct* businesses.
+`AUTO ELECTRIC` — one real brand and four pseudo-brand industrial names.
 
-**Research.** The mix scales with town population (Iowa PBS):
-
-| Class | Commercial strip |
-|---|---|
-| crossroads | gas + grocery (Casey's), maybe a post office |
-| hamlet | + feed & seed, a hardware store, a bar |
-| village | + implement dealership, bank, insurance, pharmacy, restaurant, auto repair |
-| town | + lumber yard, newspaper office, several of the above, motel |
-
-**To do.** Turn the label list into a *business catalogue* with a footprint and a
-frontage, and let the town class draw from it:
-Casey's (gas + grocery, big sign), implement dealership (large shed + display lot),
-feed & seed, hardware, bank, insurance office, post office, pharmacy, bar & grill,
-auto electric / repair, restaurant, lumber yard, hardware, laundromat.
-
-Casey's is the anchor: 312 in Iowa by 1990 and the chain's whole strategy was small
-towns, so *every* Iowa small town had one.
+**Now:** `BusinessCatalogue.cs` holds 16 shop types and 5 industrial types, each with a
+descriptor, the smallest town tier that gets it, the chance it carries an invented
+flavour name, whether it wants a site at the end of the strip, and its footprint. The
+mix is gated by a town tier (0 crossroads … 3 town) and the order is shuffled, so no
+two towns have the same row of shops. The roomy businesses (gas station, implement
+dealer, lumber yard, motel) are pushed back to the ends, because that is how a real
+main street reads.
 
 ## 5. Industrial — and put it on the railroad, not the highway
 
@@ -153,33 +127,35 @@ town has the elevator at the rail/main junction. Real industrial buildings follo
 rail corridor: "industrial corridors extending along more than 40 miles of railroad
 right-of-ways"; George's Boiler Ave is lined with small manufacturing.
 
-**To do.**
+**Partly done:** the industrial *boxes* now come from the catalogue and the elevator
+can sit on either side of MAIN. **Still to do:**
 - Place the **elevator + bin row at the rail siding**, where the rail actually touches
   the town; keep it on the highway band only if there is no rail in the town.
 - Add a **rail spur** into the elevator yard.
 - Add a **rail-side industrial strip** (small manufacturing: cabinet shop, metal
   fabrication, feed mill) on the diagonal rail-corridor street from item 3.
-- Keep the highway-fringe industrial (implement dealership, propane bulk tank) as
-  *highway* uses — that is correct; industrial follows rail, commercial follows highway.
 - Industrial building form (NRHP Iowa Malleable Iron): 1-story metal building on a
   concrete foundation, e.g. 90'×240'; concrete-block ancillary with 14–16 ft walls and
   an overhead door. Creamery is a ghost-town element by the 1990s — rare.
 
 ## 6. Civic and institutional landmarks
 
-**Gap.** No water tower, no depot, no cemetery, no ball field, no library as a building,
-no post office, no bank.
+**Partly done.** The civic buildings now vary per town and per tier: a one-room
+schoolhouse is a coin flip in a crossroads and near-certain in a village, a town may
+have two churches and no park, and the order they go in is the town's. A park on the
+most central face becomes the **town square**.
 
-**To do.** Add as civic anchors, scaled by town class: **water tower** (near-universal
-small-town landmark), **railroad depot** (wooden, single story, town-name sign on a
-post), **cemetery** (often with a church), **ball field**, **public library**, and
-post office/bank as commercial buildings (item 4).
+**Still to do:** **water tower** (near-universal small-town landmark), **railroad depot**
+(wooden, single story, town-name sign on a post), **cemetery** (often with a church),
+**ball field**, **public library**, and post office/bank as commercial buildings.
 
-## 7. Street variety
+## 7. Street variety — **PARTLY DONE**
 
-**To do.** Per town, by seed: one diagonal rail-corridor street; one curved street;
-one outlying road with sparse rural-residential; one street that simply stops at the
-edge of the plat.
+Done: the outlying road, the bypassed old highway, the industrial side-street, the
+cul-de-sac court, the plat-edge street and the town square (item 3b).
+
+**Still to do:** the diagonal rail-corridor street and the curved street. Both need the
+rail's position threaded into `SmallTownGenerator`.
 
 ## 8. Sidewalk realism
 
