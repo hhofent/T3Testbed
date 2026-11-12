@@ -85,13 +85,13 @@ public static class SmallTownGenerator
     {
         // Generic placeholder sizes. No reference-town names are used in the world.
         // Every town gets one dead-end street; only the biggest get a second.
-        ["crossroads"] = new TownSize { Columns = 2, EWStreets = 2, LotsMin = 2, LotsMax = 3, CommercialPads = 2, CivicAnchors = 1, DeadEnds = 1, Tier = 0, Label = "CROSSROADS" },
-        ["hamlet"] = new TownSize { Columns = 4, EWStreets = 3, LotsMin = 3, LotsMax = 4, CommercialPads = 3, CivicAnchors = 2, DeadEnds = 1, Tier = 1, Label = "HAMLET" },
-        ["village"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 5, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
-        ["town"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 7, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
+        ["crossroads"] = new TownSize { Columns = 2, EWStreets = 2, LotsMin = 2, LotsMax = 3, CommercialPads = 3, CivicAnchors = 1, DeadEnds = 1, Tier = 0, Label = "CROSSROADS" },
+        ["hamlet"] = new TownSize { Columns = 4, EWStreets = 3, LotsMin = 3, LotsMax = 4, CommercialPads = 6, CivicAnchors = 2, DeadEnds = 1, Tier = 1, Label = "HAMLET" },
+        ["village"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 10, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
+        ["town"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 14, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
         // Old preset names stay as aliases so existing commands keep working.
-        ["boyden"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 5, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
-        ["hull"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 7, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
+        ["boyden"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 10, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
+        ["hull"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 14, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
     };
 
     static readonly string[] PlaceNames =
@@ -442,7 +442,9 @@ public static class SmallTownGenerator
         // blob is a shape for the blocks, not for the road frontage.
         {
             var placed = new List<(BusinessCatalogue.Business biz, float x, float w, float d, string label)>();
-            float x = 45f;
+            // The strip starts at a random point, so the shops are spread along the
+            // road rather than bunched at one end.
+            float x = rng.Range(40f, 260f);
             int guard = 0;
             foreach (var biz in strip)
             {
@@ -459,7 +461,9 @@ public static class SmallTownGenerator
                     x += 12f;
                 }
                 if (tries >= 24) continue;   // no room for this one; the town is full
-                float gap = rng.Range(5f, 18f);
+                // A real main street is not a solid wall of shops: there are gaps,
+                // yards and parking between them.
+                float gap = rng.Range(45f, 140f);
                 placed.Add((biz, x, w, d, BusinessCatalogue.LabelFor(rng, biz)));
                 bandOcc.Add((x - 5f, x + w + 5f));
                 x += w + gap;
@@ -496,6 +500,33 @@ public static class SmallTownGenerator
                     Label = BusinessCatalogue.LabelFor(rng, biz),
                 });
                 bandOcc.Add((ix - 10f, ix + iw + 10f));
+            }
+
+            // --- the cross street gets its own shops -------------------------------
+            // Commerce is not all on the highway: a town has shops on the street that
+            // runs back from it as well, and they cluster near the junction.
+            int crossShops = rng.RangeInt(0, 3);
+            for (int i = 0; i < crossShops; i++)
+            {
+                var biz = eligible.Count > 0 ? eligible[rng.RangeInt(0, eligible.Count)] : null;
+                if (biz == null) break;
+                bool west = rng.Chance(0.5f);
+                float w = rng.Range(biz.MinDepth, biz.MaxDepth);      // across the street
+                float d = rng.Range(biz.MinWidth, biz.MaxWidth);      // along the street
+                float cx = west ? mainX - StreetRow / 2f - 6f - w / 2f
+                                : mainX + StreetRow / 2f + 6f + w / 2f;
+                float cz = rng.Range(zBand + 24f, MathF.Max(zBand + 25f, zBand + BandDepth - d - 12f));
+                bool clash = bandOcc.Any(b => cx - w / 2f < b.x1 && cx + w / 2f > b.x0);
+                if (clash) continue;
+                map.Outbuildings.Add(new Outbuilding
+                {
+                    Kind = OutbuildingKind.Storefront,
+                    Center = new Vec2(cx, cz),
+                    WidthFeet = w,
+                    DepthFeet = d,
+                    Label = BusinessCatalogue.LabelFor(rng, biz),
+                });
+                bandOcc.Add((cx - w / 2f - 6f, cx + w / 2f + 6f));
             }
         }
         uint houseSeed = seed * 2654435761u + 97u;
@@ -1019,8 +1050,9 @@ public static class SmallTownGenerator
 
         // An outlying road (or a bypassed old highway) sits beyond the town edge.
         // The two boundary streets carry on north to reach it, so it is a through
-        // road and not a dangling end.
-        float outerRoadZ = northZ1 + StreetRow + rng.Range(120f, 210f);
+        // road and not a dangling end. It is kept clear of the lot row that sits
+        // outside the perimeter.
+        float outerRoadZ = northZ1 + StreetRow + rng.Range(200f, 300f);
         bool outerRoadIsShops = hasBypassedHighway && !hasOutlyingRoad;
 
         float nsZ1 = ewZ[lastKeptEW] + StreetRow;
@@ -1295,7 +1327,11 @@ public static class SmallTownGenerator
         // --- the final "plat and build" pass --------------------------------------
         // The town's own ground: the plat ends here, and the streets beyond it are
         // country roads, not town.
-        float plattedMaxZ = builtMaxZ + 200f;
+        // The town's own ground: the plat ends here, and the streets beyond it are
+        // country roads, not town. The budget has to clear the *highest* point of the
+        // perimeter (it jogs), or the row of lots outside the jogged half gets
+        // squeezed out.
+        float plattedMaxZ = northZ1 + StreetRow + 130f;
 
         // Walks every street in the town and, for each side that is completely
         // empty, plats a row of lots and builds most of them. A few are left empty
@@ -1329,7 +1365,8 @@ public static class SmallTownGenerator
         // say) does not stop the whole row.
         void PlatEWStrip(float x0, float x1, float streetEdgeZ, bool northSide)
         {
-            if (x0 < 2f || x1 > totalWidth - 2f) return;
+            // The street's own extent bounds the row; a street may sit on the town's
+            // edge, so there is no width limit here.
             float lotZ0 = northSide ? streetEdgeZ : streetEdgeZ - lotDepth;
             // The town's own ground ends here; a strip that would reach out into the
             // fields is not platted.
@@ -1352,7 +1389,7 @@ public static class SmallTownGenerator
                 map.LotLines.Add(new MapRect(a, lotZ0, b - a, depth));
                 // A few plats stay empty — a town with no vacant lot reads as a
                 // pattern, not a place.
-                if (rng.Chance(0.22f)) continue;
+                if (rng.Chance(0.10f)) continue;
                 uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
                 var house = HouseGenerator.Generate(Weighted(rng), hSeed);
                 float setback = rng.Range(9f, 16f);
@@ -1408,7 +1445,7 @@ public static class SmallTownGenerator
                 if (b - a < 30f) continue;
                 if (!RectFree(lotX0, a, lotX1, b)) continue;
                 map.LotLines.Add(new MapRect(lotX0, a, depth, b - a));
-                if (rng.Chance(0.22f)) continue;
+                if (rng.Chance(0.10f)) continue;
                 uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
                 var house = HouseGenerator.Generate(Weighted(rng), hSeed);
                 house = eastSide ? house.Rotate90CCW() : house.Rotate90CW();
