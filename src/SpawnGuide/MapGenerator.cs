@@ -178,11 +178,6 @@ public static class MapGenerator
         }
 
         bool garageRight = !frontEntry && GarageSideIsRight(house, garageWall!);
-        map.Driveways.Add(DrivewayTo(garageDoor, frontEntry, garageRight, zStart: -58f, surface: "gravel", width: 12f));
-
-        // Walk from the county road to the front door.
-        var fd = FindFrontDoor(house);
-        map.Walks.Add(new Driveway { Points = { new Vec2(fd.X, 0f), fd }, WidthFeet = 3.5f, Surface = "concrete" });
 
         // Machine shed behind the house — the big 1990s pole shed, doors to the yard.
         float shedW = rng.Pick(new[] { 36f, 40f, 48f });
@@ -201,13 +196,58 @@ public static class MapGenerator
             Label = $"MACHINE SHED {shedW:0}×{shedD:0}",
         });
         float shedDoorX = shedX + shedW / 2f;
-        // Second gravel lane from the county road into the shed yard.
-        map.Driveways.Add(new Driveway
+
+        // --- ONE driveway for the lot -------------------------------------------
+        // Iowa farm properties are served by a single entrance — "a farm property
+        // may be served by a single driveway for the residence, plus a second
+        // driveway to allow access to farm buildings or grain bins" (Woodbury
+        // County). So the lot gets one lane: it leaves the road at ~90°, runs up
+        // the side of the house, carries on past the house to the machine shed and
+        // the bin row, and the garage is a short branch off it in the yard.
+        float houseMinX = house.Footprint.Select(p => p.X).Min();
+        float houseMaxX = house.Footprint.Select(p => p.X).Max();
+        // The lane runs up the side the machine shed is on, so it reaches the shed.
+        bool laneLeft = shedX < houseMinX;
+        float entryX = laneLeft ? houseMinX - 15f : houseMaxX + 15f;
+        if (laneLeft && entryX < 8f) entryX = MathF.Min(houseMaxX + 15f, lotW - 10f);
+        if (!laneLeft && entryX > lotW - 10f) entryX = MathF.Max(houseMinX - 15f, 8f);
+        entryX = Math.Clamp(entryX, 8f, lotW - 10f);
+        float yardZ = hz - 20f;    // the yard, in front of the house
+        var lane = new Driveway { Surface = "gravel", WidthFeet = 12f };
+        lane.Points.Add(new Vec2(entryX, -58f));     // out in the road, where it flares
+        lane.Points.Add(new Vec2(entryX, 0f));       // the road's edge
+        lane.Points.Add(new Vec2(entryX, yardZ));    // up to the yard
+        lane.Points.Add(new Vec2(entryX, shedZ));     // past the house
+        lane.Points.Add(new Vec2(shedDoorX, shedZ));  // along the shed front to its door
+        map.Driveways.Add(lane);
+
+        // The garage is a branch off the lane in the yard, not a second entrance.
+        var spur = new Driveway { Surface = "gravel", WidthFeet = 12f };
+        spur.Points.Add(new Vec2(entryX, yardZ));
+        if (frontEntry)
         {
-            Surface = "gravel",
-            WidthFeet = 10f,
-            Points = { new Vec2(shedDoorX, -58f), new Vec2(shedDoorX, shedZ) },
-        });
+            spur.Points.Add(new Vec2(garageDoor.X, yardZ));
+            spur.Points.Add(garageDoor);
+        }
+        else
+        {
+            float laneX = garageDoor.X + (garageRight ? 9f : -9f);
+            spur.Points.Add(new Vec2(laneX, yardZ));
+            spur.Points.Add(new Vec2(laneX, garageDoor.Z));
+            spur.Points.Add(garageDoor);
+        }
+        map.Driveways.Add(spur);
+
+        // The walk leaves the road beside the lane, follows it up the yard, and
+        // then curves off to the front door.
+        var fd = FindFrontDoor(house);
+        float walkX = Math.Clamp(fd.X, houseMinX - 4f, houseMaxX + 4f);
+        var walk = new Driveway { WidthFeet = 3.5f, Surface = "concrete" };
+        walk.Points.Add(new Vec2(entryX + (laneLeft ? 7f : -7f), 0f));
+        walk.Points.Add(new Vec2(entryX + (laneLeft ? 7f : -7f), yardZ));
+        walk.Points.Add(new Vec2(walkX, fd.Z - 12f));
+        walk.Points.Add(fd);
+        map.Walks.Add(walk);
 
         // Smaller shop / lean-to outbuilding beside the shed, 1990s build-out.
         if (rng.Chance(0.4f))

@@ -187,6 +187,7 @@ public static class WorldMap
 
         // --- country ------------------------------------------------------------
         AddFarms(ww, worldSeed);
+        AddFieldEntrances(ww, worldSeed);
         AddWindowLabels(ww);
 
         return ww;
@@ -1166,6 +1167,130 @@ public static class WorldMap
         return false;
     }
 
+    // ------------------------------------------------------------------ field entrances
+
+    /// <summary>
+    /// Dirt entrances from the section-line road into the crop fields.
+    ///
+    /// Iowa county rules are specific: "up to two field entrances may be allowed per
+    /// forty (40) acre field" (Woodbury County); a field entrance is earth with
+    /// vegetation or a minimum of 4 in of 1⅛" crushed rock (Clarke County); it is
+    /// 20–40 ft in top width with 3:1 side slopes; and it must sit at least 100 ft
+    /// from an intersecting road. So: one or two per quarter section, hashed off the
+    /// world coordinates so they never move as the lens moves.
+    ///
+    /// These are the *field* entrances — a farmstead's own driveway is separate, and
+    /// stays on its residence.
+    /// </summary>
+    static void AddFieldEntrances(WorldWindow ww, uint worldSeed)
+    {
+        int placedCount = 0, noRoad = 0, blocked = 0;
+        float minX = ww.MinX - 2000f, maxX = ww.MinX + ww.WidthFeet + 2000f;
+        float minZ = ww.MinZ - 2000f, maxZ = ww.MinZ + ww.DepthFeet + 2000f;
+        int sx0 = (int)MathF.Floor(minX / SectionFeet) - 1;
+        int sx1 = (int)MathF.Floor(maxX / SectionFeet) + 1;
+        int sz0 = (int)MathF.Floor(minZ / SectionFeet) - 1;
+        int sz1 = (int)MathF.Floor(maxZ / SectionFeet) + 1;
+        float half = SectionFeet / 2f;   // a quarter section is half a mile square
+
+        for (int sx = sx0; sx <= sx1; sx++)
+        {
+            for (int sz = sz0; sz <= sz1; sz++)
+            {
+                for (int qx = 0; qx < 2; qx++)
+                {
+                    for (int qz = 0; qz < 2; qz++)
+                    {
+                        int qi = qz * 2 + qx;
+                        ulong h = Hash.U64(worldSeed, sx, sz, qi, 61);
+                        int count = 1 + (int)(h % 2);          // one or two per quarter
+                        for (int k = 0; k < count; k++)
+                        {
+                            ulong h2 = Hash.U64(worldSeed, sx, sz, qi, 62 + k);
+                            float t = (float)((h2 >> 8) % 1000000UL) / 1000000f;
+                            float len = 95f + (float)((h2 >> 24) % 75);
+                            bool onNS = (h2 & 1UL) == 0UL;    // opens onto the N–S section line
+                            float ax, az, bx, bz;
+                            float roadHalf;
+                            // An entrance needs a road to open onto, and it must keep
+                            // 100 ft clear of the intersection (Appanoose County).
+                            const float setback = 110f;
+                            if (onNS)
+                            {
+                                int line = qx == 0 ? sx : sx + 1;
+                                if (RoadLineAbsent(worldSeed, false, line)) { noRoad++; continue; }
+                                float X = line * SectionFeet;
+                                float qz0 = sz * SectionFeet + qz * half;
+                                float zz = Math.Clamp(qz0 + t * half, qz0 + setback, qz0 + half - setback);
+                                float dir = qx == 0 ? 1f : -1f;   // into the quarter
+                                roadHalf = RoadLinePaved(worldSeed, false, line) ? RoadHalfPaved : RoadHalfGravel;
+                                ax = X + dir * (roadHalf - 4f); az = zz;
+                                bx = X + dir * (roadHalf + len);  bz = zz;
+                            }
+                            else
+                            {
+                                int line = qz == 0 ? sz : sz + 1;
+                                if (RoadLineAbsent(worldSeed, true, line)) { noRoad++; continue; }
+                                float Z = line * SectionFeet;
+                                float qx0 = sx * SectionFeet + qx * half;
+                                float xx = Math.Clamp(qx0 + t * half, qx0 + setback, qx0 + half - setback);
+                                float dir = qz == 0 ? 1f : -1f;
+                                roadHalf = RoadLinePaved(worldSeed, true, line) ? RoadHalfPaved : RoadHalfGravel;
+                                ax = xx; az = Z + dir * (roadHalf - 4f);
+                                bx = xx; bz = Z + dir * (roadHalf + len);
+                            }
+                            // Don't run a track through a farmyard or through town.
+                            if (EntranceBlocked(ww, ax, az, bx, bz)) { blocked++; continue; }
+                            ww.Map.Driveways.Add(new Driveway
+                            {
+                                Surface = "dirt",
+                                WidthFeet = 26f,
+                                Points =
+                                {
+                                    new Vec2(ax - ww.MinX, az - ww.MinZ),
+                                    new Vec2(bx - ww.MinX, bz - ww.MinZ),
+                                },
+                            });
+                            placedCount++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>True when a field entrance would run into a farmstead or a town.</summary>
+    static bool EntranceBlocked(WorldWindow ww, float ax, float az, float bx, float bz)
+    {
+        foreach (var f in ww.Farms)
+        {
+            // 90 ft of clearance around the farmstead's yard.
+            if (SegmentNearRect(ax, az, bx, bz, f.MinX - 90f, f.MinZ - 90f, f.MaxX + 90f, f.MaxZ + 90f))
+                return true;
+        }
+        foreach (var t in ww.Towns)
+        {
+            if (SegmentNearRect(ax, az, bx, bz, t.MinX - 60f, t.MinZ - 60f, t.MaxX + 60f, t.MaxZ + 60f))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>True when a segment comes within the rectangle.</summary>
+    static bool SegmentNearRect(float ax, float az, float bx, float bz, float x0, float z0, float x1, float z1)
+    {
+        if (ax > x0 && ax < x1 && az > z0 && az < z1) return true;
+        if (bx > x0 && bx < x1 && bz > z0 && bz < z1) return true;
+        // Sample the segment; it is short and straight.
+        for (int i = 1; i < 10; i++)
+        {
+            float t = i / 10f;
+            float px = ax + (bx - ax) * t, pz = az + (bz - az) * t;
+            if (px > x0 && px < x1 && pz > z0 && pz < z1) return true;
+        }
+        return false;
+    }
+
     static Vec2 FarmPoint(Vec2 p, int side, float ox, float oz) => side switch
     {
         0 => new Vec2(p.X + ox, p.Z + oz),
@@ -1173,7 +1298,6 @@ public static class WorldMap
         2 => new Vec2(p.Z + ox, oz - p.X),
         _ => new Vec2(ox - p.Z, p.X + oz),
     };
-
     static (float minX, float minZ, float maxX, float maxZ) RuralBounds(MapPlan plan, int side, float ox, float oz)
     {
         float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;

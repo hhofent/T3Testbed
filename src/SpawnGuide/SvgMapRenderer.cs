@@ -234,7 +234,13 @@ public static class SvgMapRenderer
         // Driveways (thick polylines), then walks. Hidden at countryside zoom.
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Driveways)
         {
-            string color = d.Surface == "concrete" ? "#dcd9d2" : "#d6c9a3";
+            // concrete aprons, gravel farm lanes, and the bare dirt of a field entrance.
+            string color = d.Surface switch
+            {
+                "concrete" => "#dcd9d2",
+                "dirt" => "#bda882",
+                _ => "#d6c9a3",
+            };
             sb.AppendLine(Polyline(Map, d.Points, color, MathF.Max(0.6f, d.WidthFeet * scale), "butt"));
         }
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Walks)

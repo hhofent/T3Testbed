@@ -77,8 +77,16 @@ Each stage is independently committable and keeps `--verify` green.
       *Done and verified:* every seed now gets its own strip, its own civic mix and its
       own street names. Sidewalk labels are no longer suppressed in quiet mode — only
       when the caller asks (`SuppressOutbuildingLabels`).
-- [ ] **Stage 2 — ask 3 (rural).** One lane per lot; walk from the road following the
+- [x] **Stage 2 — ask 3 (rural).** One lane per lot; walk from the road following the
       drive and curving to the door; 1–2 field entrances per quarter section.
+      *Done:* `RuralLot` now has a single lane that leaves the road at ~90°, runs up the
+      side of the house, carries on past it to the machine shed and bin row, with the
+      garage as a branch off it in the yard. The concrete walk leaves the road beside
+      the lane, follows it up the yard and curves off to the front door. Field
+      entrances are added by `WorldMap.AddFieldEntrances` — 1–2 per quarter section,
+      hashed off world coordinates, 26 ft wide, 95–170 ft long, set back 110 ft from
+      an intersection, skipped where the road line is absent or where a farmyard or
+      town is in the way. Drawn on a new "dirt" surface colour.
 - [ ] **Stage 3 — ask 2 (town extras).** The extra street kinds, 0–2 per town.
 - [ ] **Stage 4 — todo item 3a (fill every street with lots).** Final pass platting
       lots along every street segment, leaving a few deliberately empty.
@@ -109,3 +117,8 @@ Each stage is independently committable and keeps `--verify` green.
   *not* a stable sort by key, so the order depends on the RNG stream — fine inside a
   town (the town seed fixes the stream) but it must never be used where the order has
   to be reproducible across windows. The world layer uses hashed sorts for that.
+- **BUILD GOTCHA: `dotnet build` fails silently when `SpawnGuide.exe` is locked by a
+  running `--serve` process.** The build errors are all `MSB3026/MSB3021` about
+  copying the apphost, and `dotnet run --no-build` then runs the *old* binary, so a
+  change appears not to work. Always `Get-Process SpawnGuide | Stop-Process -Force`
+  before building, and check for "Build succeeded" rather than assuming.
