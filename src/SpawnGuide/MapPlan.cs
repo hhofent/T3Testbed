@@ -41,6 +41,20 @@ public sealed class WaterCourse
     public float WidthFeet { get; set; } = 50f;
 }
 
+/// <summary>A railroad line: straight across the landscape, drawn with ballast, rails and ties.</summary>
+public sealed class RailLine
+{
+    public List<Vec2> Points { get; } = new();
+}
+
+/// <summary>One marching-squares contour segment. Level is the sampled elevation in feet.</summary>
+public readonly struct ContourSegment
+{
+    public readonly Vec2 A, B;
+    public readonly int Level;
+    public ContourSegment(Vec2 a, Vec2 b, int level) { A = a; B = b; Level = level; }
+}
+
 /// <summary>Cul-de-sac bulb: asphalt turnaround at the clipped end of a street.</summary>
 public sealed class RoadBulb
 {
@@ -96,11 +110,17 @@ public sealed class MapPlan
     public List<string> FieldFills { get; } = new();
     /// <summary>Creek / drainage ribbons, drawn above fields and under roads, trees and buildings.</summary>
     public List<WaterCourse> Waters { get; } = new();
+    /// <summary>Railroad lines, drawn above water and under roads/trees.</summary>
+    public List<RailLine> Rails { get; } = new();
+    /// <summary>Low-contrast elevation contours, drawn above fields (Great Plains: 10-ft interval).</summary>
+    public List<ContourSegment> Contours { get; } = new();
     /// <summary>Cul-de-sac bulbs drawn on top of the road surface.</summary>
     public List<RoadBulb> Bulbs { get; } = new();
     public bool RoadCenterDashes { get; set; }
     /// <summary>Per-road yellow-centerline flag, parallel to Roads. Falls back to RoadCenterDashes when empty.</summary>
     public List<bool> RoadDashed { get; } = new();
+    /// <summary>Per-road paved flag, parallel to Roads. Empty → derive from RoadSurface.</summary>
+    public List<bool> RoadPaved { get; } = new();
     /// <summary>"asphalt" | "gravel" | "" (derive from dash flags, back-compat).</summary>
     public string RoadSurface { get; set; } = "";
     /// <summary>Level-of-detail: houses/outbuildings silhouette-only, no captions (countryside zoom).</summary>
@@ -110,9 +130,21 @@ public sealed class MapPlan
     /// <summary>Hide per-building labels (MACHINE SHED, GAMBREL BARN, ...) while keeping geometry.
     /// World windows need this: at nine miles a farm label is a dozen pixels of noise.</summary>
     public bool SuppressOutbuildingLabels { get; set; }
+    /// <summary>
+    /// Bounds of the town's perimeter street loop, in local coordinates. County roads
+    /// stop at this rectangle so they meet a town street instead of dangling.
+    /// </summary>
+    public float LoopMinX { get; set; }
+    public float LoopMinZ { get; set; }
+    public float LoopMaxX { get; set; }
+    public float LoopMaxZ { get; set; }
+    /// <summary>Bounds of what actually got built (blocks and houses), local coords.</summary>
+    public float BuiltMinX { get; set; }
+    public float BuiltMinZ { get; set; }
+    public float BuiltMaxX { get; set; }
+    public float BuiltMaxZ { get; set; }
     /// <summary>Dashed lot boundary rectangles (town lots). Rural: the outer parcel line.</summary>
-    public List<MapRect> LotLines { get; } = new();
-    public List<PositionedHouse> Houses { get; } = new();
+    public List<MapRect> LotLines { get; } = new();    public List<PositionedHouse> Houses { get; } = new();
     public List<Outbuilding> Outbuildings { get; } = new();
     public List<Driveway> Driveways { get; } = new();
     public List<Driveway> Walks { get; } = new();

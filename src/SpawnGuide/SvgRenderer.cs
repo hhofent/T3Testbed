@@ -25,7 +25,10 @@ public static class SvgRenderer
     /// labels for a house plan, using the given coordinate map and scale. Everything the
     /// map renderer needs to embed a house in a larger scene.
     /// </summary>
-    public static void AppendHouse(StringBuilder sb, HousePlan plan, Func<Vec2, SvgPx> map, float scale, string gapColor, bool mirroredZ = false, bool quietAnnotations = false)
+    /// <param name="wallScreenPx">Wall width in screen pixels (null = use the default
+    /// hairline). House lines are drawn non-scaling, so they stay thin however far the
+    /// map is zoomed.</param>
+    public static void AppendHouse(StringBuilder sb, HousePlan plan, Func<Vec2, SvgPx> map, float scale, string gapColor, bool mirroredZ = false, bool quietAnnotations = false, float? wallScreenPx = null)
     {
         string N(float v) => Format(v);
 
@@ -52,12 +55,18 @@ public static class SvgRenderer
         }
 
         // Walls with opening gaps.
+        // Wall line weight. The map is zoomed by scaling the whole SVG, and a scaled
+        // stroke turns a wall into a black bar — so house lines are drawn
+        // non-scaling and hold a constant hairline on screen at any zoom.
+        float wallPx = wallScreenPx ?? 0.95f;
+        float gapPx = wallPx + MathF.Max(0.6f, wallPx * 0.9f);
+        float thinPx = MathF.Max(0.32f, wallPx * 0.55f);
+
         foreach (var wall in plan.Walls)
         {
             var a = map(wall.Start);
             var b = map(wall.End);
-            float thick = MathF.Max(wall.ThicknessFeet * scale, scale < 0.15f ? 0.7f : 2.2f);
-            sb.AppendLine($"<line class='wall' x1='{N(a.X)}' y1='{N(a.Y)}' x2='{N(b.X)}' y2='{N(b.Y)}' stroke-width='{N(thick)}'/>");
+            sb.AppendLine($"<line class='wall' vector-effect='non-scaling-stroke' x1='{N(a.X)}' y1='{N(a.Y)}' x2='{N(b.X)}' y2='{N(b.Y)}' stroke-width='{N(wallPx)}'/>");
 
             var dir = (wall.End - wall.Start).Normalized();
             foreach (var op in wall.Openings)
@@ -66,18 +75,18 @@ public static class SvgRenderer
                 var half = dir * (op.WidthFeet / 2f);
                 var p0 = map(center - half);
                 var p1 = map(center + half);
-                sb.AppendLine($"<line x1='{N(p0.X)}' y1='{N(p0.Y)}' x2='{N(p1.X)}' y2='{N(p1.Y)}' stroke='{gapColor}' stroke-width='{N(thick + 3.5f)}'/>");
+                sb.AppendLine($"<line vector-effect='non-scaling-stroke' x1='{N(p0.X)}' y1='{N(p0.Y)}' x2='{N(p1.X)}' y2='{N(p1.Y)}' stroke='{gapColor}' stroke-width='{N(gapPx)}'/>");
                 var c = map(center);
 
                 if (op.Kind == OpeningKind.Window)
                 {
                     // Classic plan symbol: three parallel lines across the wall.
                     // Screen-space perpendicular = (dir.Z, dir.X), scaled to the wall thickness.
-                    var nqx = dir.Z * thick * 0.32f;
-                    var nqy = dir.X * thick * 0.32f;
+                    float nqx = dir.Z * wallPx * 0.36f;
+                    float nqy = dir.X * wallPx * 0.36f;
                     foreach (var f in new[] { -1f, 0f, 1f })
                     {
-                        sb.AppendLine($"<line class='thin' x1='{N(p0.X + nqx * f)}' y1='{N(p0.Y + nqy * f)}' x2='{N(p1.X + nqx * f)}' y2='{N(p1.Y + nqy * f)}'/>");
+                        sb.AppendLine($"<line vector-effect='non-scaling-stroke' x1='{N(p0.X + nqx * f)}' y1='{N(p0.Y + nqy * f)}' x2='{N(p1.X + nqx * f)}' y2='{N(p1.Y + nqy * f)}' stroke='#3a332b' stroke-width='{N(thinPx)}'/>");
                     }
                 }
                 else if (op.Kind == OpeningKind.Door)
@@ -86,8 +95,8 @@ public static class SvgRenderer
                     float leaf = op.WidthFeet * scale;
                     float swing = mirroredZ ? leaf : -leaf;
                     var leafEnd = p0.Offset(0, swing);
-                    sb.AppendLine($"<line class='thin' x1='{N(p0.X)}' y1='{N(p0.Y)}' x2='{N(leafEnd.X)}' y2='{N(leafEnd.Y)}'/>");
-                    sb.AppendLine($"<path class='dash' d='M {N(p1.X)} {N(p1.Y)} A {N(leaf)} {N(leaf)} 0 0 {(mirroredZ ? "0" : "1")} {N(leafEnd.X)} {N(leafEnd.Y)}'/>");
+                    sb.AppendLine($"<line vector-effect='non-scaling-stroke' x1='{N(p0.X)}' y1='{N(p0.Y)}' x2='{N(leafEnd.X)}' y2='{N(leafEnd.Y)}' stroke='#3a332b' stroke-width='{N(thinPx)}'/>");
+                    sb.AppendLine($"<path vector-effect='non-scaling-stroke' d='M {N(p1.X)} {N(p1.Y)} A {N(leaf)} {N(leaf)} 0 0 {(mirroredZ ? "0" : "1")} {N(leafEnd.X)} {N(leafEnd.Y)}' fill='none' stroke='#8a7f70' stroke-width='{N(thinPx)}' stroke-dasharray='7 5'/>");
                 }
                 else if (op.Kind == OpeningKind.GarageDoor)
                 {

@@ -52,10 +52,32 @@ ports later.
   independent render tile. Content is pure in world coordinates; windows are rendered as
   one rectangle and clipped. Independent cell images would duplicate seams and split
   boundary buildings.
-- Town field is a queryable lattice, not a sequential Poisson pass: one candidate per
-  10-mi slot per 24-mi east-west highway corridor, priority suppression inside 10 mi.
-  The highway through a town is continuous; county roads are clipped inside town
-  footprints; the town's south-of-highway fringe is dropped in world mode.
+- **Land order (user, 2026-11-11): hills → rivers → rail → roads → towns/lots.** The
+  world is built in that order and each layer constrains the next.
+- **World road rules (user, 2026-11-11):** paved corridors every ~10 mi (towns live on
+  them and always sit on one), gravel section roads on every mile line, rare exceptions
+  in both directions. Rail lines every ~75 mi, E/W and N/S; towns tend to be near rail.
+  Rivers run south and tributaries merge into bigger rivers; hills stay low (Great
+  Plains, <130 ft relief).
+- **Town field is a queryable lattice, not a sequential Poisson pass:** one candidate per
+  10-mi slot on the 10-mi paved corridor lattice (both directions), a town only exists
+  if rail runs within 9 mi, priority suppression inside 10 mi, and a trunk river within
+  1,200 ft vetoes the site. The highway through a town is continuous; county roads are
+  clipped inside town footprints.
+- **Town names are generic place names (user, 2026-11-11).** Boyden/Hull/George are
+  gone from the world: a 40-name pool (`COLD SPRING`, `PINEHURST`, `OAKDALE`, …) and
+  generic sizes (`crossroads` / `hamlet` / `village` / `town`). The old preset names
+  survive only as CLI aliases.
+- **Town streets form a loop, not a cul-de-sac maze (user, 2026-11-11).** A perimeter
+  street encircles the town with a jog in its north edge; every street end meets another
+  street. Exactly one dead end per town (two for the biggest) hangs off the perimeter
+  with four empty lots along it — the only deliberate vacancy in town.
+- **Towns vary on which side of the road they sit (user, 2026-11-11):** 46% north,
+  24% south, 30% straddling the highway.
+- **House walls must not fatten when zoomed (user, 2026-11-11).** SVG
+  `vector-effect='non-scaling-stroke'` at 0.95 px; the server renders each world window
+  at the viewer's screen resolution so the stroke is a true screen pixel.
+- **Max zoom 300×** against the opening view (user, 2026-11-11; was 270×).
 
 ## Current status (verified on disk)
 
@@ -72,45 +94,58 @@ ports later.
   the interior section-line junction, 1-mile section grid, field fills, 6 farmstead
   clusters, HWY 18 to the cell edges. One far-LOD (silhouettes, trunk dots) AND one
   detail (walls + captions, trunk dots r≈2 ft) per size class per run.
-- **Infinite world** (`WorldMap.cs`, 2026-11-11): pure `(seed, cx, cz, span)` query.
-  Queryable town lattice: one candidate per 10-mi slot on each 24-mi EW highway
-  corridor, hashed class (10% Hull / 30% Boyden / 36% hamlet / 24% empty), priority
-  suppression guarantees ≥10-mi spacing. Towns are centered in a section; the highway
-  through town is never clipped; county section roads are clipped around town
-  footprints; south-of-highway fringe dropped. Per-section farmsteads stamp/rotate the
-  existing `RuralLot` leaf (0–3 per section), fields are four quarter fills, creeks are
-  global meandering ribbons with tree banks. `ExactBounds` + bare SVG maps pixels 1:1
-  to the world rectangle. `--verify --seed 1993` passes all 6 checks (byte determinism,
-  100-mi reproducibility, overlapping-window equality, cell-vs-window equality, town
-  spacing, zero building overlaps). `--map world` writes a 9-mi window, a 3-mi cell and
-  the viewer; seed 1993 = 1 town, 64 farms, 424 houses, 776 outbuildings, 3 creek runs.
+- **Infinite world** (`WorldMap.cs`, 2026-11-11, reworked the same day): pure
+  `(seed, cx, cz, span)` query, built in land order — **hills → rivers → rail → roads →
+  towns/lots → farms**. Hills are a low long-wavelength field (<130 ft relief) drawn as
+  20-ft contours on a global quarter-mile lattice. Trunk rivers every ~28 mi run south
+  with tributaries every ~8 mi merging into them; banks carry trees. Rail every ~75 mi,
+  E/W and N/S. Paved corridors every 10 mi (E/W **and** N/S) carry the gravel
+  section-road grid on every mile line, with ~1.8% missing / ~2.2% paved exceptions.
+  Towns are a queryable 10-mi lattice on the paved corridors, only where rail runs
+  within 9 mi, priority-suppressed to ≥10 mi apart, class ladder crossroads/hamlet/
+  village/town, generic names, north/south/straddling the road (46/24/30%). Per-section
+  farmsteads stamp/rotate the existing `RuralLot` leaf (0–3 per section), fields are
+  four quarter fills. `ExactBounds` + bare SVG maps pixels 1:1 to the world rectangle.
+  `--verify --seed 1993` passes all **10** checks (byte determinism, 100-mi
+  reproducibility, overlapping-window equality, cell-vs-window equality, town spacing,
+  rail proximity, zero building overlaps, rivers, every town on a paved road, zero
+  dangling street ends). `--map world` writes a 9-mi window, a 3-mi cell and the viewer;
+  seed 1993 = 1 town, 65 farms, 219 houses, 683 outbuildings, 3 creek runs.
 - `out/viewer.html` (~2 MB for `--map world`; ~10 MB with all maps baked): pan/zoom
   viewer, wheel+drag+pinch, far↔detail LOD crossfade for old fixed maps. In world mode
-  it streams live windows: pan debounces and fetches `/world?seed&cx&cz&span`, keeps the
-  old image until the new one decodes, then anchors the same world point under the
-  viewport (no pop). The lens is zoom-adaptive — 9-mi windows at fit, then 6/4/2/1-mi
-  windows as you zoom so buildings stay crisp instead of upscaling a 34-ft/px image.
-  `/world-center?seed` puts a live seed on its nearest town. Baked maps still work
-  offline; the server is optional for old maps and required for live world panning.
+  it streams live windows: pan debounces and fetches `/world?seed&cx&cz&span&ppf`,
+  keeps the old image until the new one decodes, then anchors the same world point under
+  the viewport (no pop). The lens is zoom-adaptive — the server renders each window at
+  the viewer's screen resolution (pixels-per-foot), the viewer draws it 1:1, and
+  zooming in requests a smaller window (nice-span ladder, 150 ft → 30 mi) instead of
+  upscaling a 34-ft/px image. Max zoom 300× against the opening view (~400-ft window).
+  House walls are `vector-effect='non-scaling-stroke'` at 0.95 px so they stay
+  hairlines at any zoom. `/world-center?seed` puts a live seed on its nearest town's
+  **built blocks**. Baked maps still work offline; the server is optional for old maps
+  and required for live world panning.
 - SpawnGuide --serve [--port N] starts the built-in spawner on 127.0.0.1:N (default
   8735): `/` viewer, `/gen?seed=N&size=hamlet|boyden|hull` old fixed maps,
-  `/world?seed&cx&cz&span&lod` world windows, `/world-center?seed`. CORS + HEAD are
+  `/world?seed&cx&cz&span&ppf&lod` world windows, `/world-center?seed`. CORS + HEAD are
   handled so a `file://` viewer can detect the server. World SVG cache = 24 windows.
   Controls: dropdown, 🎲 random button, seed entry box. Bake pool: 13 hamlet seeds.
 - Trees render as trunk-location dots only, no canopy disks (user call, 2026-11-11).
-- Town silhouettes are seeded superellipse-wobble blobs (edge lots dropped), never a
-  rectangle (user call). Hamlet seed 1993 now 130 houses after blob cut (was 168).
-- QuietAnnotations is generator-set, not scale-derived; wall min-stroke is 2.2px at
-  natural size (was 5px).
+- Town silhouettes are seeded superellipse-wobble blobs (edge **lots** dropped, not
+  whole blocks), never a rectangle (user call). Vacancy is radial: 14% on the ragged
+  outskirts, 5% mid, 1.5% in the core — a town is built out.
+- QuietAnnotations is generator-set, not scale-derived; house walls are non-scaling
+  strokes at 0.95 px (was a 2.2-px floor that ballooned at high zoom).
 - ROADS MUST ATTACH TO ANOTHER ROAD, BOTH ENDS, EVERY TIME (user, hard rule,
   2026-11-11). The network is a full grid: EW streets run the full grid width,
-  NS streets run from the highway out to the last surviving EW street. A row or
+  NS streets run from the highway out to a **perimeter street with a jog**, so the
+  town is encircled without the loop ever being an even rectangle. A row or
   column with zero content yields its street (then it vanishes cleanly).
-  Cul-de-sacs: seeded ONE per town — a short N–S stub (<half a block, ~110–130 ft)
-  into an empty north-edge column, ending in a 46-ft bulb, flanked by 2 lots.
-  That is the only cul-de-sac legal under the rule.
+  Cul-de-sacs: exactly ONE per town (two for the biggest) — a short street hanging
+  off the perimeter, ending in a 44-ft bulb, with four platted-but-empty lots along
+  it. That is the only cul-de-sac legal under the rule, and the only deliberate
+  vacancy in town. `WorldMap.Verify()` counts dangling street ends: **0**.
 - NO trees alongside roads and none on lots (user call, 2026-11-11). Town is
   tree-free; country has a few field-interior groves and farmstead belts only.
+  (River banks are the one exception — the user asked for trees around rivers.)
 - Houses: ~45% detached garage / 45% integral / 10% none; ~12% get a small shed;
   ~40% "half lots" (34–47 ft frontage, farmhouse forced — the condensed look).
   Houses clamped clear of the alley row (offenders go vacant); occupancy registry
@@ -143,10 +178,10 @@ ports later.
    `docs/research/2026-11-11-ia-calibration-references.md`.
 2. ~~Lock the 3-mile-cell architecture and build the infinite world~~ — done
    2026-11-11; `WorldMap.cs` + `--verify` + live `/world` streaming.
-3. World follow-ups: north-south highway corridors; bridge/culvert decks where roads
-   cross creeks; cache materialized towns across windows; optional diagonal
-   rail-corridor street (George's Boiler Ave / Boyden's Railroad St). Cattle-yard
-   archetype still unconfirmed.
+3. World follow-ups: bridge/culvert decks where roads cross rivers; cache materialized
+   towns across windows; a real place-name list (the 40 generic names repeat);
+   optional diagonal rail-corridor street (George's Boiler Ave / Boyden's Railroad St).
+   Cattle-yard archetype still unconfirmed.
 4. Keep `dotnet run -- --verify --seed 1993` green after every generation change.
    Floor plans and the Unity port are still future work; the world query API is the
    porting boundary.

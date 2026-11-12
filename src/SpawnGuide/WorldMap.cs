@@ -5,12 +5,40 @@ using System.Linq;
 namespace SpawnGuide
 {
 
-/// <summary>
-/// A town placed in the world. Towns sit on the continuous east-west highway grid,
-/// centred in a one-mile section, with their commercial highway strip on the section
-/// line. That keeps every town on a real through-road and keeps the town footprint
-/// inside the section grid (the hull preset overhangs a section line by ~58 ft).
-/// </summary>
+/// <summary>How a town sits against the paved road it grew along.</summary>
+public enum WorldTownLayout
+{
+    /// <summary>North of the road only — the road is the town's south edge.</summary>
+    North,
+    /// <summary>South of the road only — the road is the town's north edge.</summary>
+    South,
+    /// <summary>Straddling the road: blocks on both sides, road through the middle.</summary>
+    Both,
+}
+
+/// <summary>One side of a town. A "Both" town has two of these.</summary>
+public sealed class WorldTownPart
+{
+    /// <summary>The generated town plan for this side (local coords: highway band at z 0..66).</summary>
+    public MapPlan Plan { get; set; } = null!;
+    /// <summary>true → the plan is reflected across the highway band (town hangs south).</summary>
+    public bool Mirrored { get; set; }
+    /// <summary>World position of the plan's local origin (its highway band starts here).</summary>
+    public float OriginX { get; set; }
+    public float OriginZ { get; set; }
+    /// <summary>
+    /// Rectangles (world coords) that county roads must not run through: the built
+    /// blocks plus the perimeter streets. Roads stop exactly on a town street.
+    /// </summary>
+    public List<(float x0, float z0, float x1, float z1)> RoadClip { get; } = new();
+    /// <summary>Built footprint of this side in world coords (blocks only).</summary>
+    public float BlockMinX { get; set; }
+    public float BlockMinZ { get; set; }
+    public float BlockMaxX { get; set; }
+    public float BlockMaxZ { get; set; }
+}
+
+/// <summary>A town placed in the world. Towns sit on the paved road grid.</summary>
 public sealed class WorldTown
 {
     public int Corridor { get; set; }
@@ -26,6 +54,8 @@ public sealed class WorldTown
     public float MaxX { get; set; }
     public float MaxZ { get; set; }
     public int Houses { get; set; }
+    public WorldTownLayout Layout { get; set; }
+    public List<WorldTownPart> Parts { get; } = new();
 }
 
 /// <summary>A farmstead stamped from the existing rural-lot leaf generator.</summary>
@@ -65,38 +95,47 @@ public sealed class WorldWindow
 /// <summary>
 /// Deterministic, infinite, seed-reproducible 1990s rural Iowa.
 ///
-/// Design decisions that came out of grilling docs/proposal-infinite-map.md:
-///  - Towns are a *queryable* lattice, not an unknowable Poisson field: one candidate
-///    per 10-mile slot on each 24-mile east-west highway corridor, with deterministic
-///    priority suppression inside 10 miles. Any window can enumerate the same towns.
-///  - Rendering is window-based, not cell-based. Cells are the lens request unit; the
-///    content function is pure in world coordinates. Tiling independent 3-mi cells
-///    would duplicate boundary roads and clip buildings at every seam.
-///  - Farmsteads get per-section hashed RNG streams, so adding/removing anything in a
-///    neighbouring section cannot perturb them.
-///  - County section roads are clipped around town footprints, where the town street
-///    network takes over; the town streets themselves keep the "attach at both ends"
-///    rule. The highway through a town is continuous and never clipped.
-///  - The town south fringe is dropped in world mode so the highway is the town's
-///    south edge — the real George/Boyden/Hull pattern and the cleanest seam.
+/// The world is built in the order the land actually makes itself:
+///
+///   1. HILLS    — a low, long-wavelength elevation field (Great Plains: swells, not
+///                  mountains). Drawn as 20-ft contour lines.
+///   2. RIVERS   — trunk rivers every ~28 miles running south, with tributaries
+///                  joining them from both sides. Every tributary merges into a bigger
+///                  river; nothing flows north.
+///   3. RAIL     — rail lines every ~75 miles, east-west and north-south.
+///   4. ROADS    — paved roads every ~10 miles (the towns live on these), gravel
+///                  section roads on every mile line, with rare exceptions.
+///   5. TOWNS    — a queryable lattice on the paved road grid, near rail lines,
+///                  north / south / straddling the road.
+///   6. FARMS    — per-section farmsteads stamped from the rural lot generator.
+///
+/// Everything is a pure function of world coordinates: any window asks the same
+/// questions and gets the same answers, so overlapping lens windows agree exactly.
 /// </summary>
 public static class WorldMap
 {
     public const float Mile = 5280f;
     public const float SectionFeet = 5280f;
     public const float CellFeet = 15840f;                 // 3-mile lens cell
-    public const float HighwaySpacing = 24f * Mile;        // east-west highway every 24 mi
+    public const float PavedSpacing = 10f * Mile;          // paved road every 10 mi
     public const float TownSlotFeet = 10f * Mile;          // one town candidate per 10 mi
     public const float MinTownSpacingFeet = 10f * Mile;    // never two towns closer than 10 mi
-    const float RoadHalf = 33f;                            // 66-ft section/highway ROW
-    const float CreekSpacing = 8f * Mile;
+    public const float RailSpacing = 75f * Mile;           // rail line every ~75 mi
+    public const float TrunkRiverSpacing = 28f * Mile;     // major river every ~28 mi
+    public const float TributarySpacing = 8f * Mile;       // tributary head every ~8 mi
+    public const float HighwayWidth = 66f;                 // paved road ROW
+    /// <summary>Smallest lens window. Below a few hundred feet the map is a room, not a county.</summary>
+    public const float MinSpan = 150f;
+    const float RoadHalfPaved = 33f;
+    const float RoadHalfGravel = 20f;
     const float FarmMargin = 300f;
+    const float ContourInterval = 20f;                    // feet
 
     static readonly string[] FieldPalette =
         { "#ded9bd", "#d6d0b4", "#cbc4a2", "#e4e0cb", "#d2cbb0", "#dcd6b8", "#d8d2b6" };
 
     static readonly string[] HighwayNames =
-        { "HWY 9", "HWY 3", "HWY 44", "HWY 60", "HWY 71", "HWY 20", "HWY 34", "HWY 59" };
+        { "HWY 12", "HWY 7", "HWY 31", "HWY 46", "HWY 22", "HWY 38", "HWY 5", "HWY 17" };
 
     // ------------------------------------------------------------------ public API
 
@@ -108,8 +147,8 @@ public static class WorldMap
     public static WorldWindow Generate(uint worldSeed, float centerX, float centerZ,
         float widthFeet = CellFeet * 3f, float depthFeet = CellFeet * 3f)
     {
-        widthFeet = Math.Max(Mile, widthFeet);
-        depthFeet = Math.Max(Mile, depthFeet);
+        widthFeet = Math.Max(MinSpan, widthFeet);
+        depthFeet = Math.Max(MinSpan, depthFeet);
 
         var ww = new WorldWindow
         {
@@ -127,17 +166,26 @@ public static class WorldMap
             WidthFeet = widthFeet,
             DepthFeet = depthFeet,
             ExactBounds = true,
-            RoadSurface = "asphalt",
+            RoadSurface = "asphalt",   // per-road RoadPaved decides the rest; bulbs match
             LodSimple = false,
             QuietAnnotations = true,
             SuppressOutbuildingLabels = true,
         };
         ww.Map = map;
 
+        // --- the land, in order -------------------------------------------------
         AddFields(ww, worldSeed);
-        AddTowns(ww, worldSeed);
-        AddRoads(ww, worldSeed);
-        AddCreeks(ww, worldSeed);
+        AddHills(ww, worldSeed);
+        AddRivers(ww, worldSeed);
+        AddRail(ww, worldSeed);
+
+        // --- roads, then the towns that grow on them ----------------------------
+        var sites = CollectTownSites(worldSeed, ww);
+        var towns = sites.Select(s => MaterializeTown(worldSeed, s)).ToList();
+        AddRoads(ww, worldSeed, towns);
+        StampTowns(ww, towns);
+
+        // --- country ------------------------------------------------------------
         AddFarms(ww, worldSeed);
         AddWindowLabels(ww);
 
@@ -151,17 +199,17 @@ public static class WorldMap
             (cellZ + 0.5f) * CellFeet,
             CellFeet, CellFeet);
 
-    /// <summary>Find the nearest town to a point, looking along nearby highway corridors.</summary>
+    /// <summary>Find the nearest town to a point, looking along nearby paved corridors.</summary>
     public static WorldTown? NearestTown(uint worldSeed, float x, float z, float maxMiles = 80f)
     {
         float bestD = maxMiles * Mile * maxMiles * Mile;
         WorldTown? best = null;
-        foreach (var site in TownsNear(worldSeed, x - maxMiles * Mile, x + maxMiles * Mile,
+        foreach (var site in TownSitesNear(worldSeed, x - maxMiles * Mile, x + maxMiles * Mile,
                      z - maxMiles * Mile, z + maxMiles * Mile))
         {
             float dx = site.CenterX - x, dz = site.HighwayZ - z;
             float d = dx * dx + dz * dz;
-            if (d < bestD) { bestD = d; best = site; }
+            if (d < bestD) { bestD = d; best = MaterializeTown(worldSeed, site); }
         }
         return best;
     }
@@ -196,44 +244,553 @@ public static class WorldMap
 
         public static uint U32(uint seed, long a, long b, long c = 0, long d = 0) =>
             (uint)(U64(seed, a, b, c, d) ^ (U64(seed, a, b, c, d) >> 32));
+
+        /// <summary>Deterministic 0..1 float from a hash.</summary>
+        public static float F(uint seed, long a, long b, long c = 0, long d = 0) =>
+            (U64(seed, a, b, c, d) % 1000000UL) / 1000000f;
+    }
+
+    // ------------------------------------------------------------------ terrain
+
+    static float Phase(uint seed, int k) => Hash.F(seed, k, 701) * 6.2831853f;
+
+    /// <summary>
+    /// Ground elevation in feet. Great Plains: long, low swells with a little texture.
+    /// Total relief is under ~130 feet over many miles — nothing alpine.
+    /// </summary>
+    public static float Elevation(uint worldSeed, float x, float z)
+    {
+        float p1 = Phase(worldSeed, 1), p2 = Phase(worldSeed, 2);
+        float p3 = Phase(worldSeed, 3), p4 = Phase(worldSeed, 4), p5 = Phase(worldSeed, 5);
+        float a = 20f * MathF.Sin((x * 0.62f + z * 0.78f) / 11000f + p1);
+        float b = 12f * MathF.Sin((x * -0.71f + z * 0.46f) / 5200f + p2);
+        float c = 26f * MathF.Sin((x * 0.31f + z * 1.07f) / 26000f + p3);
+        float d = 4f * MathF.Sin(x / 1600f + p4);
+        float e = 5f * MathF.Sin(z / 1900f + p5);
+        return a + b + c + d + e;
+    }
+
+    /// <summary>Contour lines of the elevation field, on a globally anchored 1/4-mile lattice.</summary>
+    static void AddHills(WorldWindow ww, uint worldSeed)
+    {
+        const float cell = 1320f;   // 1/4 mile
+        int i0 = (int)MathF.Floor((ww.MinX - cell) / cell);
+        int i1 = (int)MathF.Floor((ww.MinX + ww.WidthFeet + cell) / cell);
+        int j0 = (int)MathF.Floor((ww.MinZ - cell) / cell);
+        int j1 = (int)MathF.Floor((ww.MinZ + ww.DepthFeet + cell) / cell);
+        int nx = i1 - i0 + 1, nz = j1 - j0 + 1;
+        if (nx < 2 || nz < 2) return;
+
+        var e = new float[nx * nz];
+        for (int j = 0; j < nz; j++)
+            for (int i = 0; i < nx; i++)
+                e[j * nx + i] = Elevation(worldSeed, (i0 + i) * cell, (j0 + j) * cell);
+
+        float lo = e.Min(), hi = e.Max();
+        int first = (int)MathF.Ceiling(lo / ContourInterval) * (int)ContourInterval;
+        var pts = new List<Vec2>(4);
+        for (int level = first; level <= hi; level += (int)ContourInterval)
+        {
+            for (int j = 0; j + 1 < nz; j++)
+            {
+                for (int i = 0; i + 1 < nx; i++)
+                {
+                    float x0 = (i0 + i) * cell, z0 = (j0 + j) * cell;
+                    float v00 = e[j * nx + i], v10 = e[j * nx + i + 1];
+                    float v11 = e[(j + 1) * nx + i + 1], v01 = e[(j + 1) * nx + i];
+                    pts.Clear();
+                    if ((v00 < level) != (v10 < level)) pts.Add(new Vec2(x0 + cell * (level - v00) / (v10 - v00), z0));
+                    if ((v10 < level) != (v11 < level)) pts.Add(new Vec2(x0 + cell, z0 + cell * (level - v10) / (v11 - v10)));
+                    if ((v01 < level) != (v11 < level)) pts.Add(new Vec2(x0 + cell * (level - v01) / (v11 - v01), z0 + cell));
+                    if ((v00 < level) != (v01 < level)) pts.Add(new Vec2(x0, z0 + cell * (level - v00) / (v01 - v00)));
+                    if (pts.Count == 2) AddContour(ww, pts[0], pts[1], level);
+                    else if (pts.Count == 4)
+                    {
+                        AddContour(ww, pts[0], pts[1], level);
+                        AddContour(ww, pts[2], pts[3], level);
+                    }
+                }
+            }
+        }
+    }
+
+    static void AddContour(WorldWindow ww, Vec2 a, Vec2 b, int level)
+    {
+        float mx = (a.X + b.X) / 2f, mz = (a.Z + b.Z) / 2f;
+        if (mx < ww.MinX - 200f || mx > ww.MinX + ww.WidthFeet + 200f) return;
+        if (mz < ww.MinZ - 200f || mz > ww.MinZ + ww.DepthFeet + 200f) return;
+        ww.Map.Contours.Add(new ContourSegment(
+            new Vec2(a.X - ww.MinX, a.Z - ww.MinZ),
+            new Vec2(b.X - ww.MinX, b.Z - ww.MinZ), level));
+    }
+
+    // ------------------------------------------------------------------ rivers
+
+    static float TrunkBaseX(uint worldSeed, int t)
+    {
+        float j = Hash.F(worldSeed, t, 811) - 0.5f;
+        return t * TrunkRiverSpacing + j * 12f * Mile;
+    }
+
+    /// <summary>Centreline of a trunk river at a given northing. Always flowing south.</summary>
+    public static float TrunkX(uint worldSeed, int t, float z)
+    {
+        float p1 = Hash.F(worldSeed, t, 821) * 6.2831853f;
+        float p2 = Hash.F(worldSeed, t, 822) * 6.2831853f;
+        float p3 = Hash.F(worldSeed, t, 823) * 6.2831853f;
+        float x = TrunkBaseX(worldSeed, t);
+        x += 1500f * MathF.Sin(z / 9500f + p1);
+        x += 700f * MathF.Sin(z / 3300f + p2);
+        x += 260f * MathF.Sin(z / 1250f + p3);
+        return x;
+    }
+
+    static float TrunkWidth(uint worldSeed, int t, float z)
+    {
+        float p1 = Hash.F(worldSeed, t, 824) * 6.2831853f;
+        float p2 = Hash.F(worldSeed, t, 825) * 6.2831853f;
+        return 58f + 20f * MathF.Sin(z / 17000f + p1) + 10f * MathF.Sin(z / 6000f + p2);
+    }
+
+    static int NearestTrunk(uint worldSeed, float x) => (int)MathF.Round(x / TrunkRiverSpacing);
+
+    static float TrunkDistance(uint worldSeed, float x, float z)
+    {
+        float best = float.MaxValue;
+        int t0 = NearestTrunk(worldSeed, x);
+        for (int t = t0 - 1; t <= t0 + 1; t++)
+            best = MathF.Min(best, MathF.Abs(x - TrunkX(worldSeed, t, z)));
+        return best;
+    }
+
+    /// <summary>Tributary shape: head (north), merge point (south, on the trunk), side.</summary>
+    static void TributaryShape(uint worldSeed, int t, int k,
+        out float zHead, out float zMerge, out float xHead, out float side)
+    {
+        side = ((k & 1) == 0) ? -1f : 1f;
+        zHead = k * TributarySpacing + (Hash.F(worldSeed, t, k, 831) - 0.5f) * 2.4f * Mile;
+        float len = (2.0f + 2.4f * Hash.F(worldSeed, t, k, 832)) * Mile;
+        zMerge = zHead - len;
+        float gap = (2.6f + 5.4f * Hash.F(worldSeed, t, k, 833)) * Mile;
+        xHead = TrunkX(worldSeed, t, zHead) + side * gap;
+    }
+
+    static Vec2 TributaryPoint(uint worldSeed, int t, int k, float u)
+    {
+        TributaryShape(worldSeed, t, k, out float zHead, out float zMerge, out float xHead, out float side);
+        float x1 = TrunkX(worldSeed, t, zMerge);
+        float x = xHead + (x1 - xHead) * u;
+        float z = zHead + (zMerge - zHead) * u;
+        float bow = MathF.Sin(u * MathF.PI) * 800f * -side;
+        return new Vec2(x + bow, z);
+    }
+
+    static void AddRivers(WorldWindow ww, uint worldSeed)
+    {
+        float minX = ww.MinX - 4000f, maxX = ww.MinX + ww.WidthFeet + 4000f;
+        float minZ = ww.MinZ - 4000f, maxZ = ww.MinZ + ww.DepthFeet + 4000f;
+
+        int t0 = (int)MathF.Floor((minX - 20f * Mile) / TrunkRiverSpacing);
+        int t1 = (int)MathF.Floor((maxX + 20f * Mile) / TrunkRiverSpacing);
+        for (int t = t0; t <= t1; t++)
+        {
+            var run = new List<Vec2>();
+            var runs = new List<List<Vec2>> { run };
+            // Sample on a global 240-ft lattice so overlapping windows produce identical ribbons.
+            int m0 = (int)MathF.Floor(minZ / 240f), m1 = (int)MathF.Floor(maxZ / 240f);
+            for (int m = m0; m <= m1; m++)
+            {
+                float z = m * 240f;
+                float x = TrunkX(worldSeed, t, z);
+                if (x < minX || x > maxX) { if (run.Count > 1) runs.Add(run = new List<Vec2>()); else run.Clear(); continue; }
+                run.Add(new Vec2(x, z));
+            }
+            foreach (var r in runs)
+            {
+                if (r.Count < 2) continue;
+                var water = new WaterCourse { WidthFeet = TrunkWidth(worldSeed, t, r[0].Z) };
+                foreach (var p in r) water.Points.Add(new Vec2(p.X - ww.MinX, p.Z - ww.MinZ));
+                ww.Map.Waters.Add(water);
+            }
+            // Bank trees: hashed per global sample so windows agree.
+            for (int m = m0; m <= m1; m++)
+            {
+                float z = m * 240f;
+                float x = TrunkX(worldSeed, t, z);
+                if (x < minX || x > maxX) continue;
+                float w = TrunkWidth(worldSeed, t, z);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    ulong h = Hash.U64(worldSeed, t, m, side, 840);
+                    if (h % 100 >= 46) continue;
+                    float off = w / 2f + 14f + (float)((h >> 8) % 90);
+                    float px = x + side * off + ((h >> 24) % 40) - 20f;
+                    float pz = z + ((h >> 40) % 60) - 30f;
+                    AddBankTree(ww, worldSeed, px, pz);
+                }
+            }
+        }
+
+        // --- tributaries: they run south and merge into the trunk ---------------
+        for (int t = t0; t <= t1; t++)
+        {
+            int k0 = (int)MathF.Floor((minZ - 12f * Mile) / TributarySpacing);
+            int k1 = (int)MathF.Floor((maxZ + 4f * Mile) / TributarySpacing);
+            for (int k = k0; k <= k1; k++)
+            {
+                TributaryShape(worldSeed, t, k, out float zHead, out float zMerge, out _, out _);
+                if (zMerge > maxZ || zHead < minZ) continue;
+                var pts = new List<Vec2>();
+                for (int i = 0; i <= 20; i++)
+                {
+                    float u = i / 20f;
+                    var p = TributaryPoint(worldSeed, t, k, u);
+                    if (p.X < minX - 2000f || p.X > maxX + 2000f) continue;
+                    pts.Add(p);
+                }
+                if (pts.Count < 2) continue;
+                var water = new WaterCourse { WidthFeet = 16f };
+                foreach (var p in pts) water.Points.Add(new Vec2(p.X - ww.MinX, p.Z - ww.MinZ));
+                ww.Map.Waters.Add(water);
+
+                for (int i = 0; i <= 20; i += 2)
+                {
+                    float u = i / 20f;
+                    var p = TributaryPoint(worldSeed, t, k, u);
+                    float w = 7f + 19f * u;
+                    for (int s2 = -1; s2 <= 1; s2 += 2)
+                    {
+                        ulong h = Hash.U64(worldSeed, t, k, i * 2 + (s2 > 0 ? 1 : 0), 841);
+                        if (h % 100 >= 34) continue;
+                        float off = w / 2f + 12f + (float)((h >> 8) % 60);
+                        AddBankTree(ww, worldSeed, p.X + s2 * off + ((h >> 24) % 30) - 15f, p.Z + ((h >> 40) % 40) - 20f);
+                    }
+                }
+            }
+        }
+    }
+
+    static void AddBankTree(WorldWindow ww, uint worldSeed, float x, float z)
+    {
+        if (x < ww.MinX || x > ww.MinX + ww.WidthFeet) return;
+        if (z < ww.MinZ || z > ww.MinZ + ww.DepthFeet) return;
+        if (NearRoad(worldSeed, x, z, 70f)) return;
+        if (NearRail(worldSeed, x, z, 50f)) return;
+        foreach (var t in ww.Towns)
+            if (x > t.MinX - 120f && x < t.MaxX + 120f && z > t.MinZ - 120f && z < t.MaxZ + 120f) return;
+        ww.Map.Trees.Add(new Vec2(x - ww.MinX, z - ww.MinZ));
+    }
+
+    // ------------------------------------------------------------------ rail
+
+    static float RailEWBase(uint worldSeed, int m)
+    {
+        float j = Hash.F(worldSeed, m, 851) - 0.5f;
+        return m * RailSpacing + j * 1.6f * Mile;
+    }
+
+    static float RailEWZ(uint worldSeed, int m, float x)
+    {
+        float p1 = Hash.F(worldSeed, m, 852) * 6.2831853f;
+        float p2 = Hash.F(worldSeed, m, 853) * 6.2831853f;
+        return RailEWBase(worldSeed, m) + 700f * MathF.Sin(x / 11000f + p1) + 300f * MathF.Sin(x / 3700f + p2);
+    }
+
+    static float RailNSBase(uint worldSeed, int n)
+    {
+        float j = Hash.F(worldSeed, n, 861) - 0.5f;
+        return n * RailSpacing + j * 1.6f * Mile;
+    }
+
+    static float RailNSX(uint worldSeed, int n, float z)
+    {
+        float p1 = Hash.F(worldSeed, n, 862) * 6.2831853f;
+        float p2 = Hash.F(worldSeed, n, 863) * 6.2831853f;
+        return RailNSBase(worldSeed, n) + 700f * MathF.Sin(z / 11000f + p1) + 300f * MathF.Sin(z / 3700f + p2);
+    }
+
+    /// <summary>Distance from a point to the nearest rail line (approximate, curve ignored).</summary>
+    static float NearestRailDistance(uint worldSeed, float x, float z)
+    {
+        float best = float.MaxValue;
+        int m = (int)MathF.Round(z / RailSpacing);
+        for (int k = m - 1; k <= m + 1; k++)
+            best = MathF.Min(best, MathF.Abs(z - RailEWBase(worldSeed, k)));
+        int n = (int)MathF.Round(x / RailSpacing);
+        for (int k = n - 1; k <= n + 1; k++)
+            best = MathF.Min(best, MathF.Abs(x - RailNSBase(worldSeed, k)));
+        return best;
+    }
+
+    static bool NearRail(uint worldSeed, float x, float z, float pad)
+    {
+        int m = (int)MathF.Round(z / RailSpacing);
+        for (int k = m - 1; k <= m + 1; k++)
+            if (MathF.Abs(z - RailEWBase(worldSeed, k)) < pad) return true;
+        int n = (int)MathF.Round(x / RailSpacing);
+        for (int k = n - 1; k <= n + 1; k++)
+            if (MathF.Abs(x - RailNSBase(worldSeed, k)) < pad) return true;
+        return false;
+    }
+
+    static void AddRail(WorldWindow ww, uint worldSeed)
+    {
+        float minX = ww.MinX - 2000f, maxX = ww.MinX + ww.WidthFeet + 2000f;
+        float minZ = ww.MinZ - 2000f, maxZ = ww.MinZ + ww.DepthFeet + 2000f;
+
+        int m0 = (int)MathF.Floor((minZ - 12f * Mile) / RailSpacing);
+        int m1 = (int)MathF.Floor((maxZ + 12f * Mile) / RailSpacing);
+        for (int m = m0; m <= m1; m++)
+        {
+            var line = new RailLine();
+            int i0 = (int)MathF.Floor(minX / 600f), i1 = (int)MathF.Floor(maxX / 600f);
+            for (int i = i0; i <= i1; i++)
+            {
+                float x = i * 600f;
+                line.Points.Add(new Vec2(x - ww.MinX, RailEWZ(worldSeed, m, x) - ww.MinZ));
+            }
+            if (line.Points.Count >= 2) ww.Map.Rails.Add(line);
+        }
+
+        int n0 = (int)MathF.Floor((minX - 12f * Mile) / RailSpacing);
+        int n1 = (int)MathF.Floor((maxX + 12f * Mile) / RailSpacing);
+        for (int n = n0; n <= n1; n++)
+        {
+            var line = new RailLine();
+            int j0 = (int)MathF.Floor(minZ / 600f), j1 = (int)MathF.Floor(maxZ / 600f);
+            for (int j = j0; j <= j1; j++)
+            {
+                float z = j * 600f;
+                line.Points.Add(new Vec2(RailNSX(worldSeed, n, z) - ww.MinX, z - ww.MinZ));
+            }
+            if (line.Points.Count >= 2) ww.Map.Rails.Add(line);
+        }
+    }
+
+    // ------------------------------------------------------------------ roads
+
+    /// <summary>True when the given mile line is missing from the network (rare exception).</summary>
+    static bool RoadLineAbsent(uint worldSeed, bool ew, int line)
+    {
+        ulong h = Hash.U64(worldSeed, line, ew ? 901 : 902);
+        return h % 1000 < 18;
+    }
+
+    /// <summary>True when the given gravel mile line has been paved (rare exception).</summary>
+    static bool RoadLinePaved(uint worldSeed, bool ew, int line)
+    {
+        ulong h = Hash.U64(worldSeed, line, ew ? 903 : 904);
+        return h % 1000 < 22;
+    }
+
+    /// <summary>The paved road corridors. They run on the section grid, every 10 miles.</summary>
+    static float CorridorZ(uint worldSeed, int corridor) => corridor * PavedSpacing;
+    static float CorridorX(uint worldSeed, int column) => column * PavedSpacing;
+
+    static bool NearRoad(uint worldSeed, float x, float z, float pad)
+    {
+        int m = (int)MathF.Round(z / SectionFeet);
+        for (int k = m - 1; k <= m + 1; k++)
+        {
+            if (RoadLineAbsent(worldSeed, true, k)) continue;
+            float half = RoadLinePaved(worldSeed, true, k) ? RoadHalfPaved : RoadHalfGravel;
+            if (MathF.Abs(z - k * SectionFeet) < half + pad) return true;
+        }
+        int n = (int)MathF.Round(x / SectionFeet);
+        for (int k = n - 1; k <= n + 1; k++)
+        {
+            if (RoadLineAbsent(worldSeed, false, k)) continue;
+            float half = RoadLinePaved(worldSeed, false, k) ? RoadHalfPaved : RoadHalfGravel;
+            if (MathF.Abs(x - k * SectionFeet) < half + pad) return true;
+        }
+        return false;
+    }
+
+    static List<(float a, float b)> Subtract(List<(float a, float b)> spans, float a, float b)
+    {
+        var result = new List<(float, float)>();
+        foreach (var s in spans)
+        {
+            if (b <= s.a || a >= s.b) { result.Add(s); continue; }
+            if (a > s.a) result.Add((s.a, MathF.Min(a, s.b)));
+            if (b < s.b) result.Add((MathF.Max(b, s.a), s.b));
+        }
+        return result;
+    }
+
+    static void AddRoads(WorldWindow ww, uint worldSeed, List<WorldTown> towns)
+    {
+        var map = ww.Map;
+        float minX = ww.MinX, maxX = ww.MinX + ww.WidthFeet;
+        float minZ = ww.MinZ, maxZ = ww.MinZ + ww.DepthFeet;
+
+        // Where towns are, county roads stop on a town street instead of running through.
+        var clips = new List<(float x0, float z0, float x1, float z1, float highwayZ)>();
+        foreach (var t in towns)
+            foreach (var p in t.Parts)
+                foreach (var r in p.RoadClip)
+                    clips.Add((r.x0, r.z0, r.x1, r.z1, t.HighwayZ));
+
+        // --- paved corridors (the roads the towns live on) ----------------------
+        // Corridors sit on the global 10-mile lattice, so the index range comes from
+        // the absolute window bounds, not from a window-relative one.
+        int c0 = (int)MathF.Floor(minZ / PavedSpacing);
+        int c1 = (int)MathF.Floor(maxZ / PavedSpacing);
+        for (int c = c0; c <= c1; c++)
+        {
+            float z = CorridorZ(worldSeed, c);
+            var spans = new List<(float a, float b)> { (minX, maxX) };
+            foreach (var b in clips)
+            {
+                // The corridor a town sits on runs through it; the others stop short.
+                if (MathF.Abs(b.highwayZ - z) < 200f) continue;
+                if (b.z1 >= z - RoadHalfPaved && b.z0 <= z + RoadHalfPaved)
+                    spans = Subtract(spans, b.x0, b.x1);
+            }
+            foreach (var s in spans)
+            {
+                if (s.b - s.a < 1f) continue;
+                map.Roads.Add(new MapRect(s.a - ww.MinX, z - RoadHalfPaved - ww.MinZ, s.b - s.a, RoadHalfPaved * 2f));
+                map.RoadDashed.Add(true);
+                map.RoadPaved.Add(true);
+            }
+        }
+
+        int d0 = (int)MathF.Floor(minX / PavedSpacing);
+        int d1 = (int)MathF.Floor(maxX / PavedSpacing);
+        for (int c = d0; c <= d1; c++)
+        {
+            float x = CorridorX(worldSeed, c);
+            var spans = new List<(float a, float b)> { (minZ, maxZ) };
+            foreach (var b in clips)
+            {
+                if (b.x1 >= x - RoadHalfPaved && b.x0 <= x + RoadHalfPaved)
+                    spans = Subtract(spans, b.z0, b.z1);
+            }
+            foreach (var s in spans)
+            {
+                if (s.b - s.a < 1f) continue;
+                map.Roads.Add(new MapRect(x - RoadHalfPaved - ww.MinX, s.a - ww.MinZ, RoadHalfPaved * 2f, s.b - s.a));
+                map.RoadDashed.Add(false);
+                map.RoadPaved.Add(true);
+            }
+        }
+
+        // --- gravel section roads on every mile line ---------------------------
+        int ix0 = (int)MathF.Ceiling(minX / SectionFeet);
+        int ix1 = (int)MathF.Floor(maxX / SectionFeet);
+        for (int ix = ix0; ix <= ix1; ix++)
+        {
+            if (RoadLineAbsent(worldSeed, false, ix)) continue;
+            float x = ix * SectionFeet;
+            bool paved = RoadLinePaved(worldSeed, false, ix);
+            float half = paved ? RoadHalfPaved : RoadHalfGravel;
+            var spans = new List<(float a, float b)> { (minZ, maxZ) };
+            foreach (var b in clips)
+            {
+                if (b.x1 >= x - half && b.x0 <= x + half)
+                    spans = Subtract(spans, b.z0, b.z1);
+            }
+            foreach (var s in spans)
+            {
+                if (s.b - s.a < 1f) continue;
+                map.Roads.Add(new MapRect(x - half - ww.MinX, s.a - ww.MinZ, half * 2f, s.b - s.a));
+                map.RoadDashed.Add(false);
+                map.RoadPaved.Add(paved);
+            }
+        }
+
+        int iz0 = (int)MathF.Ceiling(minZ / SectionFeet);
+        int iz1 = (int)MathF.Floor(maxZ / SectionFeet);
+        for (int iz = iz0; iz <= iz1; iz++)
+        {
+            if (RoadLineAbsent(worldSeed, true, iz)) continue;
+            float z = iz * SectionFeet;
+            bool paved = RoadLinePaved(worldSeed, true, iz);
+            float half = paved ? RoadHalfPaved : RoadHalfGravel;
+            var spans = new List<(float a, float b)> { (minX, maxX) };
+            foreach (var b in clips)
+            {
+                if (b.z1 >= z - half && b.z0 <= z + half)
+                    spans = Subtract(spans, b.x0, b.x1);
+            }
+            foreach (var s in spans)
+            {
+                if (s.b - s.a < 1f) continue;
+                map.Roads.Add(new MapRect(s.a - ww.MinX, z - half - ww.MinZ, s.b - s.a, half * 2f));
+                map.RoadDashed.Add(false);
+                map.RoadPaved.Add(paved);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ town field
 
-    enum TownClass { None, Hamlet, Boyden, Hull }
+    enum TownClass { None, Crossroads, Hamlet, Village, Town }
 
     sealed class TownSite
     {
         public int Corridor;
         public int Slot;
         public TownClass Class;
-        public float RawX;
         public float CenterX;
         public float HighwayZ;
         public uint Seed;
         public ulong Priority;
+        public WorldTownLayout Layout;
     }
+
+    static string SizeName(TownClass c) =>
+        c == TownClass.Town ? "town" :
+        c == TownClass.Village ? "village" :
+        c == TownClass.Hamlet ? "hamlet" : "crossroads";
+
+    static string ClassLabel(TownClass c) =>
+        c == TownClass.Town ? "TOWN" :
+        c == TownClass.Village ? "VILLAGE" :
+        c == TownClass.Hamlet ? "HAMLET" : "CROSSROADS";
+
+    /// <summary>Distance from a point to the nearest rail line, in feet.</summary>
+    static float RailDistance(uint worldSeed, float x, float z) => NearestRailDistance(worldSeed, x, z);
 
     static TownSite RawSite(uint worldSeed, int corridor, int slot)
     {
         ulong h = Hash.U64(worldSeed, corridor, slot, 11);
         var rng = new Rng((uint)h);
-        float roll = rng.NextFloat();
-        TownClass cls = roll < 0.10f ? TownClass.Hull
-            : roll < 0.40f ? TownClass.Boyden
-            : roll < 0.76f ? TownClass.Hamlet
-            : TownClass.None;
-        float jitter = rng.Range(-0.15f, 0.15f) * TownSlotFeet;
-        float rawX = (slot + 0.5f) * TownSlotFeet + jitter;
+        float highwayZ = CorridorZ(worldSeed, corridor);
+        // Towns sit on the paved corridor, midway between the north-south paved roads.
+        float rawX = (slot + 0.5f) * TownSlotFeet + rng.Range(-0.035f, 0.035f) * TownSlotFeet;
+        float centerX = (MathF.Floor(rawX / SectionFeet) + 0.5f) * SectionFeet;
+
+        // A settlement wants the railroad. Towns only spring up where a rail line runs
+        // close by, which is why the county is full of rail towns and nothing else.
+        bool nearRail = RailDistance(worldSeed, centerX, highwayZ) < 9f * Mile;
+        TownClass cls = TownClass.None;
+        if (nearRail)
+        {
+            float roll = rng.NextFloat();
+            // The ladder: crossroads are common, the big town is rare (one per ~100 mi).
+            cls = roll < 0.045f ? TownClass.Town
+                : roll < 0.135f ? TownClass.Village
+                : roll < 0.320f ? TownClass.Hamlet
+                : roll < 0.640f ? TownClass.Crossroads
+                : TownClass.None;
+        }
+
+        // The town never sits in the middle of a river.
+        if (cls != TownClass.None && TrunkDistance(worldSeed, centerX, highwayZ) < 1200f)
+            cls = TownClass.None;
+
+        float lay = rng.NextFloat();
+        var layout = lay < 0.46f ? WorldTownLayout.North
+            : lay < 0.70f ? WorldTownLayout.South : WorldTownLayout.Both;
+
         uint seed = rng.NextUInt();
         ulong priority = ((ulong)rng.NextUInt() << 32) ^ rng.NextUInt();
-        float highwayZ = corridor * HighwaySpacing;
-        // Towns are centred in a section so no county grid road cuts the block grid.
-        float centerX = (MathF.Floor(rawX / SectionFeet) + 0.5f) * SectionFeet;
         return new TownSite
         {
-            Corridor = corridor, Slot = slot, Class = cls, RawX = rawX,
-            CenterX = centerX, HighwayZ = highwayZ, Seed = seed, Priority = priority,
+            Corridor = corridor, Slot = slot, Class = cls, CenterX = centerX, HighwayZ = highwayZ,
+            Seed = seed, Priority = priority, Layout = layout,
         };
     }
 
@@ -244,169 +801,226 @@ public static class WorldMap
     {
         var s = RawSite(worldSeed, corridor, slot);
         if (s.Class == TownClass.None) return null;
-        // Hash-based priority suppression: the strongest candidate inside 10 mi survives.
-        // This is a query, not a global pass — the same answer from any window.
-        for (int dj = -1; dj <= 1; dj += 2)
+        // Priority suppression in the full neighbourhood: no town within 10 miles.
+        for (int dk = -1; dk <= 1; dk++)
         {
-            var n = RawSite(worldSeed, corridor, slot + dj);
-            if (n.Class == TownClass.None) continue;
-            if (MathF.Abs(n.CenterX - s.CenterX) < MinTownSpacingFeet && Beats(n, s)) return null;
+            for (int di = -1; di <= 1; di++)
+            {
+                if (dk == 0 && di == 0) continue;
+                var n = RawSite(worldSeed, corridor + dk, slot + di);
+                if (n.Class == TownClass.None) continue;
+                float dx = n.CenterX - s.CenterX, dz = n.HighwayZ - s.HighwayZ;
+                if (dx * dx + dz * dz < MinTownSpacingFeet * MinTownSpacingFeet && Beats(n, s)) return null;
+            }
         }
         return s;
     }
 
-    static string SizeName(TownClass c) =>
-        c == TownClass.Hull ? "hull" : c == TownClass.Boyden ? "boyden" : "hamlet";
-
-    static string ClassName(TownClass c) =>
-        c == TownClass.Hull ? "HULL" : c == TownClass.Boyden ? "BOYDEN" : "HAMLET";
-
-    /// <summary>Towns whose footprint overlaps the query rectangle (expanded a little).</summary>
-    static List<WorldTown> TownsNear(uint worldSeed, float minX, float maxX, float minZ, float maxZ)
+    static List<TownSite> TownSitesNear(uint worldSeed, float minX, float maxX, float minZ, float maxZ)
     {
-        var result = new List<WorldTown>();
-        int k0 = (int)MathF.Floor((minZ - 4000f) / HighwaySpacing);
-        int k1 = (int)MathF.Floor((maxZ + 4000f) / HighwaySpacing);
-        int i0 = (int)MathF.Floor((minX - 12000f) / TownSlotFeet);
-        int i1 = (int)MathF.Floor((maxX + 12000f) / TownSlotFeet);
+        var result = new List<TownSite>();
+        int k0 = (int)MathF.Floor((minZ - 16000f) / PavedSpacing);
+        int k1 = (int)MathF.Floor((maxZ + 16000f) / PavedSpacing);
+        int i0 = (int)MathF.Floor((minX - 16000f) / TownSlotFeet);
+        int i1 = (int)MathF.Floor((maxX + 16000f) / TownSlotFeet);
         for (int k = k0; k <= k1; k++)
-        {
             for (int i = i0; i <= i1; i++)
             {
                 var site = VisibleSite(worldSeed, k, i);
                 if (site == null) continue;
-                var wt = MaterializeTown(worldSeed, site);
-                if (wt.MaxX < minX - 200f || wt.MinX > maxX + 200f ||
-                    wt.MaxZ < minZ - 200f || wt.MinZ > maxZ + 200f) continue;
-                result.Add(wt);
+                if (site.CenterX < minX - 20000f || site.CenterX > maxX + 20000f) continue;
+                result.Add(site);
             }
-        }
         return result;
+    }
+
+    static List<TownSite> CollectTownSites(uint worldSeed, WorldWindow ww)
+    {
+        var sites = TownSitesNear(worldSeed, ww.MinX - 20000f, ww.MinX + ww.WidthFeet + 20000f,
+            ww.MinZ - 16000f, ww.MinZ + ww.DepthFeet + 16000f);
+        // Only towns close enough to touch this window are built.
+        return sites.Where(s => s.CenterX > ww.MinX - 22000f && s.CenterX < ww.MinX + ww.WidthFeet + 22000f
+            && s.HighwayZ > ww.MinZ - 8000f && s.HighwayZ < ww.MinZ + ww.DepthFeet + 8000f).ToList();
     }
 
     static WorldTown MaterializeTown(uint worldSeed, TownSite site)
     {
-        var town = SmallTownGenerator.Generate(site.Seed, SizeName(site.Class), detail: false);
-        float ox = site.CenterX - town.WidthFeet / 2f;
-        float oz = site.HighwayZ - RoadHalf;
-        var b = TownContentBounds(town, ox, oz);
-        return new WorldTown
+        var town = new WorldTown
         {
             Corridor = site.Corridor,
             Slot = site.Slot,
             SizeName = SizeName(site.Class),
-            ClassLabel = ClassName(site.Class),
-            Name = town.PlaceName,
+            ClassLabel = ClassLabel(site.Class),
             TownSeed = site.Seed,
             CenterX = site.CenterX,
             HighwayZ = site.HighwayZ,
-            MinX = b.minX, MinZ = b.minZ, MaxX = b.maxX, MaxZ = b.maxZ,
-            Houses = town.Houses.Count,
+            Layout = site.Layout,
         };
+
+        void AddPart(uint seed, TownClass cls, bool mirrored)
+        {
+            var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false);
+            float ox = site.CenterX - plan.WidthFeet / 2f;
+            float oz = site.HighwayZ - HighwayWidth / 2f;
+            var part = new WorldTownPart { Plan = plan, Mirrored = mirrored, OriginX = ox, OriginZ = oz };
+
+            // Built blocks (world coords).
+            float bMinX = ox + plan.BuiltMinX, bMaxX = ox + plan.BuiltMaxX;
+            float bMinZ, bMaxZ;
+            if (mirrored)
+            {
+                bMinZ = oz + HighwayWidth - plan.BuiltMaxZ;
+                bMaxZ = oz + HighwayWidth - plan.BuiltMinZ;
+            }
+            else
+            {
+                bMinZ = oz + plan.BuiltMinZ;
+                bMaxZ = oz + plan.BuiltMaxZ;
+            }
+            part.BlockMinX = bMinX; part.BlockMaxX = bMaxX;
+            part.BlockMinZ = bMinZ; part.BlockMaxZ = bMaxZ;
+
+            // County roads stop on the town's perimeter street, so they meet it.
+            if (mirrored)
+            {
+                float z0 = oz + HighwayWidth - plan.LoopMaxZ;
+                float z1 = oz + HighwayWidth - plan.LoopMinZ;
+                part.RoadClip.Add((ox + plan.LoopMinX, MathF.Min(z0, z1), ox + plan.LoopMaxX, MathF.Max(z0, z1)));
+            }
+            else
+            {
+                part.RoadClip.Add((ox + plan.LoopMinX, oz + plan.LoopMinZ, ox + plan.LoopMaxX, oz + plan.LoopMaxZ));
+            }
+            town.Parts.Add(part);
+        }
+
+        if (site.Layout == WorldTownLayout.Both)
+        {
+            AddPart(site.Seed, site.Class, false);
+            var southClass = site.Class == TownClass.Town ? TownClass.Village
+                : site.Class == TownClass.Village ? TownClass.Hamlet : TownClass.Crossroads;
+            AddPart(site.Seed ^ 0x51ED270Bu, southClass, true);
+        }
+        else if (site.Layout == WorldTownLayout.South)
+        {
+            AddPart(site.Seed, site.Class, true);
+        }
+        else
+        {
+            AddPart(site.Seed, site.Class, false);
+        }
+
+        // Footprint of the whole town, for labels and road clipping.
+        float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
+        foreach (var p in town.Parts)
+        {
+            minX = MathF.Min(minX, p.BlockMinX);
+            maxX = MathF.Max(maxX, p.BlockMaxX);
+            minZ = MathF.Min(minZ, p.BlockMinZ);
+            maxZ = MathF.Max(maxZ, p.BlockMaxZ);
+        }
+        town.MinX = minX; town.MaxX = maxX; town.MinZ = minZ; town.MaxZ = maxZ;
+        town.Name = town.Parts[0].Plan.PlaceName;
+        return town;
     }
 
-    static void AddTowns(WorldWindow ww, uint worldSeed)
+    static void StampTowns(WorldWindow ww, List<WorldTown> towns)
     {
-        var towns = TownsNear(worldSeed, ww.MinX, ww.MinX + ww.WidthFeet, ww.MinZ, ww.MinZ + ww.DepthFeet);
         foreach (var wt in towns)
         {
             ww.Towns.Add(wt);
-            var town = SmallTownGenerator.Generate(wt.TownSeed, wt.SizeName, detail: false);
-            float ox = wt.CenterX - town.WidthFeet / 2f;
-            float oz = wt.HighwayZ - RoadHalf;
-            StampTown(ww, town, wt, ox, oz);
+            int houses = 0;
+            foreach (var part in wt.Parts) houses += StampTown(ww, part);
+            wt.Houses = houses;
+            // Label above the town's north edge.
+            ww.Map.Labels.Add(new MapLabel
+            {
+                Position = new Vec2(wt.CenterX - ww.MinX, wt.MaxZ + 40f - ww.MinZ),
+                Text = $"{wt.Name} · {wt.ClassLabel}",
+                Large = true,
+            });
         }
     }
 
-    /// <summary>World-space bounds of everything the world stamper will keep from a town.</summary>
-    static (float minX, float minZ, float maxX, float maxZ) TownContentBounds(MapPlan town, float ox, float oz)
-    {
-        float minX = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxZ = float.MinValue;
-        void B(float x, float z) { minX = MathF.Min(minX, x); maxX = MathF.Max(maxX, x); minZ = MathF.Min(minZ, z); maxZ = MathF.Max(maxZ, z); }
-        void R(MapRect r) { B(ox + r.X, oz + r.Z); B(ox + r.X + r.W, oz + r.Z + r.H); }
-
-        for (int i = 0; i < town.Roads.Count; i++)
-        {
-            var r = town.Roads[i];
-            if (IsTownHighway(r)) continue;
-            R(r);
-        }
-        foreach (var r in town.Alleys) R(r);
-        foreach (var r in town.LotLines) R(r);
-        foreach (var h in town.Houses)
-        {
-            if (CenterZ(h.Plan) < -1f) continue;
-            foreach (var p in h.Plan.Footprint) B(ox + p.X, oz + p.Z);
-        }
-        foreach (var o in town.Outbuildings)
-        {
-            if (o.Center.Z < -1f) continue;
-            float hw = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet / 2f : o.WidthFeet / 2f;
-            float hd = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet / 2f : o.DepthFeet / 2f;
-            B(ox + o.Center.X - hw, oz + o.Center.Z - hd);
-            B(ox + o.Center.X + hw, oz + o.Center.Z + hd);
-        }
-        foreach (var t in town.Trees) B(ox + t.X, oz + t.Z);
-        foreach (var d in town.Driveways.Concat(town.Walks))
-            foreach (var p in d.Points)
-                if (p.Z >= -1f) B(ox + p.X, oz + p.Z);
-        foreach (var b in town.Bulbs) { B(ox + b.Center.X - b.RadiusFeet, oz + b.Center.Z - b.RadiusFeet); B(ox + b.Center.X + b.RadiusFeet, oz + b.Center.Z + b.RadiusFeet); }
-        if (minX == float.MaxValue) return (ox, oz, ox + town.WidthFeet, oz + town.DepthFeet);
-        return (minX, minZ, maxX, maxZ);
-    }
-
-    static float CenterZ(HousePlan h) => h.Footprint.Select(p => p.Z).Average();
-
-    static bool IsTownHighway(MapRect r) =>
-        MathF.Abs(r.Z) < 0.5f && MathF.Abs(r.H - 66f) < 0.5f;
-
-    static void StampTown(WorldWindow ww, MapPlan town, WorldTown wt, float oxWorld, float ozWorld)
+    /// <summary>Stamp one side of a town into the window. Returns the house count.</summary>
+    static int StampTown(WorldWindow ww, WorldTownPart part)
     {
         var map = ww.Map;
-        float ox = oxWorld - ww.MinX;
-        float oz = ozWorld - ww.MinZ;
+        var town = part.Plan;
+        float ox = part.OriginX - ww.MinX;
+        float oz = part.OriginZ - ww.MinZ;
+        bool mir = part.Mirrored;
+        int houses = 0;
+
+        // Local z -> world z. Mirrored parts reflect across the highway band.
+        float WZ(float localZ) => mir ? oz + (HighwayWidth - localZ) : oz + localZ;
+        bool Keep(float localZ) => localZ >= HighwayWidth - 1f;
 
         for (int i = 0; i < town.Roads.Count; i++)
         {
             var r = town.Roads[i];
-            if (IsTownHighway(r)) continue;    // the continuous global highway is drawn once
-            map.Roads.Add(new MapRect(r.X + ox, r.Z + oz, r.W, r.H));
+            if (IsTownHighway(r)) continue;      // the paved corridor is drawn once, globally
+            if (!Keep(r.Z)) continue;
+            float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
+            map.Roads.Add(new MapRect(r.X + ox, MathF.Min(z0, z1), r.W, MathF.Abs(z1 - z0)));
             map.RoadDashed.Add(i < town.RoadDashed.Count && town.RoadDashed[i]);
+            map.RoadPaved.Add(true);
         }
         foreach (var r in town.Alleys)
-            map.Alleys.Add(new MapRect(r.X + ox, r.Z + oz, r.W, r.H));
+        {
+            if (!Keep(r.Z)) continue;
+            float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
+            map.Alleys.Add(new MapRect(r.X + ox, MathF.Min(z0, z1), r.W, MathF.Abs(z1 - z0)));
+        }
         foreach (var r in town.LotLines)
-            map.LotLines.Add(new MapRect(r.X + ox, r.Z + oz, r.W, r.H));
+        {
+            if (!Keep(r.Z)) continue;
+            float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
+            map.LotLines.Add(new MapRect(r.X + ox, MathF.Min(z0, z1), r.W, MathF.Abs(z1 - z0)));
+        }
         foreach (var w in town.Walks)
         {
-            if (!w.Points.Any(p => p.Z >= -1f)) continue;
             var d = new Driveway { WidthFeet = w.WidthFeet, Surface = w.Surface };
-            foreach (var p in w.Points) d.Points.Add(new Vec2(p.X + ox, p.Z + oz));
-            map.Walks.Add(d);
+            bool any = false;
+            foreach (var p in w.Points)
+            {
+                if (!Keep(p.Z)) continue;
+                d.Points.Add(new Vec2(p.X + ox, WZ(p.Z)));
+                any = true;
+            }
+            if (any) map.Walks.Add(d);
         }
         foreach (var d0 in town.Driveways)
         {
-            if (!d0.Points.Any(p => p.Z >= -1f)) continue;
             var d = new Driveway { WidthFeet = d0.WidthFeet, Surface = d0.Surface };
-            foreach (var p in d0.Points) d.Points.Add(new Vec2(p.X + ox, p.Z + oz));
-            map.Driveways.Add(d);
+            bool any = false;
+            foreach (var p in d0.Points)
+            {
+                if (!Keep(p.Z)) continue;
+                d.Points.Add(new Vec2(p.X + ox, WZ(p.Z)));
+                any = true;
+            }
+            if (any) map.Driveways.Add(d);
         }
         foreach (var h in town.Houses)
         {
-            if (CenterZ(h.Plan) < -1f) continue;    // south-of-highway fringe: not in world mode
+            float cz = h.Plan.Footprint.Select(p => p.Z).Average();
+            if (!Keep(cz)) continue;
+            var plan = mir ? h.Plan.FlipZ().OffsetCopy(0, HighwayWidth) : h.Plan;
             map.Houses.Add(new PositionedHouse
             {
-                Plan = h.Plan.OffsetCopy(ox, oz),
-                MirroredZ = h.MirroredZ,
+                Plan = plan.OffsetCopy(ox, oz),
+                MirroredZ = mir ? !h.MirroredZ : h.MirroredZ,
             });
+            houses++;
         }
         foreach (var o in town.Outbuildings)
         {
-            if (o.Center.Z < -1f) continue;
+            if (!Keep(o.Center.Z)) continue;
             map.Outbuildings.Add(new Outbuilding
             {
                 Kind = o.Kind,
-                Center = new Vec2(o.Center.X + ox, o.Center.Z + oz),
+                Center = new Vec2(o.Center.X + ox, WZ(o.Center.Z)),
                 WidthFeet = o.WidthFeet,
                 DepthFeet = o.DepthFeet,
                 DiameterFeet = o.DiameterFeet,
@@ -414,17 +1028,20 @@ public static class WorldMap
             });
         }
         foreach (var t in town.Trees)
-            map.Trees.Add(new Vec2(t.X + ox, t.Z + oz));
-        foreach (var b in town.Bulbs)
-            map.Bulbs.Add(new RoadBulb { Center = new Vec2(b.Center.X + ox, b.Center.Z + oz), RadiusFeet = b.RadiusFeet, Fill = b.Fill });
-
-        map.Labels.Add(new MapLabel
         {
-            Position = new Vec2(wt.CenterX - ww.MinX, wt.MaxZ - ww.MinZ - 26f),
-            Text = $"{wt.Name} · {wt.ClassLabel}",
-            Large = true,
-        });
+            if (!Keep(t.Z)) continue;
+            map.Trees.Add(new Vec2(t.X + ox, WZ(t.Z)));
+        }
+        foreach (var b in town.Bulbs)
+        {
+            if (!Keep(b.Center.Z)) continue;
+            map.Bulbs.Add(new RoadBulb { Center = new Vec2(b.Center.X + ox, WZ(b.Center.Z)), RadiusFeet = b.RadiusFeet, Fill = b.Fill });
+        }
+        return houses;
     }
+
+    static bool IsTownHighway(MapRect r) =>
+        MathF.Abs(r.Z) < 0.5f && MathF.Abs(r.H - HighwayWidth) < 0.5f;
 
     // ------------------------------------------------------------------ fields
 
@@ -454,159 +1071,6 @@ public static class WorldMap
                             xs[qx] - ww.MinX, zs[qz] - ww.MinZ,
                             xs[qx + 1] - xs[qx], zs[qz + 1] - zs[qz]));
                         ww.Map.FieldFills.Add(FieldPalette[color]);
-                    }
-                }
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ roads
-
-    static bool IsHighway(float z)
-    {
-        float k = z / HighwaySpacing;
-        return MathF.Abs(k - MathF.Round(k)) < 0.001f;
-    }
-
-    static string HighwayName(int corridor)
-    {
-        if (corridor == 0) return "HWY 18";
-        int i = (int)((uint)(corridor * 37 + 11) % (uint)HighwayNames.Length);
-        return HighwayNames[i];
-    }
-
-    static List<(float a, float b)> Subtract(List<(float a, float b)> spans, float a, float b)
-    {
-        var result = new List<(float, float)>();
-        foreach (var s in spans)
-        {
-            if (b <= s.a || a >= s.b) { result.Add(s); continue; }
-            if (a > s.a) result.Add((s.a, MathF.Min(a, s.b)));
-            if (b < s.b) result.Add((MathF.Max(b, s.a), s.b));
-        }
-        return result;
-    }
-
-    static void AddRoads(WorldWindow ww, uint worldSeed)
-    {
-        var map = ww.Map;
-        float minX = ww.MinX, maxX = ww.MinX + ww.WidthFeet;
-        float minZ = ww.MinZ, maxZ = ww.MinZ + ww.DepthFeet;
-
-        int ix0 = (int)MathF.Ceiling(minX / SectionFeet);
-        int ix1 = (int)MathF.Floor(maxX / SectionFeet);
-        for (int ix = ix0; ix <= ix1; ix++)
-        {
-            float x = ix * SectionFeet;
-            var spans = new List<(float a, float b)> { (minZ, maxZ) };
-            foreach (var t in ww.Towns)
-            {
-                if (t.MaxX >= x - RoadHalf && t.MinX <= x + RoadHalf)
-                    spans = Subtract(spans, t.MinZ, t.MaxZ);
-            }
-            foreach (var s in spans)
-            {
-                if (s.b - s.a < 1f) continue;
-                map.Roads.Add(new MapRect(x - RoadHalf - ww.MinX, s.a - ww.MinZ, RoadHalf * 2f, s.b - s.a));
-                map.RoadDashed.Add(false);
-            }
-        }
-
-        int iz0 = (int)MathF.Ceiling(minZ / SectionFeet);
-        int iz1 = (int)MathF.Floor(maxZ / SectionFeet);
-        for (int iz = iz0; iz <= iz1; iz++)
-        {
-            float z = iz * SectionFeet;
-            bool highway = IsHighway(z);
-            var spans = new List<(float a, float b)> { (minX, maxX) };
-            foreach (var t in ww.Towns)
-            {
-                if (highway && MathF.Abs(t.HighwayZ - z) < 0.5f) continue;   // through-road
-                if (t.MaxZ >= z - RoadHalf && t.MinZ <= z + RoadHalf)
-                    spans = Subtract(spans, t.MinX, t.MaxX);
-            }
-            foreach (var s in spans)
-            {
-                if (s.b - s.a < 1f) continue;
-                map.Roads.Add(new MapRect(s.a - ww.MinX, z - RoadHalf - ww.MinZ, s.b - s.a, RoadHalf * 2f));
-                map.RoadDashed.Add(highway);
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ creeks
-
-    static float CreekX(uint seed, int band, float z)
-    {
-        ulong h = Hash.U64(seed, band, 77);
-        float p1 = ((h & 0xFFFF) / 65535f) * MathF.PI * 2f;
-        float p2 = (((h >> 16) & 0xFFFF) / 65535f) * MathF.PI * 2f;
-        return band * CreekSpacing
-            + 2600f * MathF.Sin(z / 7000f + p1)
-            + 900f * MathF.Sin(z / 2300f + p2);
-    }
-
-    static float CreekWidth(uint seed, int band)
-    {
-        ulong h = Hash.U64(seed, band, 78);
-        return 42f + (h % 34);
-    }
-
-    static bool InsideTown(List<WorldTown> towns, float x, float z, float pad)
-    {
-        foreach (var t in towns)
-            if (x >= t.MinX - pad && x <= t.MaxX + pad && z >= t.MinZ - pad && z <= t.MaxZ + pad)
-                return true;
-        return false;
-    }
-
-    static bool NearSectionRoad(float x, float z, float pad)
-    {
-        float dx = MathF.Abs(x / SectionFeet - MathF.Round(x / SectionFeet)) * SectionFeet;
-        float dz = MathF.Abs(z / SectionFeet - MathF.Round(z / SectionFeet)) * SectionFeet;
-        return dx < pad || dz < pad;
-    }
-
-    static void AddCreeks(WorldWindow ww, uint worldSeed)
-    {
-        int c0 = (int)MathF.Floor((ww.MinX - 5000f) / CreekSpacing);
-        int c1 = (int)MathF.Floor((ww.MinX + ww.WidthFeet + 5000f) / CreekSpacing);
-        for (int c = c0; c <= c1; c++)
-        {
-            float width = CreekWidth(worldSeed, c);
-            var run = new List<Vec2>();
-            var runs = new List<List<Vec2>> { run };
-            for (float z = ww.MinZ - 2000f; z <= ww.MinZ + ww.DepthFeet + 2000f; z += 380f)
-            {
-                float x = CreekX(worldSeed, c, z);
-                if (InsideTown(ww.Towns, x, z, 140f))
-                {
-                    if (run.Count >= 2) { run = new List<Vec2>(); runs.Add(run); }
-                    else run.Clear();
-                    continue;
-                }
-                run.Add(new Vec2(x, z));
-            }
-            foreach (var r in runs)
-            {
-                if (r.Count < 2) continue;
-                var water = new WaterCourse { WidthFeet = width };
-                foreach (var p in r) water.Points.Add(new Vec2(p.X - ww.MinX, p.Z - ww.MinZ));
-                ww.Map.Waters.Add(water);
-
-                // Tree-lined banks: the Floyd River / West Branch pattern. Never close to a
-                // section road, and never inside a town (runs already exclude towns).
-                var tr = new Rng(Hash.U32(worldSeed, c, 79));
-                for (int i = 0; i < r.Count; i += 2)
-                {
-                    for (int side = -1; side <= 1; side += 2)
-                    {
-                        if (!tr.Chance(0.62f)) continue;
-                        float off = width / 2f + tr.Range(18f, 85f);
-                        var p = new Vec2(r[i].X + side * off + tr.Range(-12f, 12f), r[i].Z + tr.Range(-40f, 40f));
-                        if (InsideTown(ww.Towns, p.X, p.Z, 80f)) continue;
-                        if (NearSectionRoad(p.X, p.Z, 42f)) continue;
-                        ww.Map.Trees.Add(new Vec2(p.X - ww.MinX, p.Z - ww.MinZ));
                     }
                 }
             }
@@ -649,19 +1113,20 @@ public static class WorldMap
                     {
                         float along = sx * SectionFeet + FarmMargin + rng.Range(0f, MathF.Max(0f, span - lotW));
                         ox = along;
-                        oz = side == 0 ? sz * SectionFeet + RoadHalf : (sz + 1) * SectionFeet - RoadHalf;
+                        oz = side == 0 ? sz * SectionFeet + RoadHalfGravel : (sz + 1) * SectionFeet - RoadHalfGravel;
                     }
                     else
                     {
                         float along = sz * SectionFeet + FarmMargin + rng.Range(0f, MathF.Max(0f, span - lotW));
-                        ox = side == 2 ? sx * SectionFeet + RoadHalf : (sx + 1) * SectionFeet - RoadHalf;
+                        ox = side == 2 ? sx * SectionFeet + RoadHalfGravel : (sx + 1) * SectionFeet - RoadHalfGravel;
                         oz = side == 2 ? along + lotW : along;
                     }
 
                     var b = RuralBounds(plan, side, ox, oz);
                     if (b.maxX - b.minX <= 1f || b.maxZ - b.minZ <= 1f) continue;
                     if (IntersectsAnyTown(ww.Towns, b, 240f)) continue;
-                    if (NearCreek(worldSeed, b)) continue;
+                    if (NearWater(worldSeed, b)) continue;
+                    if (NearRail(worldSeed, (b.minX + b.maxX) / 2f, (b.minZ + b.maxZ) / 2f, 220f)) continue;
                     bool collide = bboxes.Any(o =>
                         b.minX < o.x1 + 20f && b.maxX > o.x0 - 20f &&
                         b.minZ < o.z1 + 20f && b.maxZ > o.z0 - 20f);
@@ -685,16 +1150,17 @@ public static class WorldMap
         towns.Any(t => b.minX < t.MaxX + pad && b.maxX > t.MinX - pad &&
                        b.minZ < t.MaxZ + pad && b.maxZ > t.MinZ - pad);
 
-    static bool NearCreek(uint worldSeed, (float minX, float minZ, float maxX, float maxZ) b)
+    /// <summary>True when a farm footprint would sit in a river or on a bank.</summary>
+    static bool NearWater(uint worldSeed, (float minX, float minZ, float maxX, float maxZ) b)
     {
-        int c0 = (int)MathF.Floor((b.minX - 5000f) / CreekSpacing);
-        int c1 = (int)MathF.Floor((b.maxX + 5000f) / CreekSpacing);
-        for (int c = c0; c <= c1; c++)
+        float cx = (b.minX + b.maxX) / 2f, cz = (b.minZ + b.maxZ) / 2f;
+        int t = NearestTrunk(worldSeed, cx);
+        for (int k = t - 1; k <= t + 1; k++)
         {
-            for (float z = b.minZ; z <= b.maxZ; z += 220f)
+            for (float z = b.minZ - 400f; z <= b.maxZ + 400f; z += 220f)
             {
-                float cx = CreekX(worldSeed, c, z);
-                if (cx > b.minX - 160f && cx < b.maxX + 160f) return true;
+                float rx = TrunkX(worldSeed, k, z);
+                if (rx > b.minX - 260f && rx < b.maxX + 260f) return true;
             }
         }
         return false;
@@ -778,7 +1244,9 @@ public static class WorldMap
             map.Walks.Add(w);
         }
         foreach (var t in plan.Trees)
+        {
             map.Trees.Add(FarmPoint(t, side, ox, oz));
+        }
     }
 
     // ------------------------------------------------------------------ labels
@@ -786,23 +1254,26 @@ public static class WorldMap
     static void AddWindowLabels(WorldWindow ww)
     {
         var map = ww.Map;
-        int iz0 = (int)MathF.Ceiling(ww.MinZ / SectionFeet);
-        int iz1 = (int)MathF.Floor((ww.MinZ + ww.DepthFeet) / SectionFeet);
-        for (int iz = iz0; iz <= iz1; iz++)
+        int c0 = (int)MathF.Floor((ww.MinZ - 2000f) / PavedSpacing);
+        int c1 = (int)MathF.Floor((ww.MinZ + ww.DepthFeet + 2000f) / PavedSpacing);
+        for (int c = c0; c <= c1; c++)
         {
-            float z = iz * SectionFeet;
-            if (!IsHighway(z)) continue;
-            int corridor = (int)MathF.Round(z / HighwaySpacing);
+            float z = CorridorZ(ww.Map.Seed, c);
             map.Labels.Add(new MapLabel
             {
                 Position = new Vec2(42f, z - ww.MinZ),
-                Text = HighwayName(corridor),
+                Text = HighwayName(c),
                 Large = true,
                 Anchor = "start",
             });
         }
     }
 
+    static string HighwayName(int corridor)
+    {
+        int i = (int)((uint)(corridor * 37 + 11) % (uint)HighwayNames.Length);
+        return HighwayNames[i];
+    }
     // ------------------------------------------------------------------ verification
 
     public sealed class Check
@@ -864,26 +1335,42 @@ public static class WorldMap
             Detail = $"{ca.Count} elements in the cell",
         });
 
-        var ladder = new List<(float x, TownClass cls)>();
-        for (int i = -2; i <= 30; i++)
-        {
-            var s = VisibleSite(worldSeed, 0, i);
-            if (s != null) ladder.Add((s.CenterX, s.Class));
-        }
-        ladder.Sort((x, y) => x.x.CompareTo(y.x));
+        var ladder = new List<(float x, float z, TownClass cls)>();
+        for (int c = 0; c <= 3; c++)
+            for (int i = -2; i <= 30; i++)
+            {
+                var s = VisibleSite(worldSeed, c, i);
+                if (s != null) ladder.Add((s.CenterX, s.HighwayZ, s.Class));
+            }
         float minGap = float.MaxValue;
-        for (int i = 1; i < ladder.Count; i++) minGap = MathF.Min(minGap, ladder[i].x - ladder[i - 1].x);
-        int hulls = ladder.Count(t => t.cls == TownClass.Hull);
-        int boydens = ladder.Count(t => t.cls == TownClass.Boyden);
+        for (int i = 0; i < ladder.Count; i++)
+            for (int j = i + 1; j < ladder.Count; j++)
+            {
+                float dx = ladder[i].x - ladder[j].x, dz = ladder[i].z - ladder[j].z;
+                minGap = MathF.Min(minGap, MathF.Sqrt(dx * dx + dz * dz));
+            }
+        int townsBig = ladder.Count(t => t.cls == TownClass.Town);
+        int villages = ladder.Count(t => t.cls == TownClass.Village);
         int hamlets = ladder.Count(t => t.cls == TownClass.Hamlet);
+        int crossroads = ladder.Count(t => t.cls == TownClass.Crossroads);
         checks.Add(new Check
         {
-            Name = "town ladder: no towns inside 10 miles, hull rare",
+            Name = "town ladder: no towns inside 10 miles, big town rare",
             Pass = ladder.Count < 2 || minGap >= MinTownSpacingFeet - 1f,
-            Detail = $"{ladder.Count} towns / 330 mi · min gap {(minGap / Mile):0.##} mi · {hamlets} hamlet, {boydens} boyden, {hulls} hull",
+            Detail = $"{ladder.Count} towns / 330 mi · min gap {(minGap / Mile):0.##} mi · {crossroads} crossroads, {hamlets} hamlet, {villages} village, {townsBig} town",
         });
 
-        var census = Generate(worldSeed, 0f, 0f, 10f * Mile, 10f * Mile);
+        int nearRail = 0;
+        foreach (var t in ladder)
+            if (NearestRailDistance(worldSeed, t.x, t.z) < 16f * Mile) nearRail++;
+        checks.Add(new Check
+        {
+            Name = "towns tend to be near rail lines",
+            Pass = ladder.Count == 0 || nearRail * 3 >= ladder.Count,
+            Detail = $"{nearRail} of {ladder.Count} within 16 mi of rail",
+        });
+
+        var census = Generate(worldSeed, 0f, 0f, 12f * Mile, 12f * Mile);
         int overlaps = CountBuildingOverlaps(census.Map, out string overlapInfo);
         checks.Add(new Check
         {
@@ -892,7 +1379,103 @@ public static class WorldMap
             Detail = $"{census.Map.Houses.Count} houses · {census.Map.Outbuildings.Count} outbuildings · {overlaps} overlaps{overlapInfo}",
         });
 
+        checks.Add(new Check
+        {
+            Name = "rivers run south and tributaries merge into them",
+            Pass = TrunkDistance(worldSeed, 0f, 0f) < float.MaxValue,
+            Detail = $"trunk rivers every {TrunkRiverSpacing / Mile:0} mi, tributary heads every {TributarySpacing / Mile:0} mi",
+        });
+
+        // Every town sits on a paved road, and the town streets close into a loop.
+        int onPaved = 0, townsChecked = 0, dangling = 0;
+        var danglingDetail = new List<string>();
+        foreach (var site in TownSitesNear(worldSeed, 0f, 330f * Mile, 0f, 40f * Mile))
+        {
+            townsChecked++;
+            bool paved = MathF.Abs(site.HighwayZ / PavedSpacing - MathF.Round(site.HighwayZ / PavedSpacing)) < 1e-3f;
+            if (paved) onPaved++;
+            var town = MaterializeTown(worldSeed, site);
+            dangling += CountDanglingRoads(town, danglingDetail);
+        }
+        checks.Add(new Check
+        {
+            Name = "every town sits on a paved road",
+            Pass = townsChecked == 0 || onPaved == townsChecked,
+            Detail = $"{onPaved} of {townsChecked} towns on the paved grid",
+        });
+        checks.Add(new Check
+        {
+            Name = "no town street ends without an exit",
+            Pass = dangling == 0,
+            Detail = $"{dangling} dangling street ends" + (danglingDetail.Count > 0 ? " · " + string.Join("; ", danglingDetail.Take(4)) : ""),
+        });
+
         return checks;
+    }
+
+    /// <summary>
+    /// Counts street ends that touch no other street. A street may legitimately end in
+    /// a cul-de-sac bulb, and the town's highway band carries on past the town as the
+    /// global paved corridor, so neither counts as dangling.
+    /// </summary>
+    static int CountDanglingRoads(WorldTown town, List<string>? detail = null)
+    {
+        var segs = new List<(float x0, float z0, float x1, float z1)>();
+        var through = new List<bool>();     // the town's highway band continues as the global road
+        var bulbs = new List<Vec2>();
+        foreach (var part in town.Parts)
+        {
+            float ox = part.OriginX, oz = part.OriginZ;
+            bool mir = part.Mirrored;
+            float WZ(float lz) => mir ? oz + (HighwayWidth - lz) : oz + lz;
+            foreach (var r in part.Plan.Roads)
+            {
+                float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
+                segs.Add((ox + r.X, MathF.Min(z0, z1), ox + r.X + r.W, MathF.Max(z0, z1)));
+                through.Add(IsTownHighway(r));
+            }
+            foreach (var b in part.Plan.Bulbs)
+                bulbs.Add(new Vec2(ox + b.Center.X, WZ(b.Center.Z)));
+        }
+
+        int dangling = 0;
+        for (int i = 0; i < segs.Count; i++)
+        {
+            if (through[i]) continue;          // the through road carries on past the town
+            var s = segs[i];
+            // The two ends of the street: the ends of its long axis.
+            bool horizontal = (s.x1 - s.x0) >= (s.z1 - s.z0);
+            var ends = horizontal
+                ? new[] { (s.x0, (s.z0 + s.z1) / 2f), (s.x1, (s.z0 + s.z1) / 2f) }
+                : new[] { ((s.x0 + s.x1) / 2f, s.z0), ((s.x0 + s.x1) / 2f, s.z1) };
+            foreach (var e in ends)
+            {
+                bool touched = false;
+                for (int k = 0; k < segs.Count; k++)
+                {
+                    if (k == i) continue;
+                    if (PointNearSeg(e.Item1, e.Item2, segs[k])) { touched = true; break; }
+                }
+                // A cul-de-sac bulb is a legitimate dead end.
+                if (!touched && bulbs.Any(b => MathF.Abs(b.X - e.Item1) < 60f && MathF.Abs(b.Z - e.Item2) < 60f))
+                    touched = true;
+                if (!touched)
+                {
+                    dangling++;
+                    if (detail != null && detail.Count < 6)
+                        detail.Add($"end({e.Item1:0},{e.Item2:0}) of seg({s.x0:0},{s.z0:0})-({s.x1:0},{s.z1:0})");
+                }
+            }
+        }
+        return dangling;
+    }
+
+    static bool PointNearSeg(float px, float pz, (float x0, float z0, float x1, float z1) s)
+    {
+        const float tol = 2f;
+        bool onX = px >= s.x0 - tol && px <= s.x1 + tol;
+        bool onZ = pz >= s.z0 - tol && pz <= s.z1 + tol;
+        return onX && onZ;
     }
 
     static List<string> CanonicalElements(WorldWindow ww, float minX, float minZ, float maxX, float maxZ)

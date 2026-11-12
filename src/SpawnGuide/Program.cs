@@ -67,8 +67,10 @@ if (args.Contains("--serve"))
                     .ToDictionary(p => p.Split('=')[0], p => p.Split('=').Length > 1 ? p.Split('=')[1] : "", StringComparer.OrdinalIgnoreCase);
                 if (!uint.TryParse(q.GetValueOrDefault("seed", ""), out var s)) s = 1993;
                 var near = WorldMap.NearestTown(s, 0f, 0f, 80f);
-                float cx = near?.CenterX ?? 0f;
-                float cz = (near?.HighwayZ ?? 0f) + WorldMap.Mile;
+                // Centre the lens on the town's built blocks, not on the highway that
+                // runs past it — otherwise the opening view is empty farmland.
+                float cx = near != null ? (near.MinX + near.MaxX) / 2f : 0f;
+                float cz = near != null ? (near.MinZ + near.MaxZ) / 2f : 0f;
                 float span = WorldMap.CellFeet * 3f;
                 string json = $"{{\"seed\":{s},\"cx\":{cx.ToString("0.##", CultureInfo.InvariantCulture)},\"cz\":{cz.ToString("0.##", CultureInfo.InvariantCulture)},\"span\":{span.ToString("0.##", CultureInfo.InvariantCulture)}}}";
                 ctx.Response.ContentType = "application/json; charset=utf-8";
@@ -93,14 +95,28 @@ if (args.Contains("--serve"))
                 if (!float.TryParse(q.GetValueOrDefault("cx", "0"), NumberStyles.Float, CultureInfo.InvariantCulture, out var cx)) cx = 0;
                 if (!float.TryParse(q.GetValueOrDefault("cz", "0"), NumberStyles.Float, CultureInfo.InvariantCulture, out var cz)) cz = 0;
                 if (!float.TryParse(q.GetValueOrDefault("span", "47520"), NumberStyles.Float, CultureInfo.InvariantCulture, out var span)) span = 47520f;
-                span = Math.Clamp(span, WorldMap.Mile, WorldMap.Mile * 30f);
+                span = Math.Clamp(span, WorldMap.MinSpan, WorldMap.Mile * 30f);
                 bool farLod = q.GetValueOrDefault("lod", "1") == "0";
-                string key = $"{s}|{cx:0}/{cz:0}/{span:0}|{(farLod ? "far" : "detail")}";
+                // The viewer tells us how the window will be drawn on screen: either the
+                // pixel width it wants ("w") or the pixels per world foot ("ppf").
+                // Rendering at that resolution makes every line weight a true screen
+                // pixel, so walls stay hairlines however far the lens has closed in.
+                float drawW;
+                if (float.TryParse(q.GetValueOrDefault("w", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out var wq) && wq > 0f)
+                {
+                    drawW = Math.Clamp(wq, 200f, 3600f);
+                }
+                else
+                {
+                    float pp = float.TryParse(q.GetValueOrDefault("ppf", "0.03"), NumberStyles.Float, CultureInfo.InvariantCulture, out var p2) && p2 > 0f ? p2 : 0.03f;
+                    drawW = Math.Clamp(pp * span, 200f, 3600f);
+                }
+                string key = $"{s}|{cx:0}/{cz:0}/{span:0}|{(farLod ? "far" : "detail")}|{drawW:0}";
                 if (!worldCache.TryGetValue(key, out var svg))
                 {
                     var ww = WorldMap.Generate(s, cx, cz, span, span);
                     if (farLod) ww.Map.LodSimple = true;
-                    svg = SvgMapRenderer.Render(ww.Map, bare: true, targetWidth: 1400f);
+                    svg = SvgMapRenderer.Render(ww.Map, bare: true, targetWidth: drawW);
                     worldCache[key] = svg;
                     worldCacheOrder.Enqueue(key);
                     while (worldCacheOrder.Count > 24)
@@ -233,8 +249,9 @@ WorldWindow? world = null;
 if (mapMode is "world" or "all")
 {
     var near = WorldMap.NearestTown(seed, 0f, 0f, 80f);
-    float wcx = near?.CenterX ?? 0f;
-    float wcz = (near?.HighwayZ ?? 0f) + WorldMap.Mile;
+    // Centre on the town's built blocks, so the lens opens on the town itself.
+    float wcx = near != null ? (near.MinX + near.MaxX) / 2f : 0f;
+    float wcz = near != null ? (near.MinZ + near.MaxZ) / 2f : 0f;
     float span = WorldMap.CellFeet * 3f;
     world = WorldMap.Generate(seed, wcx, wcz, span, span);
     string worldFile = $"world-{seed}-9mi.svg";

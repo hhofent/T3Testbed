@@ -51,6 +51,7 @@ const seedErr = document.getElementById('seedErr');
 const hud = document.getElementById('hud');
 const seedToIndex = new Map();
 const MILE = 5280;
+const MAX_ZOOM = 300;          // magnification against the opening view
 const SERVER = 'http://127.0.0.1:8735';
 let serverUp = false;
 fetch(SERVER + '/', { method: 'HEAD' }).then(
@@ -59,15 +60,16 @@ fetch(SERVER + '/', { method: 'HEAD' }).then(
 );
 
 let cur = null;
-let worldView = null;          // { seed, cx, cz, span } of the image on screen
+// The world image on screen: which seed, which window, how big, and how many screen
+// pixels a world foot covers at natural size.
+let worldView = null;          // { seed, cx, cz, span, ppf }
 let worldReady = false;        // the on-screen world image has decoded
-let worldBasePPF = 1;          // screen px per foot at the initial 9-mile fit
+let worldBasePPF = 1;          // screen px per foot at the opening view
 let worldEpoch = 0;            // invalidates in-flight stream swaps on map change
 let streamTimer = 0;
 let streamInFlight = null;
 let streamLastKey = '';
 let streaming = false;
-let zoomOutPending = false;    // a zoom-out gesture hit the current window's fit floor
 let fitOnLoad = true;
 let s = 1, tx = 0, ty = 0, fitS = 1, natW = 1000, natH = 700;
 const pointers = new Map();
@@ -76,6 +78,7 @@ let pinchPrev = null;
 function stageRect() { return stage.getBoundingClientRect(); }
 function isWorld() { return !!(cur && cur.world && worldView); }
 
+// How many screen pixels the whole image is drawn at, relative to its natural size.
 function apply() {
   far.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
   near.style.transform = far.style.transform;
@@ -95,10 +98,9 @@ function updateHud() {
   if (isWorld()) {
     const c = screenToWorld(stage.clientWidth / 2, stage.clientHeight / 2);
     if (c) {
-      const ppf = s * natW / worldView.span;
-      const zoom = (ppf / worldBasePPF).toFixed(1);
+      const zoom = (onScreenPpft() / worldBasePPF).toFixed(1);
       hud.textContent = `seed ${worldView.seed} · ${(c.x / MILE).toFixed(1)}, ${(c.z / MILE).toFixed(1)} mi · `
-        + `${(worldView.span / MILE).toFixed(1)} mi window · ${zoom}×`
+        + `${(worldView.span / MILE).toFixed(2)} mi window · ${zoom}×`
         + (streaming ? ' · streaming…' : ' · drag to roam');
       return;
     }
@@ -109,6 +111,10 @@ function updateHud() {
 // --- world <-> screen -------------------------------------------------------
 // A bare world SVG is exactly its world rectangle: x from cx-span/2, z from
 // cz+span/2 (top of image, +Z up) to cz-span/2 (bottom).
+function onScreenPpft() {
+  if (!worldView || !natW) return worldBasePPF;
+  return s * natW / worldView.span;
+}
 function screenToWorld(px, py) {
   if (!worldView) return null;
   const kx = worldView.span / natW;
@@ -136,14 +142,52 @@ function fit() {
   apply();
 }
 
+// A smooth "round" window size, so the zoom reads as a continuous lens rather than
+// a set of rungs. Two significant figures keeps the server's cache warm while the
+// lens still moves in small steps.
+function niceSpan(w) {
+  if (!(w > 0)) return 150;
+  const e = Math.pow(10, Math.floor(Math.log10(w)));
+  const m = w / e;
+  let n;
+  if (m <= 1.2) n = 1.2; else if (m <= 1.6) n = 1.6; else if (m <= 2.4) n = 2.4;
+  else if (m <= 4) n = 4; else if (m <= 7) n = 7; else n = 10;
+  return Math.max(150, Math.round(n * e));
+}
+
+// The window is always drawn at screen resolution, so its pixels are screen pixels:
+// every line weight in the SVG is then exactly what it looks like on screen.
+function drawWidth() {
+  return Math.round(Math.min(2600, Math.max(800, Math.max(stage.clientWidth, stage.clientHeight) * 1.15)));
+}
+// World feet the window must cover to fill the stage.
+function coverFeet() {
+  return Math.max(stage.clientWidth, stage.clientHeight) * 1.15;
+}
+// The zoom limits, in screen pixels per world foot.
+function maxPpft() { return worldBasePPF * MAX_ZOOM; }
+function minPpft() { return coverFeet() / (30 * MILE); }
+
 function zoomAt(cx, cy, factor) {
-  const sMin = worldView ? fitS : fitS * 0.5, sMax = fitS * 30;
+  if (isWorld()) {
+    // Zooming in the world means asking for a finer lens. The old image is scaled as
+    // a preview until the new one decodes, then the new one is drawn 1:1.
+    const now = onScreenPpft();
+    const target = Math.min(Math.max(now * factor, minPpft()), maxPpft());
+    const k = target / (now || 1);
+    tx = cx - (cx - tx) * k;
+    ty = cy - (cy - ty) * k;
+    s = s * k;
+    apply();
+    scheduleStream();
+    return;
+  }
+  const sMin = fitS * 0.5, sMax = fitS * 33.4;
   const s2 = Math.min(Math.max(s * factor, sMin), sMax);
   const k = s2 / s;
   tx = cx - (cx - tx) * k;
   ty = cy - (cy - ty) * k;
   s = s2;
-  if (worldView && factor < 1 && s <= fitS + 1e-6) zoomOutPending = true;
   clampView();
   apply();
   scheduleStream();
@@ -164,38 +208,25 @@ function maybeStream() {
   if (!vw || !vh) return;
   const c = screenToWorld(vw / 2, vh / 2);
   if (!c) return;
-  // Prefetch once the view has moved a little off the loaded window's centre,
-  // or if the viewport has outgrown the window.
-  const trig = worldView.span * 0.05;
-  const viewW = (vw / natW) * worldView.span / s;
-  const viewH = (vh / natH) * worldView.span / s;
-  const moved = Math.abs(c.x - worldView.cx) > trig || Math.abs(c.z - worldView.cz) > trig;
-  const outgrew = viewW > worldView.span * 1.1 || viewH > worldView.span * 1.1;
-  // Zooming in should refine the lens: a 9-mile window rasterized at 1400 px is
-  // 34 ft/pixel, so houses and captions turn to mush long before 30x. Ask for a
-  // smaller window instead of upscaling the old one. Zooming out at the window's
-  // fit floor asks for a bigger lens and then fits it.
-  let wanted = Math.max(viewW, viewH) * 1.15;
-  if (zoomOutPending) wanted = Math.max(wanted, worldView.span * 1.6);
-  let span = Math.min(30 * MILE, Math.max(MILE, Math.ceil(wanted / MILE) * MILE));
-  const shrink = span < worldView.span * 0.72;
-  const grow = zoomOutPending || outgrew;
-  if (!shrink && !grow) span = worldView.span;
-  const spanChanged = span !== worldView.span;
-  if (!moved && !outgrew && !spanChanged) {
-    if (grow && span === worldView.span) zoomOutPending = false;
-    return;
-  }
-  const refit = grow && span > worldView.span;
-  zoomOutPending = false;
 
-  const key = Math.round(c.x / 40) + '|' + Math.round(c.z / 40) + '|' + span;
+  // The lens we want: enough ground to cover the stage at the current zoom.
+  const wantPpft = onScreenPpft();
+  const wanted = coverFeet() / wantPpft;
+  const span = niceSpan(wanted);
+
+  // Re-centre when the view has drifted toward the edge of the loaded window, or
+  // when the lens has changed enough to be worth a new render.
+  const drift = Math.max(Math.abs(c.x - worldView.cx), Math.abs(c.z - worldView.cz)) > worldView.span * 0.16;
+  const relens = Math.abs(span - worldView.span) / Math.max(span, 1) > 0.12;
+  if (!drift && !relens) return;
+
+  const key = Math.round(c.x / 60) + '|' + Math.round(c.z / 60) + '|' + span + '|' + Math.round(wantPpft * 1e4);
   if (key === streamLastKey) return;
   streamLastKey = key;
   streamInFlight = key;
   const epoch = worldEpoch;
-  const meta = { seed: worldView.seed, cx: c.x, cz: c.z, span, refit };
-  const url = `${SERVER}/world?seed=${meta.seed}&cx=${meta.cx.toFixed(0)}&cz=${meta.cz.toFixed(0)}&span=${meta.span.toFixed(0)}`;
+  const meta = { seed: worldView.seed, cx: c.x, cz: c.z, span, ppft: wantPpft };
+  const url = `${SERVER}/world?seed=${meta.seed}&cx=${meta.cx.toFixed(0)}&cz=${meta.cz.toFixed(0)}&span=${meta.span.toFixed(0)}&ppf=${meta.ppft.toFixed(6)}`;
   const img = new Image();
   img.onload = () => {
     if (epoch !== worldEpoch || streamInFlight !== key) return;
@@ -214,17 +245,19 @@ function maybeStream() {
 function commitWorld(img, meta) {
   const vw = stage.clientWidth, vh = stage.clientHeight;
   const anchor = screenToWorld(vw / 2, vh / 2);   // old window/scales
-  const ppfX = s * natW / worldView.span;         // screen px per world foot
-  worldView = { seed: meta.seed, cx: meta.cx, cz: meta.cz, span: meta.span };
+  worldView = { seed: meta.seed, cx: meta.cx, cz: meta.cz, span: meta.span, ppf: 0 };
   natW = img.naturalWidth || 1400;
   natH = img.naturalHeight || 1400;
+  worldView.ppf = natW / worldView.span;         // px per foot at natural size
   worldReady = true;
   fitS = Math.min(vw / natW, vh / natH) * 0.97;
-  s = meta.refit ? fitS : Math.min(Math.max(ppfX * meta.span / natW, fitS), fitS * 30);
-  const kx = meta.span / natW;
-  const kz = meta.span / natH;
-  tx = vw / 2 - ((anchor.x - (meta.cx - meta.span / 2)) / kx) * s;
-  ty = vh / 2 - (((meta.cz + meta.span / 2) - anchor.z) / kz) * s;
+  // The server drew this window at exactly the resolution we asked for, so it is
+  // shown 1:1 — its pixels are screen pixels and the line weights are true.
+  s = 1;
+  const kx = worldView.span / natW;
+  const kz = worldView.span / natH;
+  tx = vw / 2 - ((anchor.x - (worldView.cx - worldView.span / 2)) / kx) * s;
+  ty = vh / 2 - (((worldView.cz + worldView.span / 2) - anchor.z) / kz) * s;
   fitOnLoad = false;
   near.src = '';
   near.style.opacity = 0;
@@ -232,7 +265,7 @@ function commitWorld(img, meta) {
   far.src = img.src;
   setStreaming(false);
   apply();
-  if (!meta.refit) scheduleStream(); // don't cascade a zoom-out into an ever-larger lens
+  scheduleStream(); // keep the window centred on the view
 }
 
 // --- input ------------------------------------------------------------------
@@ -315,7 +348,7 @@ function loadWorldSeed(seed) {
     const span = meta.span || 47520;
     loadMap({
       name: 'Infinite world — seed ' + seed,
-      far: `${SERVER}/world?seed=${seed}&cx=${meta.cx}&cz=${meta.cz}&span=${span}`,
+      far: `${SERVER}/world?seed=${seed}&cx=${meta.cx}&cz=${meta.cz}&span=${span}&w=${drawWidth()}`,
       lodSwitch: 2.0,
       file: 'world seed ' + seed + ' (live)',
       seed,
@@ -358,15 +391,11 @@ randomBtn.onclick = () => {
 sel.onchange = () => loadMap(MAPS[+sel.value]);
 function loadMap(m) {
   cur = m;
-  worldView = m.world ? { ...m.world } : null;
-  worldBasePPF = worldView
-    ? (Math.min(stage.clientWidth || 1000, stage.clientHeight || 700) * 0.97) / worldView.span
-    : 1;
+  worldView = m.world ? { ...m.world, ppf: 0 } : null;
   worldReady = false;
   worldEpoch++;
   streamInFlight = null;
   streamLastKey = '';
-  zoomOutPending = false;
   clearTimeout(streamTimer);
   streaming = false;
   fname.textContent = m.file || m.far;
@@ -379,9 +408,16 @@ function loadMap(m) {
 far.onload = () => {
   natW = far.naturalWidth || natW;
   natH = far.naturalHeight || natH;
-  if (cur && cur.world) worldReady = true;
-  if (fitOnLoad) { fitOnLoad = false; fit(); }
-  else apply();
+  if (cur && cur.world) {
+    worldReady = true;
+    if (worldView) worldView.ppf = natW / worldView.span;
+  }
+  if (fitOnLoad) {
+    fitOnLoad = false;
+    fit();
+    // The opening view sets the zoom yardstick: 300x means 300 times this.
+    if (cur && cur.world) worldBasePPF = onScreenPpft();
+  } else apply();
 };
 if (MAPS.length) loadMap(MAPS[0]);
 </script>

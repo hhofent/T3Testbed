@@ -46,6 +46,8 @@ public static class SvgMapRenderer
         foreach (var r in map.LotLines) Box(r.X, r.Z, r.W, r.H);
         foreach (var w in map.Waters)
             foreach (var p in w.Points) Box(p.X - w.WidthFeet, p.Z - w.WidthFeet, 2 * w.WidthFeet, 2 * w.WidthFeet);
+        foreach (var r in map.Rails)
+            foreach (var p in r.Points) Box(p.X - 20, p.Z - 20, 40, 40);
         foreach (var h in map.Houses)
             foreach (var p in h.Plan.Footprint) Box(p.X - 1, p.Z - 1, 2, 2);
         foreach (var o in map.Outbuildings)
@@ -99,6 +101,26 @@ public static class SvgMapRenderer
             sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(fr.W * scale)}' height='{N(fr.H * scale)}' fill='{fill}'/>");
         }
 
+        // Great Plains contours: very light, one line per 10 ft. These are terrain, not
+        // property lines, so they sit under the water/rail/road layers.
+        if (map.Contours.Count > 0)
+        {
+            foreach (var level in map.Contours.Select(c => c.Level).Distinct().OrderBy(v => v))
+            {
+                var path = new StringBuilder();
+                foreach (var c in map.Contours)
+                {
+                    if (c.Level != level) continue;
+                    var a = Map(c.A);
+                    var b = Map(c.B);
+                    if (path.Length > 0) path.Append(' ');
+                    path.Append($"M{N(a.X)} {N(a.Y)}L{N(b.X)} {N(b.Y)}");
+                }
+                bool index = level % 50 == 0;
+                sb.AppendLine($"<path d='{path}' fill='none' stroke='{(index ? "#b3aa90" : "#c8c0a7")}' stroke-width='{N(index ? 1.1f : 0.7f)}' stroke-opacity='0.55'/>");
+            }
+        }
+
         // Creeks / drainage ribbons: low-contrast blue-gray, with a darker edge. Roads are
         // drawn over them (culverts/bridges read as crossing pavement).
         foreach (var w in map.Waters)
@@ -111,6 +133,32 @@ public static class SvgMapRenderer
             }));
             sb.AppendLine($"<polyline points='{pts}' fill='none' stroke='#7f989b' stroke-width='{N(MathF.Max(0.8f, w.WidthFeet * scale))}' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.9'/>");
             sb.AppendLine($"<polyline points='{pts}' fill='none' stroke='#a8bfc0' stroke-width='{N(MathF.Max(0.4f, w.WidthFeet * scale * 0.45f))}' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.6'/>");
+        }
+
+        // Railroads: ballast ribbon, two rails and ties. Drawn over water (bridges) and
+        // under roads (grade crossings).
+        foreach (var rail in map.Rails)
+        {
+            if (rail.Points.Count < 2) continue;
+            var pts = string.Join(" ", rail.Points.Select(p => { var m = Map(p); return $"{N(m.X)},{N(m.Y)}"; }));
+            sb.AppendLine($"<polyline points='{pts}' fill='none' stroke='#b7ae9c' stroke-width='{N(MathF.Max(1.2f, 22f * scale))}' stroke-linecap='butt'/>");
+            sb.AppendLine($"<polyline points='{pts}' fill='none' stroke='#4a453d' stroke-width='{N(MathF.Max(0.55f, 2.4f * scale))}' stroke-linecap='butt'/>");
+            // Ties: only while they are more than a couple of pixels apart.
+            for (int i = 0; i + 1 < rail.Points.Count && scale >= 0.015f; i++)
+            {
+                var p0 = rail.Points[i];
+                var p1 = rail.Points[i + 1];
+                var dir = (p1 - p0).Normalized();
+                float len = (p1 - p0).Length();
+                for (float t = 0; t < len; t += 260f)
+                {
+                    var c = p0 + dir * t;
+                    float half = 8f;
+                    var a = Map(new Vec2(c.X - dir.Z * half, c.Z + dir.X * half));
+                    var b = Map(new Vec2(c.X + dir.Z * half, c.Z - dir.X * half));
+                    sb.AppendLine($"<line x1='{N(a.X)}' y1='{N(a.Y)}' x2='{N(b.X)}' y2='{N(b.Y)}' stroke='#57503f' stroke-width='{N(MathF.Max(0.5f, 1.4f * scale))}' stroke-opacity='0.8'/>");
+                }
+            }
         }
 
         // Shelterbelt / trees under everything else.
@@ -138,7 +186,9 @@ public static class SvgMapRenderer
             var a = Map(new Vec2(r.X, r.Z + r.H));
             bool vertical = r.H > r.W;
             bool dashed = map.RoadDashed.Count == map.Roads.Count ? map.RoadDashed[ri] : map.RoadCenterDashes;
-            bool asphalt = map.RoadSurface == "asphalt" || (map.RoadSurface == "" && dashed);
+            bool asphalt = map.RoadPaved.Count == map.Roads.Count
+                ? map.RoadPaved[ri]
+                : map.RoadSurface == "asphalt" || (map.RoadSurface == "" && dashed);
             string fill = asphalt ? "#8f8b83" : "#c8c3b5";
             sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(r.W * scale)}' height='{N(r.H * scale)}' fill='{fill}'/>");
             if (dashed)
@@ -185,11 +235,11 @@ public static class SvgMapRenderer
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Driveways)
         {
             string color = d.Surface == "concrete" ? "#dcd9d2" : "#d6c9a3";
-            sb.AppendLine(Polyline(Map, d.Points, color, MathF.Max(0.6f, d.WidthFeet * scale)));
+            sb.AppendLine(Polyline(Map, d.Points, color, MathF.Max(0.6f, d.WidthFeet * scale), "butt"));
         }
         foreach (var d in map.LodSimple ? Enumerable.Empty<Driveway>() : map.Walks)
         {
-            sb.AppendLine(Polyline(Map, d.Points, "#e3e0d8", MathF.Max(0.5f, d.WidthFeet * scale)));
+            sb.AppendLine(Polyline(Map, d.Points, "#e3e0d8", MathF.Max(0.5f, d.WidthFeet * scale), "round"));
         }
 
         // Houses.
@@ -330,14 +380,14 @@ public static class SvgMapRenderer
         return sb.ToString();
     }
 
-    static string Polyline(Func<Vec2, SvgPx> map, List<Vec2> points, string color, float width)
+    static string Polyline(Func<Vec2, SvgPx> map, List<Vec2> points, string color, float width, string cap = "round")
     {
         var pts = string.Join(" ", points.Select(p =>
         {
             var m = map(p);
             return $"{m.X:0.##},{m.Y:0.##}";
         }));
-        return $"<polyline points='{pts}' fill='none' stroke='{color}' stroke-width='{width:0.##}' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>";
+        return $"<polyline points='{pts}' fill='none' stroke='{color}' stroke-width='{width:0.##}' stroke-linecap='{cap}' stroke-linejoin='round' stroke-opacity='0.95'/>";
     }
 }
 }

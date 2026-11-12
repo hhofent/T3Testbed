@@ -38,7 +38,10 @@ feed store, co-op, elevator with bin row east of MAIN), cardinal grid inside,
 blocks with houses on **4 sides** (~72% of blocks; side lots face the N–S streets,
 houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of every
 street, street trees, 2 parks + 1 school + 2 churches on the grid, per-row alleys
-(~55%), heavy canopy. Sizes: hamlet ~0.4 mi, boyden ~0.7 mi, hull ~1.1 mi.
+(~55%), heavy canopy. Sizes: hamlet ~0.4 mi, boyden ~0.7 mi, hull ~1.1 mi. The street
+network is closed by a **perimeter loop** that jogs on its north edge, so the town is
+encircled without the ring ever being an even rectangle, and exactly **one dead-end
+street** hangs off it with empty lots along it — the only deliberate vacancy in town.
 
 **Roads & lots discipline** — no building lands on another (AABB registry with pad),
 houses never reach into the alley row (clamped to the lot, else the lot goes vacant),
@@ -54,30 +57,37 @@ run: hamlet (centered), boyden (centered), hull (partial at the west edge), haml
 
 **Infinite world** (`--map world`) — the destination architecture. A window is a pure
 query `(seed, cx, cz, span)`; the 3-mile cell is the lens request unit, not an
-independent tile, so seams never duplicate roads or split farmsteads. Towns are a
-queryable 10-mile lattice on 24-mile east-west highway corridors (10% Hull / 30%
-Boyden / 36% hamlet / 24% empty per slot, forced ≥10 miles apart), centered in a
-section with the highway continuous through town. County section roads are clipped
-around town footprints. Farmsteads stamp the rural-lot leaf from per-section RNG
-streams (0–3 per section), fields are quarter-section fills, creeks are global
-meandering ribbons with tree banks. `--verify` runs the geometric ladder: byte
-determinism, 100-mile reproducibility, overlapping-window equality, cell-vs-window
-equality, town spacing, and zero building overlaps.
+independent tile, so seams never duplicate roads or split farmsteads. The land is made
+in order: **hills → rivers → rail → roads → towns and lots → farms**. Hills are low
+Great-Plains swells (under 130 ft of relief) drawn as 20-ft contours; trunk rivers run
+north-to-south every ~28 miles with tributaries merging into them; rail lines cross
+every ~75 miles; paved corridors every ~10 miles carry a gravel section-road grid on
+every mile line. Towns are a queryable 10-mile lattice **on the paved corridors**,
+only where a rail line runs within 9 miles, forced ≥10 miles apart, with generic place
+names and four sizes (crossroads / hamlet / village / town). Each town sits north of,
+south of, or astride its highway, is encircled by a perimeter street that jogs, and has
+exactly one dead-end street with empty lots on it. Farmsteads stamp the rural-lot leaf
+from per-section RNG streams (0–3 per section). `--verify` runs the geometric ladder:
+byte determinism, 100-mile reproducibility, overlapping-window equality, cell-vs-window
+equality, town spacing, rail proximity, zero building overlaps, rivers, every town on a
+paved road, and zero dangling street ends.
 
 **Zoomable viewer** — `out/viewer.html` (self-contained; no server required for the
 baked maps): pan/zoom, far ↔ detail crossfade, wheel/drag/pinch. In world mode with
 `--serve` running it streams live windows as you pan: the old image stays until the new
 one decodes, then the same world point is re-anchored under the viewport, so there is
-no pop. Zooming in requests smaller windows (down to 1 mile) instead of upscaling a
-9-mile image, keeping houses and captions crisp. Trees are trunk dots; town silhouettes
-are seeded blobs, not rectangles. **Open in a desktop browser** — phones can't reach a
-local file.
+no pop. The server draws each window at the viewer's exact screen resolution and the
+viewer shows it 1:1, so every line weight is a true screen pixel — zooming in requests
+a smaller window (down to ~400 ft at the 300× cap) instead of upscaling a 9-mile
+image, and house walls stay hairlines instead of ballooning into black bars. Trees are
+trunk dots; town silhouettes are seeded blobs, not rectangles. **Open in a desktop
+browser** — phones can't reach a local file.
 
 **Live seeds from the spawner** — `dotnet run -- --serve` starts the built-in HTTP
 server on 127.0.0.1:8735. With it running, the 🎲 random button and seed box generate
 ANY seed on demand — no baking needed. `GET /` serves the viewer,
 `GET /gen?seed=N&size=hamlet|boyden|hull` generates a fixed map fresh,
-`GET /world?seed&cx&cz&span&lod` renders any infinite-world window, and
+`GET /world?seed&cx&cz&span&ppf&lod` renders any infinite-world window, and
 `GET /world-center?seed` returns the nearest town's center so a new seed opens on a
 town. Baked maps still work offline.
 
@@ -138,9 +148,8 @@ Requires the .NET SDK (built with 5.0; no external packages).
 3. Coop corner archetype (grain elevator + bin cluster at a section-line corner —
    the Lyon County signature) and trailer-court archetype (curved street, 40×70
    pads at town fringe) — both visible in the reference images, not built yet.
-4. Infinite world follow-ups: north-south highway corridors, bridge decks where roads
-   cross creeks, cross-window town cache, optional diagonal rail-corridor street.
-   Adjacent farm blocks, creek corridors and the section grid are now built in
-   `WorldMap.cs`.
+4. Infinite world follow-ups: bridge decks where roads cross rivers, cross-window town
+   cache, a real place-name list, optional diagonal rail-corridor street. The land
+   pipeline (hills → rivers → rail → roads → towns → farms) is built in `WorldMap.cs`.
 5. Unity port: same plan dataclasses → spawns already-fastened wall prefabs.
    Keep this console app as the rule reference.
