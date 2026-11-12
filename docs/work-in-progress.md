@@ -87,13 +87,44 @@ Each stage is independently committable and keeps `--verify` green.
       hashed off world coordinates, 26 ft wide, 95–170 ft long, set back 110 ft from
       an intersection, skipped where the road line is absent or where a farmyard or
       town is in the way. Drawn on a new "dirt" surface colour.
-- [ ] **Stage 3 — ask 2 (town extras).** The extra street kinds, 0–2 per town.
+- [x] **Stage 3 — ask 2 (town extras).** The extra street kinds, 0–2 per town.
+      *Done:* six extra kinds, drawn from a shuffled pool with a 0–2 count per town
+      (35% of towns get none). Implemented:
+      - **OutlyingRoad** — a road beyond the town edge with 3–6 farm houses on it,
+        reached by the two boundary streets (so it is a through road).
+      - **BypassedHighway** — the same street, but with a few shops left on it.
+      - **IndustrialSideStreet** — a short street running from the highway up into the
+        grid; the shops keep clear of it.
+      - **Court** — a cul-de-sac off the perimeter with houses built along it (the
+        opposite of the town's one deliberate vacancy).
+      - **PlatEdge** — a street that runs out of town and stops at the edge of the
+        plat. Its far end is free by design, so `MapPlan.RoadMayEndFree` was added and
+        the verification check now honours it.
+      - **TownSquare** — the park goes on the most central face, so the middle
+        streets frame the green.
+
+      **Not done:** the *diagonal rail-corridor street* and the *boulevard with a
+      planted median*. Both need the town's surroundings (the rail line's position and
+      bearing) to be threaded into `SmallTownGenerator`, which does not know about them
+      today. See "Stage 7" below.
 - [ ] **Stage 4 — todo item 3a (fill every street with lots).** Final pass platting
       lots along every street segment, leaving a few deliberately empty.
 - [ ] **Stage 5 — todo item 1 (surface alignment).** Front-door walks and garage drives
       start on the sidewalk line; drives cross the walk to the kerb.
 - [ ] **Stage 6 — docs.** Update `docs/todo.md` (tick what is done), `STATE.md`,
       `README.md`, and this file.
+- [ ] **Stage 7 — the rail-corridor street (still to do).** The research is clear that
+      Iowa's industrial follows the railroad: a grain elevator is a co-op on a rail
+      siding, and every reference town has the elevator at the rail/main junction. The
+      world generator knows where the rail is; `SmallTownGenerator` does not. The
+      fix is a `TownContext` parameter carrying the rail's position and bearing into
+      the town generator, so it can:
+      - put the grain elevator and its bin row at the railroad instead of on the
+        highway band (today it is on the highway, and the rail can be 9 miles away);
+      - add the **diagonal rail-corridor street** (George's Boiler Ave) along the old
+        rail line, with small manufacturing on it;
+      - add a **rail spur** into the elevator yard.
+      This is the biggest remaining realism gap in the generator.
 
 ## Notes / gotchas already discovered
 

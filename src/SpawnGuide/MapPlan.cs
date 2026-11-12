@@ -131,6 +131,12 @@ public sealed class MapPlan
     /// World windows need this: at nine miles a farm label is a dozen pixels of noise.</summary>
     public bool SuppressOutbuildingLabels { get; set; }
     /// <summary>
+    /// Roads that are allowed to end at the edge of the plat. A street that runs out
+    /// of town into the fields is a real thing (Iowa plats have them), and it is not
+    /// a dangling end — it leaves town.
+    /// </summary>
+    public List<MapRect> RoadMayEndFree { get; } = new();
+    /// <summary>
     /// Bounds of the town's perimeter street loop, in local coordinates. County roads
     /// stop at this rectangle so they meet a town street instead of dangling.
     /// </summary>

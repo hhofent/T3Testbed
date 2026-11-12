@@ -350,6 +350,10 @@ public static class SvgMapRenderer
             // plan is otherwise quiet.
             bool suppress = map.SuppressOutbuildingLabels
                 || (map.QuietAnnotations && o.Kind == OutbuildingKind.DetachedGarage);
+            // A name is only worth drawing if the building is wide enough for the name
+            // to sit under it. On a town drawn 900 px wide the shops are twenty pixels
+            // apart and their labels would pile into each other.
+            if (!suppress && wPx < 72f) suppress = true;
             if (!string.IsNullOrEmpty(o.Label) && !suppress)
                 sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(tl.Y + hPx + 12)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
         }

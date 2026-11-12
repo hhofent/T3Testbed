@@ -963,9 +963,15 @@ public static class WorldMap
             if (IsTownHighway(r)) continue;      // the paved corridor is drawn once, globally
             if (!Keep(r.Z)) continue;
             float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
-            map.Roads.Add(new MapRect(r.X + ox, MathF.Min(z0, z1), r.W, MathF.Abs(z1 - z0)));
+            var placed = new MapRect(r.X + ox, MathF.Min(z0, z1), r.W, MathF.Abs(z1 - z0));
+            map.Roads.Add(placed);
             map.RoadDashed.Add(i < town.RoadDashed.Count && town.RoadDashed[i]);
             map.RoadPaved.Add(true);
+            // A street that leaves town through the edge of the plat keeps its free end.
+            if (town.RoadMayEndFree.Any(f =>
+                MathF.Abs(f.X - r.X) < 0.5f && MathF.Abs(f.Z - r.Z) < 0.5f &&
+                MathF.Abs(f.W - r.W) < 0.5f && MathF.Abs(f.H - r.H) < 0.5f))
+                map.RoadMayEndFree.Add(placed);
         }
         foreach (var r in town.Alleys)
         {
@@ -1556,7 +1562,13 @@ public static class WorldMap
             {
                 float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
                 segs.Add((ox + r.X, MathF.Min(z0, z1), ox + r.X + r.W, MathF.Max(z0, z1)));
-                through.Add(IsTownHighway(r));
+                // A road that leaves town through the edge of the plat is allowed to
+                // have a free end; so is the through-highway, which carries on as the
+                // global paved corridor.
+                bool freeEnd = part.Plan.RoadMayEndFree.Any(f =>
+                    MathF.Abs(f.X - r.X) < 0.5f && MathF.Abs(f.Z - r.Z) < 0.5f &&
+                    MathF.Abs(f.W - r.W) < 0.5f && MathF.Abs(f.H - r.H) < 0.5f);
+                through.Add(freeEnd || IsTownHighway(r));
             }
             foreach (var b in part.Plan.Bulbs)
                 bulbs.Add(new Vec2(ox + b.Center.X, WZ(b.Center.Z)));

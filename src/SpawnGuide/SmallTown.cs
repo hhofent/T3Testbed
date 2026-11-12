@@ -29,6 +29,26 @@ public static class SmallTownGenerator
     const float FourSideChance = 0.85f; // most blocks get houses on all four sides
     const float BandDepth = 175f;     // commercial band between highway and first grid street
 
+    /// <summary>
+    /// The characteristic extras an Iowa town may have. Research:
+    /// `docs/research/2026-11-11-iowa-town-composition.md`.
+    /// </summary>
+    enum TownExtra
+    {
+        /// <summary>A short street off the perimeter ending in a bulb, with houses on it.</summary>
+        Court,
+        /// <summary>A street that runs out of town and stops at the edge of the plat.</summary>
+        PlatEdge,
+        /// <summary>A road beyond the town with a few farm houses strung along it.</summary>
+        OutlyingRoad,
+        /// <summary>The old highway, now a quiet parallel street with a few shops on it.</summary>
+        BypassedHighway,
+        /// <summary>A short street running from the highway up into the grid.</summary>
+        IndustrialSideStreet,
+        /// <summary>A green square where the middle streets cross.</summary>
+        TownSquare,
+    }
+
     sealed class TownSize
     {
         public int Columns;       // block columns (N–S street count = Columns + 1)
@@ -75,6 +95,37 @@ public static class SmallTownGenerator
         var rng = new Rng(seed);
         float lotDepth = BlockLotDepth + rng.Range(-6f, 6f);
         int blockRows = size.EWStreets - 1;
+
+        // --- what kind of town is this? -------------------------------------------
+        // Iowa towns grew in layers, so no two have the same street plan. Each town
+        // draws 0–2 characteristic extras from the researched set: an outlying road
+        // with a few farm houses on it (Hull's 310th St), a bypassed old highway
+        // running parallel to the new one, an industrial side-street off the
+        // highway, a cul-de-sac court, a street that runs out to the edge of the
+        // plat, or a town square in the middle of the grid.
+        var extraPool = new List<TownExtra>();
+        if (rng.Chance(0.50f)) extraPool.Add(TownExtra.Court);
+        if (rng.Chance(0.45f)) extraPool.Add(TownExtra.PlatEdge);
+        if (rng.Chance(0.45f)) extraPool.Add(TownExtra.OutlyingRoad);
+        if (rng.Chance(0.35f)) extraPool.Add(TownExtra.BypassedHighway);
+        if (rng.Chance(0.40f)) extraPool.Add(TownExtra.IndustrialSideStreet);
+        if (rng.Chance(0.35f)) extraPool.Add(TownExtra.TownSquare);
+        for (int i = extraPool.Count - 1; i > 0; i--)
+        {
+            int j = rng.RangeInt(0, i + 1);
+            (extraPool[i], extraPool[j]) = (extraPool[j], extraPool[i]);
+        }
+        int extraCount = rng.Chance(0.35f) ? 0 : (rng.Chance(0.60f) ? 1 : 2);
+        var extras = extraPool.Take(extraCount).ToList();
+        bool hasCourt = extras.Contains(TownExtra.Court);
+        bool hasPlatEdge = extras.Contains(TownExtra.PlatEdge);
+        bool hasOutlyingRoad = extras.Contains(TownExtra.OutlyingRoad);
+        bool hasBypassedHighway = extras.Contains(TownExtra.BypassedHighway);
+        bool hasSideStreet = extras.Contains(TownExtra.IndustrialSideStreet);
+        bool hasTownSquare = extras.Contains(TownExtra.TownSquare);
+        // The outlying road and the bypassed highway are the same kind of thing — a
+        // street beyond the town edge — but they are dressed differently.
+        bool hasOuterRoad = hasOutlyingRoad || hasBypassedHighway;
 
         // Per-block-row alley decision (row-level so street spacing is uniform per row).
         var rowAlley = new bool[blockRows];
@@ -261,6 +312,18 @@ public static class SmallTownGenerator
         // at the ends where there is room for them, the shops in between.
         float mainX = nsX[mainStreetIndex];
         var bandOcc = new List<(float x0, float x1)>();
+
+        // An industrial side-street runs from the highway up into the grid, so it has
+        // to be placed before the shops (which must keep clear of it).
+        float sideStreetX = -1f;
+        if (hasSideStreet)
+        {
+            sideStreetX = rng.Chance(0.5f)
+                ? rng.Range(60f, MathF.Max(61f, mainX - StreetRow - 120f))
+                : rng.Range(mainX + StreetRow + 120f, MathF.Max(mainX + StreetRow + 121f, totalWidth - 120f));
+            sideStreetX = Math.Clamp(sideStreetX, 50f, MathF.Max(50f, totalWidth - 120f));
+            bandOcc.Add((sideStreetX - StreetRow / 2f - 6f, sideStreetX + StreetRow / 2f + 6f));
+        }
 
         // The elevator sits near the main junction — that is where every real Iowa
         // elevator is — but which side of MAIN it falls on varies.
@@ -497,6 +560,24 @@ public static class SmallTownGenerator
         {
             int j = rng.RangeInt(0, i + 1);
             (civicKinds[i], civicKinds[j]) = (civicKinds[j], civicKinds[i]);
+        }
+        // A town square sits where the middle streets cross: the park goes on the
+        // most central face, so the four streets around it frame the green.
+        if (hasTownSquare && faceIds.Count > 0)
+        {
+            int bestIdx = 0;
+            int bestScore = int.MaxValue;
+            for (int i = 0; i < faceIds.Count; i++)
+            {
+                var f = faceIds[i];
+                int score = Math.Abs(f.s - size.EWStreets / 2) * 100 + Math.Abs(f.col - size.Columns / 2);
+                if (score < bestScore) { bestScore = score; bestIdx = i; }
+            }
+            var sq = faceIds[bestIdx];
+            faceIds.RemoveAt(bestIdx);
+            civic[sq] = OutbuildingKind.CityPark;
+            // If the town was going to have a park anyway, the square is it.
+            civicKinds.RemoveAll(k => k == OutbuildingKind.CityPark);
         }
         for (int i = 0; i < civicKinds.Count && faceIds.Count > 0; i++)
         {
@@ -868,12 +949,18 @@ public static class SmallTownGenerator
         float jogH = rng.Range(24f, 130f);
         float northZ0 = builtMaxZ + gapN;
         float northZ1 = northZ0 + StreetRow + jogH;
-        // The north edge steps up at one N-S street, so the loop is never a tidy
+        // The north edge steps up at one N–S street, so the loop is never a tidy
         // rectangle — it follows the ground the way a real town street does. The
         // stepping street carries the jog itself.
         int jogStreet = rng.RangeInt(1, effColumns);
         float jogX = nsX[jogStreet];
         float PerimZ(float x) => x < jogX ? northZ0 : northZ1;
+
+        // An outlying road (or a bypassed old highway) sits beyond the town edge.
+        // The two boundary streets carry on north to reach it, so it is a through
+        // road and not a dangling end.
+        float outerRoadZ = northZ1 + StreetRow + rng.Range(120f, 210f);
+        bool outerRoadIsShops = hasBypassedHighway && !hasOutlyingRoad;
 
         float nsZ1 = ewZ[lastKeptEW] + StreetRow;
         bool[] nsKeep = new bool[nsX.Count];
@@ -901,6 +988,9 @@ public static class SmallTownGenerator
             {
                 if (!nsKeep[s]) continue;
                 float zEnd = PerimZ(nsX[s]) + StreetRow;
+                // The two boundary streets carry on north to meet an outlying road.
+                if (hasOuterRoad && (s == 0 || s == nsX.Count - 1))
+                    zEnd = outerRoadZ + StreetRow;
                 map.Roads.Add(new MapRect(nsX[s], zBand, StreetRow, zEnd - zBand));
                 map.RoadDashed.Add(false);
             }
@@ -911,6 +1001,28 @@ public static class SmallTownGenerator
             map.RoadDashed.Add(false);
             map.Roads.Add(new MapRect(jogX, northZ1, totalWidth - jogX, StreetRow));
             map.RoadDashed.Add(false);
+
+            // The outlying road (or the bypassed old highway): a street beyond the
+            // town, reached by the two boundary streets, so it is a through road.
+            if (hasOuterRoad)
+            {
+                map.Roads.Add(new MapRect(0, outerRoadZ, totalWidth, StreetRow));
+                map.RoadDashed.Add(false);
+                map.Labels.Add(new MapLabel
+                {
+                    Position = new Vec2(42f, outerRoadZ + StreetRow / 2f),
+                    Text = outerRoadIsShops ? "OLD HIGHWAY" : "RURAL ROAD",
+                    Anchor = "start",
+                });
+            }
+
+            // An industrial side-street: a short street running from the highway up
+            // into the grid. Both ends land on a street.
+            if (hasSideStreet && sideStreetX > 0f)
+            {
+                map.Roads.Add(new MapRect(sideStreetX, HighwayWidth, StreetRow, ewZ[0] + StreetRow - HighwayWidth));
+                map.RoadDashed.Add(false);
+            }
         }
 
         // --- alleys, only through blocks that actually ended up with content.
@@ -941,6 +1053,8 @@ public static class SmallTownGenerator
         {
             if (!nsKeep[s]) continue;
             float zEnd = PerimZ(nsX[s]) + StreetRow;
+            if (hasOuterRoad && (s == 0 || s == nsX.Count - 1))
+                zEnd = outerRoadZ + StreetRow;
             foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + StreetRow - 2.25f })
             {
                 map.Walks.Add(new Driveway
@@ -1006,12 +1120,108 @@ public static class SmallTownGenerator
             }
         }
 
+        // --- a cul-de-sac court -------------------------------------------------
+        // A short street off the perimeter that ends in a bulb, with houses built
+        // along it. The town's one deliberate vacancy is the dead-end above; this
+        // court is the opposite — a built-out cul-de-sac.
+        if (hasCourt)
+        {
+            float courtX = rng.Range(120f, MathF.Max(121f, totalWidth - 200f));
+            if (courtX > jogX - 110f && courtX < jogX + StreetRow + 110f)
+                courtX = courtX < jogX ? jogX - 110f : jogX + StreetRow + 110f;
+            courtX = Math.Clamp(courtX, 100f, MathF.Max(100f, totalWidth - 180f));
+            float courtLen = rng.Range(240f, 340f);
+            float courtZ = PerimZ(courtX) + StreetRow;
+            map.Roads.Add(new MapRect(courtX, courtZ, StreetRow, courtLen));
+            map.RoadDashed.Add(false);
+            map.Bulbs.Add(new RoadBulb
+            {
+                Center = new Vec2(courtX + StreetRow / 2f, courtZ + courtLen - 10f),
+                RadiusFeet = 44f,
+            });
+            // Houses down the west side of the court, facing it.
+            float hz = courtZ + 24f;
+            int courtHouses = rng.RangeInt(2, 4);
+            for (int i = 0; i < courtHouses && hz + 80f < courtZ + courtLen - 30f; i++)
+            {
+                uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+                var house = HouseGenerator.Generate(Weighted(rng), hSeed);
+                house = house.Rotate90CCW();          // front faces east, at the court
+                float hx = courtX - 12f - house.DepthFeet - rng.Range(8f, 16f);
+                house = house.OffsetCopy(hx, hz);
+                map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+                map.LotLines.Add(new MapRect(hx - 10f, hz - 8f, house.WidthFeet + 20f, house.DepthFeet + 16f));
+                hz += 92f;
+            }
+        }
+
+        // --- a street that runs out to the edge of the plat ----------------------
+        // Iowa plats have them: a street that leaves the grid and stops in the
+        // fields. Its far end is free by design — it leaves town, it does not dangle.
+        if (hasPlatEdge)
+        {
+            float edgeX = rng.Range(150f, MathF.Max(151f, totalWidth - 250f));
+            if (edgeX > jogX - 120f && edgeX < jogX + StreetRow + 120f)
+                edgeX = edgeX < jogX ? jogX - 120f : jogX + StreetRow + 120f;
+            edgeX = Math.Clamp(edgeX, 130f, MathF.Max(130f, totalWidth - 220f));
+            float edgeZ = PerimZ(edgeX) + StreetRow;
+            float edgeLen = rng.Range(260f, 420f);
+            map.Roads.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen));
+            map.RoadDashed.Add(false);
+            // It leaves town; the far end is not a dead end.
+            map.RoadMayEndFree.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen));
+        }
+
+        // --- the outlying road's buildings ---------------------------------------
+        // A few farm houses strung along a road beyond the town, or the odd shop on
+        // the old highway.
+        if (hasOuterRoad)
+        {
+            float bx = rng.Range(90f, MathF.Max(91f, totalWidth - 200f));
+            int n = rng.RangeInt(3, 6);
+            float x = bx;
+            for (int i = 0; i < n; i++)
+            {
+                if (outerRoadIsShops)
+                {
+                    // A few shops left on the old road. They are spaced well apart so
+                    // their names do not pile up on each other.
+                    float w = rng.Range(58f, 88f);
+                    float depth = rng.Range(44f, 58f);
+                    if (x + w > totalWidth - 40f) break;
+                    float y = outerRoadZ - 58f - depth / 2f;
+                    map.Outbuildings.Add(new Outbuilding
+                    {
+                        Kind = OutbuildingKind.Storefront,
+                        Center = new Vec2(x + w / 2f, y),
+                        WidthFeet = w,
+                        DepthFeet = depth,
+                        Label = BusinessCatalogue.LabelFor(rng, BusinessCatalogue.Shops[rng.RangeInt(0, BusinessCatalogue.Shops.Length)]),
+                    });
+                    x += w + rng.Range(300f, 430f);
+                }
+                else
+                {
+                    // Farm houses strung along the rural road, facing it.
+                    uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+                    var house = HouseGenerator.Generate(Weighted(rng), hSeed);
+                    house = house.FlipZ();   // front faces the road, to the south
+                    if (x + house.WidthFeet > totalWidth - 40f) break;
+                    float hz = outerRoadZ - 14f - house.DepthFeet;
+                    house = house.OffsetCopy(x, hz);
+                    map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = true });
+                    map.LotLines.Add(new MapRect(x - 12f, hz - 10f, house.WidthFeet + 24f, house.DepthFeet + 20f));
+                    x += house.WidthFeet + rng.Range(140f, 230f);
+                }
+            }
+        }
+
         // Loop bounds: county roads stop here so they meet a town street. The loop runs
         // from the town's north-of-highway edge out to the perimeter street.
         map.LoopMinX = 0f;
         map.LoopMaxX = totalWidth;
         map.LoopMinZ = zBand;
-        map.LoopMaxZ = northZ1 + StreetRow;
+        map.LoopMaxZ = hasOuterRoad ? outerRoadZ + StreetRow : northZ1 + StreetRow;
         map.BuiltMinX = builtMinX;
         map.BuiltMaxX = builtMaxX;
         map.BuiltMinZ = zBand;
