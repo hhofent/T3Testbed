@@ -33,21 +33,37 @@ farmhouses. Matched to the gridded unincorporated towns in the reference images
 (George, Craig, Struble — orthogonal streets, some lots alley-loaded, heavy canopy).
 
 **Small town** (`--map smalltown --size hamlet|boyden|hull`) — a whole seeded grid
-town, George/Craig/Struble class: highway along the south edge (commercial strip — Casey's,
-feed store, co-op, elevator with bin row east of MAIN), cardinal grid inside,
-blocks with houses on **4 sides** (~72% of blocks; side lots face the N–S streets,
-houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of every
-street, street trees, 2 parks + 1 school + 2 churches on the grid, per-row alleys
-(~55%), heavy canopy. Sizes: hamlet ~0.4 mi, boyden ~0.7 mi, hull ~1.1 mi. The street
-network is closed by a **perimeter loop** that jogs on its north edge, so the town is
-encircled without the ring ever being an even rectangle, and exactly **one dead-end
-street** hangs off it with empty lots along it — the only deliberate vacancy in town.
+town, George/Craig/Struble class: highway along the south edge (commercial strip —
+a gas station, feed store, co-op, hardware, elevator with bin row east of MAIN), cardinal
+grid inside, blocks with houses on **4 sides** (~72% of blocks; side lots face the N–S
+streets, houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of
+every street with a walk from each one to the front door and a concrete drive to each
+garage, street trees, per-row alleys (~55%), heavy canopy. Sizes: hamlet ~0.4 mi,
+boyden ~0.7 mi, hull ~1.1 mi. The street network is closed by a **perimeter loop** that
+jogs on its north edge, so the town is encircled without the ring ever being an even
+rectangle, and exactly **one dead-end street** hangs off it with empty lots along it —
+the only deliberate vacancy in town.
+
+No two towns are the same. Each draws 0–2 of the characteristic extras (an outlying
+road with farm houses on it, a bypassed old highway, an industrial side-street off the
+highway, a cul-de-sac court, a street that runs out to the edge of the plat, a town
+square), and the shops, the civic buildings and the street names are all drawn per
+town — two towns on the same highway never end up with the same row of stores.
 
 **Roads & lots discipline** — no building lands on another (AABB registry with pad),
 houses never reach into the alley row (clamped to the lot, else the lot goes vacant),
 n-street houses face both street orientations, commercial strip sits on **both** sides
 of HWY 18 (pads + 1–2 industrial boxes north, houses + a store/plant south), small
-sheds ~12% of houses. Garages: ~45% run detached, ~45% integral, ~10% none.
+sheds ~12% of houses. Garages: ~45% run detached, ~45% integral, ~10% none. Every
+street in town gets lots platted along any side that is empty, and a final pass builds
+most of them — a few plats are left empty on purpose.
+
+**Country** — one driveway per farm lot: it leaves the gravel section road at ~90°,
+runs up the side of the house and carries on to the machine shed and the bin row, with
+the garage a branch off it in the yard; the concrete walk follows the drive and curves
+off to the front door. The section lines also carry dirt **field entrances** — one or
+two per quarter section, 26 ft wide, set back from the intersections, and skipped
+where a farmyard or a town is in the way.
 
 **3-mile cell** (`--map country`, seed via `--seed`) — a 3-mile (15840 ft) test cell
 with towns straddling the interior section-line junction or a cell boundary, 1-mile
