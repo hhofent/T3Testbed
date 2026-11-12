@@ -55,7 +55,7 @@ drive.
 
 **Files:** `MapGenerator.cs` (`RuralLot`), `WorldMap.cs` (`AddFieldEntrances`).
 
-## 3. Towns still have extra roads — fill them with lots  *(user, 2026-11-11)* — **PART DONE 2026-11-12**
+## 3. Towns still have extra roads — fill them with lots  *(user, 2026-11-11)* — **DONE 2026-11-12**
 
 > "towns still have extra roads. maybe add a final step to fill with lots all roads in
 > towns, save the few empty ones"
@@ -91,10 +91,9 @@ from a shuffled pool (35% of towns get none):
 | PlatEdge | a street that runs out of town and stops at the edge of the plat |
 | TownSquare | the park goes on the most central face, so the middle streets frame the green |
 
-**Still to do:** the **diagonal rail-corridor street** and the **boulevard with a
-planted median**. Both need the town's surroundings threaded into
-`SmallTownGenerator`, which does not know where the rail is. See the next stage in
-`docs/work-in-progress.md`.
+**Still to do:** the **diagonal rail-corridor street** and a **curved street**. Both
+need the town's surroundings threaded further into `SmallTownGenerator`; the branch
+spur (item 5) is the piece that came first.
 
 **Files:** `SmallTown.cs` (street network + the final lot pass), `WorldMap.cs`
 (`RoadClip` — the loop bounds must grow to enclose the new streets, or county roads
@@ -114,54 +113,82 @@ two towns have the same row of shops. The roomy businesses (gas station, impleme
 dealer, lumber yard, motel) are pushed back to the ends, because that is how a real
 main street reads.
 
-## 5. Industrial — and put it on the railroad, not the highway
+## 5. Industrial — and put it on the railroad, not the highway — **DONE 2026-11-12**
 
-**Gap.** `SmallTown.cs` places the grain elevator + bin row and an industrial building in
-the **highway** commercial band. In the world map the rail line may be **up to 9 miles
-away**, so a town can have an elevator with no railroad beside it. Real elevators are
-railroad institutions: a siding, a headhouse, bins, and a co-op sign.
+**Was:** `SmallTown.cs` placed the grain elevator + bin row and an industrial building in
+the **highway** commercial band, and in the world map the rail line could be **up to 9
+miles away** — so a town could have an elevator with no railroad beside it.
 
-**Research.** Iowa DNR registers hundreds of elevators, mostly co-ops. The Bucknam
-station was built *by the railroad* with a siding and a grain elevator. Every reference
-town has the elevator at the rail/main junction. Real industrial buildings follow the
-rail corridor: "industrial corridors extending along more than 40 miles of railroad
-right-of-ways"; George's Boiler Ave is lined with small manufacturing.
+**Now:**
+- The rail sits on the section grid, 40–210 ft to one side of its own road, and swells
+  slowly to that same side. It therefore never crosses the road it parallels, and every
+  crossing it makes is with a perpendicular road, within a degree or so of square.
+- A town within reach of a rail gets a **branch spur** — the rail runs every 75 miles
+  and the paved corridors every 10, so the nearest corridor is 5 miles away, and that is
+  the branch line. The spur leaves the rail at a right angle, so it crosses the roads it
+  meets square too.
+- The **grain elevator moves to the end of the spur**, which is where a real Iowa
+  elevator stands. Seventeen of the thirty-seven towns in the check window have one.
+- The industrial boxes come from the catalogue.
 
-**Partly done:** the industrial *boxes* now come from the catalogue and the elevator
-can sit on either side of MAIN. **Still to do:**
-- Place the **elevator + bin row at the rail siding**, where the rail actually touches
-  the town; keep it on the highway band only if there is no rail in the town.
-- Add a **rail spur** into the elevator yard.
-- Add a **rail-side industrial strip** (small manufacturing: cabinet shop, metal
-  fabrication, feed mill) on the diagonal rail-corridor street from item 3.
-- Industrial building form (NRHP Iowa Malleable Iron): 1-story metal building on a
-  concrete foundation, e.g. 90'×240'; concrete-block ancillary with 14–16 ft walls and
-  an overhead door. Creamery is a ghost-town element by the 1990s — rare.
+**Still to do:** a **rail-side industrial strip** (small manufacturing: cabinet shop,
+metal fabrication, feed mill) along the spur inside the town. Industrial building form
+(NRHP Iowa Malleable Iron): 1-story metal building on a concrete foundation, e.g.
+90'×240'; concrete-block ancillary with 14–16 ft walls and an overhead door. Creamery is
+a ghost-town element by the 1990s — rare.
 
-## 6. Civic and institutional landmarks
+## 6. Civic and institutional landmarks — **DONE 2026-11-12**
 
-**Partly done.** The civic buildings now vary per town and per tier: a one-room
-schoolhouse is a coin flip in a crossroads and near-certain in a village, a town may
-have two churches and no park, and the order they go in is the town's. A park on the
-most central face becomes the **town square**.
+The civic buildings vary per town and per tier: a one-room schoolhouse is a coin flip in
+a crossroads and near-certain in a village, a town may have two churches and no park,
+and the order they go in is the town's. A park on the most central face becomes the
+**town square**.
 
-**Still to do:** **water tower** (near-universal small-town landmark), **railroad depot**
-(wooden, single story, town-name sign on a post), **cemetery** (often with a church),
-**ball field**, **public library**, and post office/bank as commercial buildings.
+Added (each with its own town tier and likelihood, in
+`BusinessCatalogue.Landmarks`): **water tower** (near-universal), **post office** (its
+own building, not a shop label), **fire station**, **public library**, **ball field**,
+**cemetery**, **railroad depot** (only where the railroad reaches the town),
+**golf course**, **fairgrounds**, **airstrip**. The ones that are areas stand in their
+own ground at the edge of town; the rest take a lot face.
 
-## 7. Street variety — **PARTLY DONE**
+## 7. Street variety — **MOSTLY DONE**
 
 Done: the outlying road, the bypassed old highway, the industrial side-street, the
-cul-de-sac court, the plat-edge street and the town square (item 3b).
+cul-de-sac court, the plat-edge street, the town square, and a **boulevard street with
+a planted median** (about one town in six).
 
-**Still to do:** the diagonal rail-corridor street and the curved street. Both need the
-rail's position threaded into `SmallTownGenerator`.
+**Still to do:** a genuinely *diagonal* rail-corridor street and a curved street. Both
+need the town's surroundings threaded further into `SmallTownGenerator`; the branch
+spur (item 5) is the piece that came first.
 
 ## 8. Sidewalk realism
 
 **To do.** Consider dropping the walk on one side of quieter residential streets on some
 towns (real Iowa sidewalk networks are patchy), while keeping the commercial strip and
 the school/park route fully served.
+
+## 9. Rail and road crossings — **DONE 2026-11-12** (user, 2026-11-12)
+
+> "rails and roads colliding must be redesigned. they must only cross perpendicularly.
+> they may, on occasion, cross diagonally, but it must be mostly perpendicular, never
+> almost parallel."
+
+The rail used to run on a jittered 75-mile lattice with a wave on top, so an east-west
+rail could drift across the east-west section road it was running beside and peel off it
+at whatever angle it happened to be at. It now sits on the section grid, offset to one
+side of its own road, with a one-sided swell — so it can never come back across the
+line it parallels, and every crossing is square. Two checks keep it honest:
+"rail crosses roads square, never almost parallel" and "rail towns get a branch spur
+and an elevator on it".
+
+## 10. Town edges — **DONE 2026-11-12** (user, 2026-11-12)
+
+> "they must not have streets on the outside with no lots on the outside of the streets."
+
+The plat pass now reaches past the town's outermost north-south street and plats a row
+of lots there, so the west and east edges are built out like the rest of the town. The
+town grows symmetrically to hold them, and the county-road clip follows the new
+footprint.
 
 ---
 

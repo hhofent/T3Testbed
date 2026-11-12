@@ -123,18 +123,30 @@ Each stage is independently committable and keeps `--verify` green.
       right and were left alone.
 - [ ] **Stage 6 — docs.** Update `docs/todo.md` (tick what is done), `STATE.md`,
       `README.md`, and this file.
-- [ ] **Stage 7 — the rail-corridor street (still to do).** The research is clear that
-      Iowa's industrial follows the railroad: a grain elevator is a co-op on a rail
-      siding, and every reference town has the elevator at the rail/main junction. The
-      world generator knows where the rail is; `SmallTownGenerator` does not. The
-      fix is a `TownContext` parameter carrying the rail's position and bearing into
-      the town generator, so it can:
-      - put the grain elevator and its bin row at the railroad instead of on the
-        highway band (today it is on the highway, and the rail can be 9 miles away);
-      - add the **diagonal rail-corridor street** (George's Boiler Ave) along the old
-        rail line, with small manufacturing on it;
-      - add a **rail spur** into the elevator yard.
-      This is the biggest remaining realism gap in the generator.
+- [x] **Stage 7 — the rail-corridor street.** The research is clear that Iowa's
+      industrial follows the railroad: a grain elevator is a co-op on a rail siding,
+      and every reference town has the elevator at the rail/main junction. The world
+      generator knows where the rail is; the town generator did not.
+      *Done:* a `TownContext` now carries the town's surroundings into the town
+      generator. The rail was redesigned too — it sits on the section grid, offset to
+      one side of its own road, with a one-sided swell, so it never crosses the road
+      it parallels and every crossing it makes is square. A town within reach of a
+      rail gets a **branch spur** that leaves the rail at a right angle, and the
+      grain elevator moves to the end of it. 17 of the 37 towns in the check
+      window have one.
+- [ ] **Stage 8 — a diagonal rail-corridor street and a curved street.** Still to
+      do. Both need the town's surroundings threaded further into
+      `SmallTownGenerator`. The spur (stage 7) is the piece that came first.
+- [ ] **Stage 9 — a rail-side industrial strip.** Small manufacturing (cabinet
+      shop, metal fabrication, feed mill) along the spur inside the town.
+
+## Landmarks — DONE 2026-11-12
+
+`BusinessCatalogue.Landmarks`: water tower (near-universal), post office, fire
+station, library, ball field, cemetery, depot (only where the railroad reaches the
+town), golf course, fairgrounds, airstrip. The area-like ones stand in their own
+ground at the edge of town; the rest take a lot face. Plus a boulevard street
+with a planted median, for the roughly one town in six that has one.
 
 ## Verification fix worth knowing about
 

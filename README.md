@@ -47,8 +47,20 @@ the only deliberate vacancy in town.
 No two towns are the same. Each draws 0–2 of the characteristic extras (an outlying
 road with farm houses on it, a bypassed old highway, an industrial side-street off the
 highway, a cul-de-sac court, a street that runs out to the edge of the plat, a town
-square), and the shops, the civic buildings and the street names are all drawn per
-town — two towns on the same highway never end up with the same row of stores.
+square, a boulevard with a planted median), and the shops, the civic buildings and the
+street names are all drawn per town — two towns on the same highway never end up with
+the same row of stores.
+
+**Town landmarks** — the water tower every small Iowa town has, a post office, a fire
+hall, a library, a ball field, a cemetery, a railroad depot where the railroad reaches,
+a golf course, a fairground, a landing strip. The big ones stand in their own ground
+at the edge of town.
+
+**The railroad** — rail lines every 75 miles sit on the section grid, a few yards off
+their own road, so they never run along a road and then peel off it: every crossing a
+rail makes is with a perpendicular road, and it is square. A town within reach of the
+rail gets a **branch spur** that leaves the main line at a right angle, and the grain
+elevator stands at the end of it with its bin row.
 
 **Roads & lots discipline** — no building lands on another (AABB registry with pad),
 houses never reach into the alley row (clamped to the lot, else the lot goes vacant),

@@ -59,6 +59,13 @@ ports later.
   in both directions. Rail lines every ~75 mi, E/W and N/S; towns tend to be near rail.
   Rivers run south and tributaries merge into bigger rivers; hills stay low (Great
   Plains, <130 ft relief).
+- **Rail and road crossings (user, 2026-11-12): a rail crosses roads square.** The rail
+  sits on the section grid, offset 40–210 ft to one side of its own road, with a
+  one-sided swell — so it can never cross the road it parallels, and every crossing it
+  makes is with a perpendicular road. A town near the rail gets a **branch spur** that
+  leaves the rail at a right angle, and the grain elevator stands at the end of it.
+- **Town streets must not have nothing on their outside (user, 2026-11-12):** the plat
+  pass reaches past the town's outermost street, so the edges are built out too.
 - **Town field is a queryable lattice, not a sequential Poisson pass:** one candidate per
   10-mi slot on the 10-mi paved corridor lattice (both directions), a town only exists
   if rail runs within 9 mi, priority suppression inside 10 mi, and a trunk river within
@@ -181,13 +188,17 @@ ports later.
 3. **Fill out towns** — `docs/todo.md` is the working list, with the research behind it in
    `docs/research/2026-11-11-iowa-town-composition.md`. Done 2026-11-12: the business
    catalogue (no two towns share a shop row), randomised civic buildings and street
-   names, the six characteristic town extras (outlying road, bypassed highway,
-   industrial side-street, cul-de-sac court, plat-edge street, town square), a final
-   "plat and build" pass over every street, sidewalks and drives that actually reach
-   the houses, one driveway per farm lot, and dirt field entrances on the section
-   lines. **Still to do:** the diagonal rail-corridor street, the curved street, the
-   boulevard median, and moving the grain elevator onto a **rail spur** (an elevator
-   with no railroad 9 miles away is the current worst realism bug).
+   names, the town extras (outlying road, bypassed highway, industrial side-street,
+   cul-de-sac court, plat-edge street, town square, boulevard with a planted median),
+   the landmarks (water tower, post office, fire station, library, ball field,
+   cemetery, depot, golf course, fairgrounds, airstrip), a final "plat and build" pass
+   over every street, sidewalks and drives that actually reach the houses, one
+   driveway per farm lot, and dirt field entrances on the section lines. The rail was
+   redesigned: it sits on the section grid, offset from its own road, swelling to one
+   side, so it never crosses the road it parallels and every crossing is square; a
+   town near the rail gets a **branch spur** and the grain elevator stands at the end
+   of it. **Still to do:** a diagonal rail-corridor street, a curved street, and a
+   rail-side industrial strip.
 4. World follow-ups: bridge/culvert decks where roads cross rivers; cache materialized
    towns across windows; a real place-name list (the 40 generic names repeat).
    Cattle-yard archetype still unconfirmed.
