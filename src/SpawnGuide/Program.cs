@@ -17,6 +17,54 @@ static string GetString(string[] args, string name, string fallback)
     return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback;
 }
 
+if (args.Contains("--serve"))
+{
+    // Tiny local HTTP server: serves the viewer, and /gen?seed=NNN generates an SVG on demand.
+    // Lets the viewer use ANY seed without pre-baking all of them.
+    int port = (int)GetUInt(args, "--port", 8735u);
+    var listener = new System.Net.HttpListener();
+    listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+    listener.Start();
+    Console.WriteLine($"SpawnGuide server on http://127.0.0.1:{port}/ (Ctrl+C to stop)");
+    while (listener.IsListening)
+    {
+        var ctx = listener.GetContext();
+        var url = ctx.Request.Url;
+        if (url?.LocalPath == "/gen")
+        {
+            try
+            {
+                var qs = (url.Query ?? "").TrimStart('?');
+                var q = qs.Split('&', StringSplitOptions.RemoveEmptyEntries).ToDictionary(p => p.Split('=')[0], p => p.Split('=').Length > 1 ? p.Split('=')[1] : "", StringComparer.OrdinalIgnoreCase);
+                if (!uint.TryParse(q.GetValueOrDefault("seed", ""), out var s)) s = 1993;
+                var sz = q.GetValueOrDefault("size", "hamlet");
+                var map = SmallTownGenerator.Generate(s, sz);
+                var svg = SvgMapRenderer.Render(map);
+                ctx.Response.ContentType = "image/svg+xml";
+                var bytes = System.Text.Encoding.UTF8.GetBytes(svg);
+                ctx.Response.OutputStream.Write(bytes, 0, bytes.Length);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("gen error: " + ex.Message);
+            }
+            finally { try { ctx.Response.Close(); } catch { } }
+            continue;
+        }
+        // serve the viewer file (and any out/*.svg) — just pass them through
+        var localPath = url?.LocalPath == "/" ? "/viewer.html" : url?.LocalPath;
+        var path = Path.Combine(Directory.GetCurrentDirectory(), "out", localPath?.TrimStart('/') ?? "viewer.html");
+        if (File.Exists(path))
+        {
+            var mime = path.EndsWith(".html", StringComparison.OrdinalIgnoreCase) ? "text/html" : path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase) ? "image/svg+xml" : "application/octet-stream";
+            ctx.Response.ContentType = mime;
+            ctx.Response.OutputStream.Write(File.ReadAllBytes(path), 0, (int)new FileInfo(path).Length);
+        }
+        ctx.Response.Close();
+    }
+    return;
+}
+
 var archetype = GetString(args, "--archetype", "all");
 var mapMode = GetString(args, "--map", "all");   // rural | town | smalltown | country | all
 var townSize = GetString(args, "--size", "hamlet"); // hamlet (boyden/hull later)

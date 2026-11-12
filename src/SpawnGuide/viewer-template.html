@@ -49,6 +49,12 @@ const seedGo = document.getElementById('seedGo');
 const randomBtn = document.getElementById('random');
 const seedErr = document.getElementById('seedErr');
 const seedToIndex = new Map();
+let serverUp = false;
+const SERVER = 'http://127.0.0.1:8735';
+fetch(SERVER + '/', { method: 'HEAD' }).then(
+  () => { serverUp = true; seedInput.placeholder = 'any seed… (live)'; },
+  () => {}
+);
 
 let cur = null;
 let s = 1, tx = 0, ty = 0, fitS = 1, natW = 1000, natH = 700;
@@ -162,8 +168,12 @@ function showSeedError(text) {
   setTimeout(() => { seedErr.style.display = 'none'; }, 2600);
 }
 function jumpToSeed(seed) {
+  if (serverUp) {
+    loadMap({ name: 'seed ' + seed, far: SERVER + '/gen?seed=' + seed + '&size=hamlet', lodSwitch: 1.55, file: 'seed ' + seed + ' (live)', seed });
+    return;
+  }
   const idx = seedToIndex.get(seed);
-  if (idx === undefined) { showSeedError(`seed ${seed} not baked`); return; }
+  if (idx === undefined) { showSeedError('seed ' + seed + ' not baked — start the SpawnGuide server for live seeds'); return; }
   sel.value = idx;
   loadMap(MAPS[idx]);
 }
@@ -174,6 +184,12 @@ seedGo.onclick = () => {
 };
 seedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') seedGo.click(); });
 randomBtn.onclick = () => {
+  if (serverUp) {
+    const seed = (Math.random() * 0xffffffff) >>> 0;
+    seedInput.value = seed;
+    jumpToSeed(seed);
+    return;
+  }
   if (MAPS.length < 2) return;
   let idx;
   do { idx = Math.floor(Math.random() * MAPS.length); } while (idx === sel.selectedIndex);

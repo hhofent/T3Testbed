@@ -52,10 +52,16 @@ grid roads, field fills, farmstead clusters, HWY 18 to the cell edges. Four view
 run: hamlet (centered), boyden (centered), hull (partial at the west edge), hamlet
 (partial at the north edge) — the "partial town, partial rural" framing.
 
-**Zoomable viewer** — `out/viewer.html` (fully self-contained, no server):
-pan/zoom across all six generated maps (smalltown ×3 seeds, 3 mi cell ×4 variants), far
-↔ detail crossfade as you zoom. **Open in a desktop browser** — phones can't reach a
-local file. Trees are trunk dots; town silhouettes are seeded blobs, not rectangles.
+**Zoomable viewer** — `out/viewer.html` (self-contained, no server required):
+pan/zoom across all generated maps, far ↔ detail crossfade as you zoom. **Open in a
+desktop browser** — phones can't reach a local file. Trees are trunk dots; town
+silhouettes are seeded blobs, not rectangles.
+
+**Live seeds from the spawner** — `dotnet run -- --serve` starts the built-in HTTP
+server on 127.0.0.1:8735. With it running, the 🎲 random button and the seed box
+generate ANY seed on demand — no baking needed. `GET /` serves the viewer,
+`GET /gen?seed=N&size=hamlet|boyden|hull` generates an SVG fresh. Without the server,
+the baked dropdown still works offline.
 
 **Outputs** — ASCII houses to the console, one SVG per artifact, a self-contained
 `out/index.html` (everything) and `out/example.html` (single featured example —

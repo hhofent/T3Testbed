@@ -68,23 +68,23 @@ public static class SmallTownGenerator
         int mainStreetIndex = size.Columns / 2; // N–S street index; MAIN sits mid-town
 
         // --- column plan: shared lot frontages per column so facing rows align.
-        var colFrontages = new List<float>[size.Columns];
+        var colFrontages = new List<List<float>>();
         for (int c = 0; c < size.Columns; c++)
         {
             int n = rng.RangeInt(size.LotsMin, size.LotsMax + 1);
-            colFrontages[c] = new List<float>();
+            colFrontages.Add(new List<float>());
             for (int i = 0; i < n; i++) colFrontages[c].Add(rng.Range(55f, 80f));
         }
         float BlockWidth(int col) => colFrontages[col].Sum() + 2 * SideLotDepth;
         float totalWidth = StreetRow * (size.Columns + 1);
         for (int c = 0; c < size.Columns; c++) totalWidth += BlockWidth(c);
 
-        var nsX = new float[size.Columns + 1];
+        var nsX = new List<float>();
         {
             float x = 0f;
             for (int s = 0; s <= size.Columns; s++)
             {
-                nsX[s] = x;
+                nsX.Add(x);
                 if (s < size.Columns) x += StreetRow + BlockWidth(s);
             }
         }
@@ -125,8 +125,8 @@ public static class SmallTownGenerator
         blobRZ = totalDepth / 2f;
         hb1 = rng.RangeInt(2, 5);
         hb2 = rng.RangeInt(5, 9);
-        ha1 = rng.Range(0.10f, 0.20f);
-        ha2 = rng.Range(0.04f, 0.10f);
+        ha1 = rng.Range(0.02f, 0.06f);
+        ha2 = rng.Range(0.01f, 0.03f);
         hp1 = rng.Range(0f, MathF.PI * 2f);
         hp2 = rng.Range(0f, MathF.PI * 2f);
         blobReady = true;
@@ -142,7 +142,7 @@ public static class SmallTownGenerator
         }
 
         // --- content tracking: streets end at the town's houses, never at the bounding square.
-        var streetZ = Enumerable.Range(0, size.Columns + 1).Select(_ => (z0: float.MaxValue, z1: float.MinValue)).ToArray();
+        var streetZ = Enumerable.Range(0, size.Columns + 1).Select(_ => (z0: float.MaxValue, z1: float.MinValue)).ToList();
         var streetX = Enumerable.Range(0, size.EWStreets).Select(_ => (x0: float.MaxValue, x1: float.MinValue)).ToArray();
         var rowFilled = new bool[blockRows];
         var colFilled = new bool[blockRows, size.Columns];
@@ -151,8 +151,8 @@ public static class SmallTownGenerator
         {
             for (int s = col; s <= col + 1 && s <= size.Columns; s++)
             {
-                streetZ[s].z0 = MathF.Min(streetZ[s].z0, z0);
-                streetZ[s].z1 = MathF.Max(streetZ[s].z1, z1);
+                var t = streetZ[s];
+                streetZ[s] = (MathF.Min(t.z0, z0), MathF.Max(t.z1, z1));
             }
             if (districtRow >= 0)
             {
@@ -216,21 +216,8 @@ public static class SmallTownGenerator
             QuietAnnotations = !detail,
         };
 
-        // --- roads: highway (dashed), E–W grid streets, N–S streets.
-        map.Roads.Add(new MapRect(0, 0, totalWidth, HighwayWidth));
-        map.RoadDashed.Add(true);
-        map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, HighwayWidth / 2f), Text = "HIGHWAY 18", Large = true });
-        foreach (var z in ewZ)
-        {
-            map.Roads.Add(new MapRect(0, z, totalWidth, StreetRow));
-            map.RoadDashed.Add(false);
-        }
-        for (int s = 0; s <= size.Columns; s++)
-        {
-            // N–S streets run from the highway's north edge through the last E–W street.
-            map.Roads.Add(new MapRect(nsX[s], zBand, StreetRow, lastStreetEnd - zBand));
-            map.RoadDashed.Add(false);
-        }
+        // --- (roads are created after the column sweep — empty columns get dropped first,
+        //      so the grid only includes blocks that actually have content.)
 
         // --- commercial band along the highway. Main street extends south to it.
         // Elevator first, so pads can be kept clear of it.
@@ -382,7 +369,7 @@ public static class SmallTownGenerator
             float streetZ = ewZ[streetIdx];
             float rowZ0 = facesSouth ? streetZ + StreetRow : streetZ - lotDepth;
             float cx = lotX + frontage / 2f, cz = rowZ0 + lotDepth / 2f;
-            if (!InsideBlob(cx, cz)) return; // ragged town edge
+            if (!InsideBlob(nsX[col] + StreetRow + BlockWidth(col) / 2f, rowZ0 + lotDepth / 2f)) return; // ragapped blob boundary — whole block in or out
             RecordContent(districtRow, col, lotX, lotX + frontage, rowZ0, rowZ0 + lotDepth);
             // Seeded vacancy, weighted toward the ragged outskirts.
             if (!anchor.HasValue && IsVacantLot(cx, cz))
@@ -521,6 +508,9 @@ public static class SmallTownGenerator
         void FillSideFace(int blockRow, int col, int side, float blockX0, float blockX1, float bz0, float bz1)
         {
             bool west = side == 0;
+            // outermost side strips face the open field — skip them; they read as dead-end lots
+            if (west && col == 0) return;
+            if (!west && col == size.Columns - 1) return;
             float lotX = west ? blockX0 : blockX1 - SideLotDepth;
             float z = bz0 + 3f;
             while (true)
@@ -528,7 +518,7 @@ public static class SmallTownGenerator
                 float f = rng.Range(58f, 76f);
                 if (z + f > bz1 - 3f) break;
                 float cx = lotX + SideLotDepth / 2f, cz = z + f / 2f;
-                if (!InsideBlob(cx, cz)) { z += f; continue; } // ragged town edge
+                if (!InsideBlob(nsX[col] + StreetRow + BlockWidth(col) / 2f, bz0 + (bz1 - bz0) / 2f)) { z += f; continue; } // ragapped blob — whole block in or out
                 if (IsVacantLot(cx, cz))
                 {
                     RecordContent(blockRow, col, lotX, lotX + SideLotDepth, z, z + f);
@@ -631,52 +621,121 @@ public static class SmallTownGenerator
             }
         }
 
-        // --- alleys, only through blocks that actually ended up with content.
-        for (int row = 0; row < blockRows; row++)
+        // --- drop empty columns: a column with no houses, no civic buildings and no
+        // outbuildings vanishes entirely (its lots, alleys and its east NS street),
+        // so the town never has a lone house ringed by dead roads. Everything east
+        // of the deleted column slides west by the column + street width.
+        bool ColumnHasContent(int col)
         {
-            if (!rowAlley[row]) continue;
-            float aZ = ewZ[row] + StreetRow + lotDepth;
-            for (int col = 0; col < size.Columns; col++)
-            {
-                if (!colFilled[row, col]) continue;
-                float bX = nsX[col] + StreetRow;
-                map.Alleys.Add(new MapRect(bX, aZ, BlockWidth(col), AlleyRow));
-            }
+            float lo = nsX[col] + StreetRow;
+            float hi = lo + colFrontages[col].Sum() + 2 * SideLotDepth;
+            int houses = 0, buildings = 0, lots = 0;
+            foreach (var h in map.Houses) if (h.Plan.MinX >= lo && h.Plan.MinX < hi) houses++;
+            foreach (var o in map.Outbuildings) if (o.Center.X >= lo && o.Center.X < hi) buildings++;
+            foreach (var r in map.LotLines) { float cx = r.X + r.W / 2f; if (cx >= lo && cx < hi) lots++; }
+            // a mostly-empty block is worse than no block — delete it, and slide everything west
+            bool keep = houses >= 4 && houses * 2 >= lots;
+            return keep;
         }
+        void ShiftAllX(float bound, float dx)
+        {
+            foreach (var h in map.Houses)
+            {
+                var p = h.Plan;
+                if (p.MinX >= bound) h.Plan = p.OffsetCopy(dx, 0f);
+            }
+            for (int i = 0; i < map.LotLines.Count; i++) { var r = map.LotLines[i]; if (r.X >= bound) map.LotLines[i] = new MapRect(r.X + dx, r.Z, r.W, r.H); }
+            for (int i = 0; i < map.Alleys.Count; i++) { var r = map.Alleys[i]; if (r.X >= bound) map.Alleys[i] = new MapRect(r.X + dx, r.Z, r.W, r.H); }
+            for (int i = 0; i < map.Outbuildings.Count; i++) { var o = map.Outbuildings[i]; if (o.Center.X >= bound) o.Center = new Vec2(o.Center.X + dx, o.Center.Z); }
+            for (int i = 0; i < map.Walks.Count; i++)
+            {
+                var w = map.Walks[i];
+                if (!w.Points.Any(p => p.X >= bound)) continue;
+                var d = new Driveway { WidthFeet = w.WidthFeet, Surface = w.Surface };
+                foreach (var p in w.Points) d.Points.Add(new Vec2(p.X + (p.X >= bound ? dx : 0f), p.Z));
+                map.Walks[i] = d;
+            }
+            for (int i = 0; i < map.Driveways.Count; i++)
+            {
+                var d = map.Driveways[i];
+                if (!d.Points.Any(p => p.X >= bound)) continue;
+                var n = new Driveway { WidthFeet = d.WidthFeet, Surface = d.Surface };
+                foreach (var p in d.Points) n.Points.Add(new Vec2(p.X + (p.X >= bound ? dx : 0f), p.Z));
+                map.Driveways[i] = n;
+            }
+            for (int i = 0; i < map.Trees.Count; i++) if (map.Trees[i].X >= bound) map.Trees[i] = new Vec2(map.Trees[i].X + dx, map.Trees[i].Z);
+            for (int i = 0; i < map.Labels.Count; i++) { var l = map.Labels[i]; if (l.Position.X >= bound) map.Labels[i] = new MapLabel { Position = new Vec2(l.Position.X + dx, l.Position.Z), Text = l.Text, Large = l.Large, RotateDeg = l.RotateDeg, Anchor = l.Anchor }; }
+            for (int i = 0; i < map.Bulbs.Count; i++) { var b = map.Bulbs[i]; if (b.Center.X >= bound) map.Bulbs[i] = new RoadBulb { Center = new Vec2(b.Center.X + dx, b.Center.Z), RadiusFeet = b.RadiusFeet, Fill = b.Fill }; }
+        }
+        for (int c = size.Columns - 1; c >= 0; c--)
+        {
+            bool has = ColumnHasContent(c);
+            if (has) continue;
+            float colW = colFrontages[c].Sum() + 2 * SideLotDepth + StreetRow;
+            float lo = nsX[c] + StreetRow;
+            float hi = lo + colFrontages[c].Sum() + 2 * SideLotDepth;
+            map.Houses.RemoveAll(h => h.Plan.MinX >= lo && h.Plan.MinX < hi);
+            map.LotLines.RemoveAll(r => r.X + r.W > lo && r.X < hi);
+            map.Alleys.RemoveAll(r => r.X + r.W > lo && r.X < hi);
+            map.Outbuildings.RemoveAll(o => o.Center.X >= lo && o.Center.X < hi);
+            map.Walks.RemoveAll(w => w.Points.Any(p => p.X >= lo && p.X < hi));
+            map.Driveways.RemoveAll(d => d.Points.Any(p => p.X >= lo && p.X < hi));
+            map.Trees.RemoveAll(t => t.X >= lo && t.X < hi);
+            map.Labels.RemoveAll(l => l.Position.X >= lo && l.Position.X < hi);
+            map.Bulbs.RemoveAll(b => b.Center.X >= lo && b.Center.X < hi);
+            float bound = nsX[c + 1] + StreetRow;
+            ShiftAllX(bound, -colW);
+            for (int i = c + 2; i < nsX.Count; i++) nsX[i] -= colW;
+            nsX.RemoveAt(c + 1);
+            streetZ.RemoveAt(c + 1);
+            colFrontages.RemoveAt(c);
+            totalWidth -= colW;
+            map.WidthFeet = totalWidth;
+        }
+        int effColumns = nsX.Count - 1;   // effective column count after sweep
 
-        // --- road grid: every road attaches to another road, both ends, no free ends ever.
-        // A full EW row with no lots at all vanishes (taking its street with it); a totally
-        // empty column vanishes too. Rows that keep content keep their full-width street;
-        // NS streets run from the highway out to the last surviving EW street.
+        // --- roads built fresh after the sweep (empty columns are gone, so every
+        // road has content to serve). EW streets run the full grid width; NS streets
+        // run from the highway to the last surviving EW street.
         bool[] ewKeep = new bool[size.EWStreets];
         for (int s = 0; s < size.EWStreets; s++)
             ewKeep[s] = streetX[s].x1 >= streetX[s].x0;
-        bool[] nsKeep = new bool[size.Columns + 1];
-        for (int s = 0; s <= size.Columns; s++)
-            nsKeep[s] = streetZ[s].z1 > zBand + 40f;
         int lastKeptEW = -1;
         for (int s = size.EWStreets - 1; s >= 0; s--)
             if (ewKeep[s]) { lastKeptEW = s; break; }
         float nsZ1 = lastKeptEW >= 0 ? ewZ[lastKeptEW] + StreetRow : zBand + StreetRow;
         {
-            var newRoads = new List<MapRect> { map.Roads[0] };
-            var newDashed = new List<bool> { map.RoadDashed[0] };
+            map.Roads.Add(new MapRect(0, 0, totalWidth, HighwayWidth));
+            map.RoadDashed.Add(true);
+            map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, HighwayWidth / 2f), Text = "HIGHWAY 18", Large = true });
             for (int s = 0; s < size.EWStreets; s++)
             {
                 if (!ewKeep[s]) continue;
-                newRoads.Add(new MapRect(0, ewZ[s], totalWidth, StreetRow));
-                newDashed.Add(false);
+                map.Roads.Add(new MapRect(0, ewZ[s], totalWidth, StreetRow));
+                map.RoadDashed.Add(false);
             }
-            for (int s = 0; s <= size.Columns; s++)
+            bool[] nsKeep = new bool[nsX.Count];
+            for (int s = 0; s < nsX.Count; s++) nsKeep[s] = streetZ[s].z1 > zBand + 40f;
+            for (int s = 0; s < nsX.Count; s++)
             {
                 if (!nsKeep[s]) continue;
-                newRoads.Add(new MapRect(nsX[s], zBand, StreetRow, nsZ1 - zBand));
-                newDashed.Add(false);
+                map.Roads.Add(new MapRect(nsX[s], zBand, StreetRow, nsZ1 - zBand));
+                map.RoadDashed.Add(false);
             }
-            map.Roads.Clear();
-            map.Roads.AddRange(newRoads);
-            map.RoadDashed.Clear();
-            map.RoadDashed.AddRange(newDashed);
+        }
+
+        // --- alleys, only through blocks that actually ended up with content.
+        for (int row = 0; row < blockRows; row++)
+        {
+            if (!rowAlley[row]) continue;
+            float aZ = ewZ[row] + StreetRow + lotDepth;
+            for (int col = 0; col < effColumns; col++)
+            {
+                if (!colFilled[row, col]) continue;
+                float bX = nsX[col] + StreetRow;
+                if (bX + colFrontages[col].Sum() > totalWidth + 1f) continue;
+                map.Alleys.Add(new MapRect(bX, aZ, colFrontages[col].Sum() + 2 * SideLotDepth, AlleyRow));
+            }
         }
 
         // --- sidewalks run with the streets (they connect end to end like the roads).
@@ -689,9 +748,9 @@ public static class SmallTownGenerator
                 map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(0, wz), new Vec2(totalWidth, wz) } });
             }
         }
-        for (int s = 0; s <= size.Columns; s++)
+        for (int s = 0; s < nsX.Count; s++)
         {
-            if (!nsKeep[s]) continue;
+            if (streetZ[s].z1 <= zBand + 40f) continue;
             foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + StreetRow - 2.25f })
             {
                 map.Walks.Add(new Driveway
@@ -709,9 +768,9 @@ public static class SmallTownGenerator
             if (!ewKeep[i]) continue;
             map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, ewZ[i] + StreetRow / 2f), Text = ewNames[i % ewNames.Length] + " AVENUE" });
         }
-        for (int s = 0; s <= size.Columns; s++)
+        for (int s = 0; s < nsX.Count; s++)
         {
-            if (!nsKeep[s]) continue;
+            if (streetZ[s].z1 <= zBand + 40f) continue;
             int ni = s < mainStreetIndex ? s : s - 1;
             string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length];
             map.Labels.Add(new MapLabel
@@ -728,14 +787,22 @@ public static class SmallTownGenerator
         if (rng.Chance(0.7f) && lastKeptEW >= 0)
         {
             // pick a column whose NORTH-EDGE row is empty (so the stub doesn't hit houses)
-            var edgeEmpty = Enumerable.Range(0, size.Columns)
-                .Where(cn => !northEdgeFilled.Contains(cn))
+            float spurZ0 = ewZ[lastKeptEW] + StreetRow;
+            float northEdgeBottom = lastStreetEnd;
+            var northLots = map.LotLines.Where(r => r.Z >= spurZ0 - 1f).ToList();
+            var edgeEmpty = Enumerable.Range(0, effColumns)
+                .Where(cn =>
+                {
+                    float lo = nsX[cn] + StreetRow;
+                    float hi = lo + colFrontages[cn].Sum() + 2 * SideLotDepth;
+                    return !map.Houses.Any(h => h.Plan.MinX >= lo && h.Plan.MinX < hi)
+                        && !northLots.Any(r => r.X + r.W > lo && r.X < hi);
+                })
                 .ToList();
             if (edgeEmpty.Count > 0)
             {
                 int cn = edgeEmpty[rng.RangeInt(0, edgeEmpty.Count)];
                 float spurX = nsX[cn] + StreetRow + BlockWidth(cn) / 2f - StreetRow / 2f;
-                float spurZ0 = ewZ[lastKeptEW] + StreetRow;      // attaches at the last through street
                 float stubLen = rng.Range(110f, 130f);            // < half a block
                 map.Roads.Add(new MapRect(spurX - StreetRow / 2f, spurZ0, StreetRow, stubLen));
                 map.RoadDashed.Add(false);
