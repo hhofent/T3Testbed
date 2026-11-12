@@ -339,8 +339,11 @@ public static class SvgMapRenderer
                 else
                     sb.AppendLine($"<line class='thin' x1='{N(tl.X + wPx / 2f)}' y1='{N(tl.Y + 2)}' x2='{N(tl.X + wPx / 2f)}' y2='{N(tl.Y + hPx - 2)}' stroke-dasharray='5 4'/>");
             }
+            // Storefront names are the town's business row — they only get hidden when
+            // the caller says so (a nine-mile world window), never just because the
+            // plan is otherwise quiet.
             bool suppress = map.SuppressOutbuildingLabels
-                || (map.QuietAnnotations && (o.Kind == OutbuildingKind.DetachedGarage || o.Kind == OutbuildingKind.Storefront));
+                || (map.QuietAnnotations && o.Kind == OutbuildingKind.DetachedGarage);
             if (!string.IsNullOrEmpty(o.Label) && !suppress)
                 sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(tl.Y + hPx + 12)}' text-anchor='middle'>{SvgRenderer.Esc(o.Label)}</text>");
         }

@@ -37,6 +37,7 @@ public static class SmallTownGenerator
         public int CommercialPads;
         public int CivicAnchors;
         public int DeadEnds;
+        public int Tier;          // 0 crossroads, 1 hamlet, 2 village, 3 town
         public string Label = "";
     }
 
@@ -44,13 +45,13 @@ public static class SmallTownGenerator
     {
         // Generic placeholder sizes. No reference-town names are used in the world.
         // Every town gets one dead-end street; only the biggest get a second.
-        ["crossroads"] = new TownSize { Columns = 2, EWStreets = 2, LotsMin = 2, LotsMax = 3, CommercialPads = 2, CivicAnchors = 1, DeadEnds = 1, Label = "CROSSROADS" },
-        ["hamlet"] = new TownSize { Columns = 4, EWStreets = 3, LotsMin = 3, LotsMax = 4, CommercialPads = 3, CivicAnchors = 2, DeadEnds = 1, Label = "HAMLET" },
-        ["village"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 5, CivicAnchors = 4, DeadEnds = 1, Label = "VILLAGE" },
-        ["town"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 7, CivicAnchors = 5, DeadEnds = 2, Label = "TOWN" },
+        ["crossroads"] = new TownSize { Columns = 2, EWStreets = 2, LotsMin = 2, LotsMax = 3, CommercialPads = 2, CivicAnchors = 1, DeadEnds = 1, Tier = 0, Label = "CROSSROADS" },
+        ["hamlet"] = new TownSize { Columns = 4, EWStreets = 3, LotsMin = 3, LotsMax = 4, CommercialPads = 3, CivicAnchors = 2, DeadEnds = 1, Tier = 1, Label = "HAMLET" },
+        ["village"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 5, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
+        ["town"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 7, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
         // Old preset names stay as aliases so existing commands keep working.
-        ["boyden"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 5, CivicAnchors = 4, DeadEnds = 1, Label = "VILLAGE" },
-        ["hull"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 7, CivicAnchors = 5, DeadEnds = 2, Label = "TOWN" },
+        ["boyden"] = new TownSize { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 5, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
+        ["hull"] = new TownSize { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 7, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
     };
 
     static readonly string[] PlaceNames =
@@ -83,8 +84,17 @@ public static class SmallTownGenerator
         // Placeholder names only — not borrowed from the reference towns. Replace with the
         // real names list when it lands.
         string townName = rng.Pick(PlaceNames);
-        string[] ewNames = { "IOWA", "MICHIGAN", "MINNESOTA", "DAKOTA", "CALUMET", "OHIO" };
-        string[] nsNames = { "DIVISION", "LINCOLN", "WASHINGTON", "HARRIS", "WILLIAMS", "CHESTNUT", "BURROUGHS", "ADA", "PARK", "ELEANOR", "VINE", "CHELSEA", "STONE", "HUGH", "LOCUST", "DELTA" };
+        // Street names are drawn per town and shuffled, so no two towns in the world
+        // carry the same street list in the same order. The pools are the ones Iowa
+        // actually uses: state names, pioneer presidents, and tree names.
+        string[] ewPool = { "IOWA", "MICHIGAN", "MINNESOTA", "DAKOTA", "CALUMET", "OHIO",
+                            "NEBRASKA", "KANSAS", "ILLINOIS", "WISCONSIN", "ARKANSAS", "NEBASKA" };
+        string[] nsPool = { "DIVISION", "LINCOLN", "WASHINGTON", "HARRIS", "WILLIAMS", "CHESTNUT",
+                            "BURROUGHS", "ADA", "PARK", "ELEANOR", "VINE", "CHELSEA", "STONE",
+                            "HUGH", "LOCUST", "DELTA", "JEFFERSON", "MADISON", "MONROE", "WILSON",
+                            "MAPLE", "ELM", "ASH", "OAK", "CEDAR", "POPLAR", "WALNUT", "SPRUCE" };
+        var ewNames = ewPool.OrderBy(_ => rng.NextUInt()).ToArray();
+        var nsNames = nsPool.OrderBy(_ => rng.NextUInt()).ToArray();
         int mainStreetIndex = size.Columns / 2; // N–S street index; MAIN sits mid-town
 
         // --- column plan: shared lot frontages per column so facing rows align.
@@ -244,80 +254,151 @@ public static class SmallTownGenerator
         //      so the grid only includes blocks that actually have content.)
 
         // --- commercial band along the highway. Main street extends south to it.
-        // Elevator first, so pads can be kept clear of it.
+        // The mix, the sizes, the names and the order are all drawn per town: two
+        // towns on the same street never end up with the same row of shops. What
+        // stays constant is the shape a real Iowa main street has — the grain
+        // elevator by the main junction, the implement dealer and the gas station out
+        // at the ends where there is room for them, the shops in between.
         float mainX = nsX[mainStreetIndex];
         var bandOcc = new List<(float x0, float x1)>();
+
+        // The elevator sits near the main junction — that is where every real Iowa
+        // elevator is — but which side of MAIN it falls on varies.
+        float evW = 48f, evD = 88f;
+        bool elevatorRight = rng.Chance(0.62f);
+        float evX0 = elevatorRight ? mainX + StreetRow + rng.Range(45f, 150f)
+                                   : mainX - StreetRow - rng.Range(45f, 150f) - evW;
+        evX0 = Math.Clamp(evX0, 40f, MathF.Max(40f, totalWidth - evW - 40f));
+        map.Outbuildings.Add(new Outbuilding
         {
-            float evW = 48f, evD = 88f;
-            float evX0 = mainX + StreetRow + 55f;
+            Kind = OutbuildingKind.GrainElevator,
+            Center = new Vec2(evX0 + evW / 2f, zBand + BandDepth / 2f),
+            WidthFeet = evW,
+            DepthFeet = evD,
+            Label = "ELEVATOR",
+        });
+        bandOcc.Add((evX0 - 12f, evX0 + evW + 12f));
+        int bins = rng.RangeInt(4, 7);
+        float binD = 22f, spacing = binD + 8f;
+        float binRowW = bins * spacing - 8f;
+        float binX = evX0 + (evW - binRowW) / 2f;
+        if (binX + binRowW > totalWidth - 8f) binX = totalWidth - 8f - binRowW;
+        if (binX < 8f) binX = 8f;
+        for (int i = 0; i < bins; i++)
             map.Outbuildings.Add(new Outbuilding
             {
-                Kind = OutbuildingKind.GrainElevator,
-                Center = new Vec2(evX0 + evW / 2f, zBand + BandDepth / 2f),
-                WidthFeet = evW,
-                DepthFeet = evD,
-                Label = "ELEVATOR",
+                Kind = OutbuildingKind.GrainBin,
+                Center = new Vec2(binX + i * spacing + binD / 2f, zBand + BandDepth / 2f + evD / 2f + 10f + binD / 2f),
+                DiameterFeet = binD,
+                Label = "",
             });
-            if (evX0 + evW + 8f < totalWidth - 8f) bandOcc.Add((evX0 - 14f, evX0 + evW + 80f));
-            int bins = rng.RangeInt(4, 7);
-            float binD = 22f, spacing = binD + 8f;
-            float binRowW = bins * spacing - 8f;
-            float binX = evX0 + (evW - binRowW) / 2f;
-            if (binX + binRowW > totalWidth - 8f) binX = totalWidth - 8f - binRowW;
-            for (int i = 0; i < bins; i++)
+        bandOcc.Add((binX - 8f, binX + binRowW + 8f));
+
+        // --- pick this town's row of businesses -----------------------------------
+        // A gas station is always in; everything else is drawn from what the town tier
+        // can support. The order is then shuffled, so no two towns read alike.
+        var eligible = BusinessCatalogue.Shops.Where(b => b.MinTier <= size.Tier).ToList();
+        var chosen = new List<BusinessCatalogue.Business>();
+        var gas = eligible.First(b => b.Descriptor == "GAS STATION");
+        chosen.Add(gas);
+        var rest = eligible.Where(b => b != gas).ToList();
+        // Fisher–Yates on a copy, then take as many as the town has pads.
+        for (int i = rest.Count - 1; i > 0; i--)
+        {
+            int j = rng.RangeInt(0, i + 1);
+            (rest[i], rest[j]) = (rest[j], rest[i]);
+        }
+        for (int i = 0; i < size.CommercialPads - 1 && i < rest.Count; i++) chosen.Add(rest[i]);
+
+        // Real main streets put the roomy businesses at the two ends and the small
+        // ones in the middle, so keep the edge businesses at the ends.
+        var edge = chosen.Where(b => b.Edge).ToList();
+        var core = chosen.Where(b => !b.Edge).ToList();
+        for (int i = core.Count - 1; i > 0; i--)
+        {
+            int j = rng.RangeInt(0, i + 1);
+            (core[i], core[j]) = (core[j], core[i]);
+        }
+        var strip = new List<BusinessCatalogue.Business>();
+        int leftSlots = edge.Count / 2;
+        for (int i = 0; i < leftSlots; i++) strip.Add(edge[i]);
+        strip.AddRange(core);
+        for (int i = edge.Count - 1; i >= leftSlots; i--) strip.Add(edge[i]);
+
+        // The industrial boxes: 1–2 on the highway edge, away from the main junction.
+        int indCount = rng.Chance(0.55f) ? 2 : 1;
+        var indEligible = BusinessCatalogue.Industrial.Where(b => b.MinTier <= size.Tier).ToList();
+        var industrial = new List<BusinessCatalogue.Business>();
+        for (int i = 0; i < indCount && indEligible.Count > 0; i++)
+        {
+            int pick = rng.RangeInt(0, indEligible.Count);
+            industrial.Add(indEligible[pick]);
+            indEligible.RemoveAt(pick);
+        }
+
+        // --- lay the strip out ----------------------------------------------------
+        // The band runs the length of the town, broken by the main-street gap and by
+        // the elevator. Buildings are placed in the chosen order, skipping the
+        // occupied stretches.
+        // The band's footprint is NOT trimmed by the town's ragged residential
+        // silhouette: a real highway strip runs the full length of the town, and the
+        // blob is a shape for the blocks, not for the road frontage.
+        {
+            var placed = new List<(BusinessCatalogue.Business biz, float x, float w, float d, string label)>();
+            float x = 45f;
+            int guard = 0;
+            foreach (var biz in strip)
+            {
+                float w = rng.Range(biz.MinWidth, biz.MaxWidth);
+                float d = rng.Range(biz.MinDepth, biz.MaxDepth);
+                // Find room for it: try the current position, then push right.
+                int tries = 0;
+                while (tries++ < 24)
+                {
+                    bool inMainGap = x + w > mainX - 12f && x < mainX + StreetRow + 12f;
+                    bool inBandOcc = bandOcc.Any(b => x < b.x1 && x + w > b.x0);
+                    if (x + w <= totalWidth - 35f && !inMainGap && !inBandOcc)
+                        break;
+                    x += 12f;
+                }
+                if (tries >= 24) continue;   // no room for this one; the town is full
+                float gap = rng.Range(5f, 18f);
+                placed.Add((biz, x, w, d, BusinessCatalogue.LabelFor(rng, biz)));
+                bandOcc.Add((x - 5f, x + w + 5f));
+                x += w + gap;
+                if (guard++ > 40) break;
+            }
+            foreach (var p in placed)
+            {
+                RecordContent(-1, 0, p.x, p.x + p.w, zBand, zBand + 80f);
                 map.Outbuildings.Add(new Outbuilding
                 {
-                    Kind = OutbuildingKind.GrainBin,
-                    Center = new Vec2(binX + i * spacing + binD / 2f, zBand + BandDepth / 2f + evD / 2f + 10f + binD / 2f),
-                    DiameterFeet = binD,
-                    Label = "",
+                    Kind = OutbuildingKind.Storefront,
+                    Center = new Vec2(p.x + p.w / 2f, zBand + p.d / 2f + 8f),
+                    WidthFeet = p.w,
+                    DepthFeet = p.d,
+                    Label = p.label,
                 });
-            bandOcc.Add((evX0 - 14f, totalWidth + 1f));   // keep the pad row clear of elevator + bins
-        }
-        // 1–2 industrial flat boxes on the highway edge, away from the main junction.
-        string[] industrialNames = { "MERCO MFG", "CO-OP PLANT", "SIOUX STEEL", "MERIDIAN MFG" };
-        for (int i = 0, placedInd = 0; i < 2 && placedInd < (rng.Chance(0.55f) ? 2 : 1); i++)
-        {
-            float iw = rng.Range(85f, 115f), id = rng.Range(55f, 70f);
-            float ix = i == 0 ? rng.Range(50f, totalWidth * 0.30f) : rng.Range(totalWidth * 0.62f, totalWidth - iw - 50f);
-            if (ix < mainX + StreetRow + 20f && ix + iw > mainX - 20f) continue;
-            map.Outbuildings.Add(new Outbuilding
+            }
+
+            // The industrial boxes go at whatever frontage is left, never straddling the
+            // main junction.
+            foreach (var biz in industrial)
             {
-                Kind = OutbuildingKind.Storefront,
-                Center = new Vec2(ix + iw / 2f, zBand + id / 2f + 8f),
-                WidthFeet = iw,
-                DepthFeet = id,
-                Label = industrialNames[(i + (int)(seed % 4)) % industrialNames.Length],
-            });
-            bandOcc.Add((ix - 10f, ix + iw + 10f));
-            placedInd++;
-        }
-        var padLabels = new List<string> { "CASEY'S", "FEED & SEED", "CO-OP", "HARDWARE", "BAR & GRILL", "AUTO ELECTRIC" };
-        {
-            float x = 55f;
-            int placed = 0, guard = 0;
-            while (placed < size.CommercialPads && guard++ < 60)
-            {
-                float w = rng.Range(70f, 110f);
-                float gap = rng.Range(6f, 20f);
-                bool inMainGap = x + w > mainX - 12f && x < mainX + StreetRow + 12f;
-                bool inBandOcc = bandOcc.Any(b => x < b.x1 && x + w > b.x0);
-                if (x + w <= totalWidth - 40f && !inMainGap && !inBandOcc && InsideBlob(x + w / 2f, zBand + 50f))
+                float iw = rng.Range(biz.MinWidth, biz.MaxWidth), id = rng.Range(biz.MinDepth, biz.MaxDepth);
+                float ix = rng.Range(45f, MathF.Max(46f, totalWidth - iw - 45f));
+                bool straddles = ix < mainX + StreetRow + 20f && ix + iw > mainX - 20f;
+                bool collides = bandOcc.Any(b => ix < b.x1 && ix + iw > b.x0);
+                if (straddles || collides) continue;
+                map.Outbuildings.Add(new Outbuilding
                 {
-                    RecordContent(-1, 0, x, x + w, zBand, zBand + 80f);
-                    float d = rng.Range(52f, 72f);
-                    map.Outbuildings.Add(new Outbuilding
-                    {
-                        Kind = OutbuildingKind.Storefront,
-                        Center = new Vec2(x + w / 2f, zBand + d / 2f + 8f),
-                        WidthFeet = w,
-                        DepthFeet = d,
-                        Label = padLabels[placed % padLabels.Count],
-                    });
-                    bandOcc.Add((x - 6f, x + w + 6f));
-                    placed++;
-                }
-                x += w + gap;
+                    Kind = OutbuildingKind.Storefront,
+                    Center = new Vec2(ix + iw / 2f, zBand + id / 2f + 8f),
+                    WidthFeet = iw,
+                    DepthFeet = id,
+                    Label = BusinessCatalogue.LabelFor(rng, biz),
+                });
+                bandOcc.Add((ix - 10f, ix + iw + 10f));
             }
         }
         uint houseSeed = seed * 2654435761u + 97u;
@@ -351,12 +432,16 @@ public static class SmallTownGenerator
                 }
                 x += hW + rng.Range(24f, 60f);
             }
-            // one industrial or storefront at the remaining side
-            if (rng.Chance(0.6f))
+            // one industrial or storefront at the remaining side, drawn from the same
+            // catalogue as the north strip so no two towns share a name. A crossroads
+            // is too small for any of them, so it just gets houses down here.
+            var southPool = BusinessCatalogue.Industrial.Where(b => b.MinTier <= size.Tier).ToList();
+            if (southPool.Count > 0 && rng.Chance(0.6f))
             {
-                float iw = rng.Range(70f, 100f), id = rng.Range(46f, 60f);
+                var southBiz = southPool[rng.RangeInt(0, southPool.Count)];
+                float iw = rng.Range(southBiz.MinWidth, southBiz.MaxWidth);
+                float id = rng.Range(southBiz.MinDepth, southBiz.MaxDepth);
                 float ix = totalWidth - iw - 45f;
-                string[] southLabels = { "MERIDIAN MFG", "CO-OP PLANT", "SOAP WORKS", "FEED CO-OP" };
                 if (ix > x + 20f)
                 {
                     map.Outbuildings.Add(new Outbuilding
@@ -365,7 +450,7 @@ public static class SmallTownGenerator
                         Center = new Vec2(ix + iw / 2f, southEdge + id / 2f + 10f),
                         WidthFeet = iw,
                         DepthFeet = id,
-                        Label = southLabels[(int)(seed % 4)],
+                        Label = BusinessCatalogue.LabelFor(rng, southBiz),
                     });
                 }
             }
@@ -380,8 +465,40 @@ public static class SmallTownGenerator
         for (int s = 1; s < size.EWStreets; s++)
             for (int col = 0; col < size.Columns; col++) faceIds.Add((s, 1, col));
         var civic = new Dictionary<(int s, int side, int col), OutbuildingKind>();
-        OutbuildingKind[] civicKinds = { OutbuildingKind.Church, OutbuildingKind.CityPark, OutbuildingKind.School, OutbuildingKind.Church, OutbuildingKind.CityPark };
-        for (int i = 0; i < size.CivicAnchors && i < civicKinds.Length && faceIds.Count > 0; i++)
+        // Which civic buildings a town has, and how many of each, varies with the seed
+        // and with the town tier — a village is not a hamlet with more parks. What
+        // stays constant is the shape of the list: a church is nearly always there,
+        // the school appears once the town is big enough to have one, and a park is
+        // the thing that turns a grid into a place.
+        var civicKinds = new List<OutbuildingKind>();
+        int anchors = size.CivicAnchors;
+        // Church: the one near-universal. Two of them in the bigger towns.
+        int churches = rng.Chance(0.72f) ? 2 : 1;
+        if (size.Tier >= 2) churches = rng.Chance(0.5f) ? 2 : 1;
+        if (size.Tier == 0) churches = rng.Chance(0.75f) ? 1 : 0;
+        for (int i = 0; i < churches && civicKinds.Count < anchors; i++) civicKinds.Add(OutbuildingKind.Church);
+        // School: a one-room schoolhouse in a crossroads, a real schoolhouse in a town.
+        float schoolChance = size.Tier == 0 ? 0.3f : size.Tier == 1 ? 0.6f : 0.95f;
+        if (civicKinds.Count < anchors && rng.Chance(schoolChance)) civicKinds.Add(OutbuildingKind.School);
+        // Park.
+        float parkChance = size.Tier == 0 ? 0.35f : size.Tier == 1 ? 0.6f : 0.85f;
+        if (civicKinds.Count < anchors && rng.Chance(parkChance)) civicKinds.Add(OutbuildingKind.CityPark);
+        // Fill any remaining slots with whatever is left, so a big town always uses
+        // the anchors it has.
+        var spare = new List<OutbuildingKind> { OutbuildingKind.Church, OutbuildingKind.CityPark, OutbuildingKind.School };
+        while (civicKinds.Count < anchors && spare.Count > 0)
+        {
+            int k = rng.RangeInt(0, spare.Count);
+            civicKinds.Add(spare[k]);
+            spare.RemoveAt(k);
+        }
+        // The order the anchors go in is the town's, not the list's.
+        for (int i = civicKinds.Count - 1; i > 0; i--)
+        {
+            int j = rng.RangeInt(0, i + 1);
+            (civicKinds[i], civicKinds[j]) = (civicKinds[j], civicKinds[i]);
+        }
+        for (int i = 0; i < civicKinds.Count && faceIds.Count > 0; i++)
         {
             int idx = rng.RangeInt(0, faceIds.Count);
             civic[faceIds[idx]] = civicKinds[i];
