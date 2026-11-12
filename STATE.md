@@ -178,11 +178,17 @@ ports later.
    `docs/research/2026-11-11-ia-calibration-references.md`.
 2. ~~Lock the 3-mile-cell architecture and build the infinite world~~ — done
    2026-11-11; `WorldMap.cs` + `--verify` + live `/world` streaming.
-3. World follow-ups: bridge/culvert decks where roads cross rivers; cache materialized
-   towns across windows; a real place-name list (the 40 generic names repeat);
-   optional diagonal rail-corridor street (George's Boiler Ave / Boyden's Railroad St).
+3. **Fill out towns** — `docs/todo.md` is the working list, with the research behind it in
+   `docs/research/2026-11-11-iowa-town-composition.md`. Headline items: sidewalks and
+   drives that actually reach the houses and garages; dirt field entrances on rural
+   gravel roads; a final "platted but not built" lot pass over every town street; a real
+   business catalogue so towns stop sharing one fixed set of six shops; and moving the
+   grain elevator + industrial buildings onto the **rail spur** (an elevator with no
+   railroad 9 miles away is the current worst realism bug).
+4. World follow-ups: bridge/culvert decks where roads cross rivers; cache materialized
+   towns across windows; a real place-name list (the 40 generic names repeat).
    Cattle-yard archetype still unconfirmed.
-4. Keep `dotnet run -- --verify --seed 1993` green after every generation change.
+5. Keep `dotnet run -- --verify --seed 1993` green after every generation change.
    Floor plans and the Unity port are still future work; the world query API is the
    porting boundary.
 
@@ -201,7 +207,9 @@ ports later.
 ## File map
 
 - `STATE.md` — this file.
-- `docs/research/` — dated, write-once observations (calibration links, town anatomy).
+- `docs/todo.md` — working to-do list (town filling-out, with research links).
+- `docs/research/` — dated, write-once observations (calibration links, town anatomy,
+  Iowa town composition + county entrance rules).
 - `docs/proposal-infinite-map.md` — built world architecture + grilling findings.
 - `docs/archive/handoff-2026-11-11.md` — frozen original handoff (verbatim).
 - `out/` — generated embeds (gitignored).
