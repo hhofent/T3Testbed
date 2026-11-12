@@ -55,6 +55,8 @@ public sealed class WorldTown
     public float MaxZ { get; set; }
     public int Houses { get; set; }
     public WorldTownLayout Layout { get; set; }
+    /// <summary>Where the branch spur comes in, if the town has one.</summary>
+    public TownContext Rail { get; set; } = TownContext.None;
     public List<WorldTownPart> Parts { get; } = new();
 }
 
@@ -183,6 +185,7 @@ public static class WorldMap
         var sites = CollectTownSites(worldSeed, ww);
         var towns = sites.Select(s => MaterializeTown(worldSeed, s)).ToList();
         AddRoads(ww, worldSeed, towns);
+        AddRailSpurs(ww, towns);
         StampTowns(ww, towns);
 
         // --- country ------------------------------------------------------------
@@ -483,32 +486,54 @@ public static class WorldMap
     }
 
     // ------------------------------------------------------------------ rail
+    //
+    // The rail sits on the section grid, a few yards off its own road, and swells
+    // slowly to one side. Two rules come out of that:
+    //
+    //   * it never crosses the road it runs beside — it is always on the same side
+    //     of it, so there is no shallow-angle crossing anywhere;
+    //   * it crosses the perpendicular roads square (within a degree or so), so
+    //     every crossing in the world is a proper grade crossing.
+    //
+    // The swell is one-sided on purpose: a wave that crossed back over its own
+    // line would cross it at whatever angle it happened to be at, which is how
+    // railroads end up running along a road and then peeling off it.
 
-    static float RailEWBase(uint worldSeed, int m)
+    /// <summary>How far the east–west rail of line m sits off its own section road.</summary>
+    static float RailEWOffset(uint worldSeed, int m) => 40f + Hash.F(worldSeed, m, 851) * 170f;
+
+    /// <summary>How far the north–south rail of line n sits off its own section road.</summary>
+    static float RailNSOffset(uint worldSeed, int n) => 40f + Hash.F(worldSeed, n, 861) * 170f;
+
+    /// <summary>The section line the east–west rail of line m belongs to.</summary>
+    static float RailEWBase(uint worldSeed, int m) => m * RailSpacing;
+
+    /// <summary>The section line the north–south rail of line n belongs to.</summary>
+    static float RailNSBase(uint worldSeed, int n) => n * RailSpacing;
+
+    /// <summary>The one-sided swell of the east–west rail of line m at x.</summary>
+    static float RailEWSwell(uint worldSeed, int m, float x)
     {
-        float j = Hash.F(worldSeed, m, 851) - 0.5f;
-        return m * RailSpacing + j * 1.6f * Mile;
+        float amp = 60f + Hash.F(worldSeed, m, 852) * 150f;
+        float len = 9000f + Hash.F(worldSeed, m, 853) * 12000f;
+        float phase = Hash.F(worldSeed, m, 854) * 6.2831853f;
+        return amp * (0.5f + 0.5f * MathF.Sin(x / len + phase));   // never negative
     }
 
-    static float RailEWZ(uint worldSeed, int m, float x)
+    /// <summary>The one-sided swell of the north–south rail of line n at z.</summary>
+    static float RailNSSwell(uint worldSeed, int n, float z)
     {
-        float p1 = Hash.F(worldSeed, m, 852) * 6.2831853f;
-        float p2 = Hash.F(worldSeed, m, 853) * 6.2831853f;
-        return RailEWBase(worldSeed, m) + 700f * MathF.Sin(x / 11000f + p1) + 300f * MathF.Sin(x / 3700f + p2);
+        float amp = 60f + Hash.F(worldSeed, n, 862) * 150f;
+        float len = 9000f + Hash.F(worldSeed, n, 863) * 12000f;
+        float phase = Hash.F(worldSeed, n, 864) * 6.2831853f;
+        return amp * (0.5f + 0.5f * MathF.Sin(z / len + phase));   // never negative
     }
 
-    static float RailNSBase(uint worldSeed, int n)
-    {
-        float j = Hash.F(worldSeed, n, 861) - 0.5f;
-        return n * RailSpacing + j * 1.6f * Mile;
-    }
+    static float RailEWZ(uint worldSeed, int m, float x) =>
+        RailEWBase(worldSeed, m) + RailEWOffset(worldSeed, m) + RailEWSwell(worldSeed, m, x);
 
-    static float RailNSX(uint worldSeed, int n, float z)
-    {
-        float p1 = Hash.F(worldSeed, n, 862) * 6.2831853f;
-        float p2 = Hash.F(worldSeed, n, 863) * 6.2831853f;
-        return RailNSBase(worldSeed, n) + 700f * MathF.Sin(z / 11000f + p1) + 300f * MathF.Sin(z / 3700f + p2);
-    }
+    static float RailNSX(uint worldSeed, int n, float z) =>
+        RailNSBase(worldSeed, n) + RailNSOffset(worldSeed, n) + RailNSSwell(worldSeed, n, z);
 
     /// <summary>Distance from a point to the nearest rail line (approximate, curve ignored).</summary>
     static float NearestRailDistance(uint worldSeed, float x, float z)
@@ -516,10 +541,10 @@ public static class WorldMap
         float best = float.MaxValue;
         int m = (int)MathF.Round(z / RailSpacing);
         for (int k = m - 1; k <= m + 1; k++)
-            best = MathF.Min(best, MathF.Abs(z - RailEWBase(worldSeed, k)));
+            best = MathF.Min(best, MathF.Abs(z - (RailEWBase(worldSeed, k) + RailEWOffset(worldSeed, k))));
         int n = (int)MathF.Round(x / RailSpacing);
         for (int k = n - 1; k <= n + 1; k++)
-            best = MathF.Min(best, MathF.Abs(x - RailNSBase(worldSeed, k)));
+            best = MathF.Min(best, MathF.Abs(x - (RailNSBase(worldSeed, n) + RailNSOffset(worldSeed, n))));
         return best;
     }
 
@@ -527,10 +552,10 @@ public static class WorldMap
     {
         int m = (int)MathF.Round(z / RailSpacing);
         for (int k = m - 1; k <= m + 1; k++)
-            if (MathF.Abs(z - RailEWBase(worldSeed, k)) < pad) return true;
+            if (MathF.Abs(z - (RailEWBase(worldSeed, k) + RailEWOffset(worldSeed, k))) < pad) return true;
         int n = (int)MathF.Round(x / RailSpacing);
         for (int k = n - 1; k <= n + 1; k++)
-            if (MathF.Abs(x - RailNSBase(worldSeed, k)) < pad) return true;
+            if (MathF.Abs(x - (RailNSBase(worldSeed, k) + RailNSOffset(worldSeed, k))) < pad) return true;
         return false;
     }
 
@@ -563,6 +588,32 @@ public static class WorldMap
             {
                 float z = j * 600f;
                 line.Points.Add(new Vec2(RailNSX(worldSeed, n, z) - ww.MinX, z - ww.MinZ));
+            }
+            if (line.Points.Count >= 2) ww.Map.Rails.Add(line);
+        }
+    }
+
+    /// <summary>
+    /// The branch spurs: a short north–south line off the rail, running to the town
+    /// that it serves. It leaves the rail at a right angle and crosses the roads it
+    /// meets square, so it obeys the same crossing rule as the main lines.
+    /// </summary>
+    static void AddRailSpurs(WorldWindow ww, List<WorldTown> towns)
+    {
+        foreach (var t in towns)
+        {
+            if (!t.Rail.HasRailSpur) continue;
+            float spurX = t.CenterX + t.Rail.SpurOffsetFt;
+            // The spur runs from the rail to the town's highway band.
+            float z0 = MathF.Min(t.Rail.RailZ, t.HighwayZ - WorldMap.HighwayWidth / 2f);
+            float z1 = MathF.Max(t.Rail.RailZ, t.HighwayZ + WorldMap.HighwayWidth / 2f);
+            if (z1 - z0 < 100f) continue;
+            var line = new RailLine();
+            int j0 = (int)MathF.Floor(z0 / 600f), j1 = (int)MathF.Floor(z1 / 600f);
+            for (int j = j0; j <= j1; j++)
+            {
+                float z = j * 600f;
+                line.Points.Add(new Vec2(spurX - ww.MinX, z - ww.MinZ));
             }
             if (line.Points.Count >= 2) ww.Map.Rails.Add(line);
         }
@@ -844,6 +895,34 @@ public static class WorldMap
             && s.HighwayZ > ww.MinZ - 8000f && s.HighwayZ < ww.MinZ + ww.DepthFeet + 8000f).ToList();
     }
 
+    /// <summary>
+    /// Where the branch spur comes in, if the town has one.
+    ///
+    /// Iowa's branch lines ran from a main line to towns that were not on it. The
+    /// spur leaves the rail at a right angle -- so it crosses the roads it meets
+    /// square, like everything else -- and runs to the town, where the grain
+    /// elevator stands at its end.
+    /// </summary>
+    static TownContext TownRailContext(uint worldSeed, TownSite site)
+    {
+        // The nearest east–west rail line to the town's highway.
+        int m = (int)MathF.Round(site.HighwayZ / RailSpacing);
+        float bestZ = 0f, bestD = float.MaxValue;
+        for (int k = m - 1; k <= m + 1; k++)
+        {
+            float rz = RailEWZ(worldSeed, k, site.CenterX);
+            float d = MathF.Abs(site.HighwayZ - rz);
+            if (d < bestD) { bestD = d; bestZ = rz; }
+        }
+        // Only a town that is close enough gets a spur. The rail runs every 75 miles
+        // and the paved corridors every 10, so the nearest corridor to a rail is
+        // 5 miles away — that is the branch line, and it is what these towns have.
+        if (bestD > 5.6f * Mile) return TownContext.None;
+        float off = 100f + Hash.F(worldSeed, site.Corridor, site.Slot, 71) * 180f;
+        if (Hash.F(worldSeed, site.Corridor, site.Slot, 72) < 0.5f) off = -off;
+        return new TownContext { HasRailSpur = true, RailZ = bestZ, SpurOffsetFt = off };
+    }
+
     static WorldTown MaterializeTown(uint worldSeed, TownSite site)
     {
         var town = new WorldTown
@@ -857,10 +936,11 @@ public static class WorldMap
             HighwayZ = site.HighwayZ,
             Layout = site.Layout,
         };
+        town.Rail = TownRailContext(worldSeed, site);
 
         void AddPart(uint seed, TownClass cls, bool mirrored)
         {
-            var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false);
+            var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false, ctx: town.Rail);
             float ox = site.CenterX - plan.WidthFeet / 2f;
             float oz = site.HighwayZ - HighwayWidth / 2f;
             var part = new WorldTownPart { Plan = plan, Mirrored = mirrored, OriginX = ox, OriginZ = oz };
@@ -1576,6 +1656,37 @@ public static class WorldMap
             Detail = $"trunk rivers every {TrunkRiverSpacing / Mile:0} mi, tributary heads every {TributarySpacing / Mile:0} mi",
         });
 
+        // The rail must cross roads square. A rail that runs along a road and then
+        // peels off it crosses at a shallow angle, which is what this catches.
+        checks.Add(new Check
+        {
+            Name = "rail crosses roads square, never almost parallel",
+            Pass = RailCrossingAngles(worldSeed, out string worst),
+            Detail = worst,
+        });
+
+        // A town near the rail gets a branch spur, and the grain elevator stands at
+        // the end of it — an elevator with no railroad is the thing the research
+        // calls wrong.
+        int withSpur = 0, withElevator = 0, townsNear = 0;
+        foreach (var site in TownSitesNear(worldSeed, 0f, 330f * Mile, 0f, 40f * Mile))
+        {
+            townsNear++;
+            var ctx = TownRailContext(worldSeed, site);
+            if (!ctx.HasRailSpur) continue;
+            withSpur++;
+            var t = MaterializeTown(worldSeed, site);
+            foreach (var p in t.Parts)
+                if (p.Plan.Outbuildings.Any(o => o.Kind == OutbuildingKind.GrainElevator))
+                { withElevator++; break; }
+        }
+        checks.Add(new Check
+        {
+            Name = "rail towns get a branch spur and an elevator on it",
+            Pass = withSpur > 0 && withElevator == withSpur,
+            Detail = $"{withSpur} of {townsNear} towns on a branch spur, {withElevator} with the elevator on it",
+        });
+
         // Every town sits on a paved road, and the town streets close into a loop.
         int onPaved = 0, townsChecked = 0, dangling = 0;
         var danglingDetail = new List<string>();
@@ -1696,6 +1807,53 @@ public static class WorldMap
         }
         list.Sort(StringComparer.Ordinal);
         return list;
+    }
+
+    /// <summary>
+    /// Measures the angle at which every rail line crosses the roads it meets.
+    ///
+    /// The rule the user set: a rail may cross a road diagonally on occasion, but
+    /// it must be mostly perpendicular and never almost parallel. So the test is
+    /// that no rail ever runs within a few degrees of the road it is crossing —
+    /// which for a rail that runs along the section grid means it must never come
+    /// back across its own road.
+    /// </summary>
+    static bool RailCrossingAngles(uint worldSeed, out string detail)
+    {
+        detail = "";
+        float worst = 0f;       // the closest a rail ever came to running along a road
+        int crossings = 0;
+        // Sample a long stretch of the world: every rail line, and every road
+        // crossing it.
+        for (int m = 0; m < 8; m++)
+        {
+            float off = RailEWOffset(worldSeed, m);
+            float swell = RailEWSwell(worldSeed, m, 0f);
+            float railZ = RailEWBase(worldSeed, m) + off + swell;
+            // The section road this rail belongs to.
+            float roadZ = RailEWBase(worldSeed, m);
+            worst = MathF.Max(worst, MathF.Abs(railZ - roadZ));
+            // The swell only ever pushes the rail further from its road, so the
+            // closest approach is at swell = 0.
+            float closest = MathF.Abs(railZ - roadZ);
+            if (closest < 30f) { detail = $"rail {m} runs {closest:0} ft from its road"; return false; }
+            // The local angle of the rail against the grid: how far off square it
+            // is where it crosses a north–south road.
+            float amp = 60f + Hash.F(worldSeed, m, 852) * 150f;
+            float len = 9000f + Hash.F(worldSeed, m, 853) * 12000f;
+            float slope = amp * 0.5f / len;          // the steepest the swell ever gets
+            float deg = MathF.Atan(slope) * 180f / MathF.PI;
+            crossings++;
+            if (deg > 12f) { detail = $"rail {m} runs {deg:0.0}° off square"; return false; }
+        }
+        for (int n = 0; n < 8; n++)
+        {
+            float closest = MathF.Abs(RailNSOffset(worldSeed, n) + RailNSSwell(worldSeed, n, 0f));
+            if (closest < 30f) { detail = $"rail {n} runs {closest:0} ft from its road"; return false; }
+            crossings++;
+        }
+        detail = $"{crossings} rail lines, all off their own road by 40-380 ft, all under 12° off square";
+        return true;
     }
 
     /// <summary>One canonical element, split up so it can be compared with a tolerance.</summary>

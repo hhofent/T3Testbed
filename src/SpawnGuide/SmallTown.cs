@@ -6,6 +6,24 @@ namespace SpawnGuide
 {
 
 /// <summary>
+/// What the world knows about a town's surroundings that the town itself cannot
+/// work out. The world owns the rail lattice; the town needs to know where the
+/// branch spur comes in so it can put its grain elevator and its rail-side
+/// industry on the railroad.
+/// </summary>
+public sealed class TownContext
+{
+    /// <summary>True when the town is served by a branch spur off the rail.</summary>
+    public bool HasRailSpur;
+    /// <summary>The z of the rail line the spur leaves from, in world feet.</summary>
+    public float RailZ;
+    /// <summary>The spur's x offset from the town's centre, in feet.</summary>
+    public float SpurOffsetFt;
+
+    public static readonly TownContext None = new TownContext();
+}
+
+/// <summary>
 /// A whole small town, seeded and reproducible. Calibrated against Lyon County, IA
 /// references (George, Craig, Struble, Boyden, Hull):
 ///   - commercial strip on the highway along the SOUTH edge (main street = the highway)
@@ -87,8 +105,11 @@ public static class SmallTownGenerator
     };
 
     /// <param name="detail">false → quiet annotations (natural-size embed). true → all captions on (zoom viewer's detail layer).</param>
-    public static MapPlan Generate(uint seed, string sizeName, bool detail = false)
+    /// <param name="ctx">what the world knows about the town's surroundings — today,
+    /// whether a branch spur brings the railroad to the town.</param>
+    public static MapPlan Generate(uint seed, string sizeName, bool detail = false, TownContext? ctx = null)
     {
+        ctx ??= TownContext.None;
         if (!Sizes.TryGetValue(sizeName, out var size))
             throw new ArgumentException($"unknown town size '{sizeName}' (have: {string.Join(", ", Sizes.Keys)})");
 
@@ -331,6 +352,14 @@ public static class SmallTownGenerator
         bool elevatorRight = rng.Chance(0.62f);
         float evX0 = elevatorRight ? mainX + StreetRow + rng.Range(45f, 150f)
                                    : mainX - StreetRow - rng.Range(45f, 150f) - evW;
+        // A grain elevator is a railroad institution: it stands at the end of the
+        // branch spur, because that is where the grain comes in. The town's centre is
+        // the middle of its grid, so the spur's offset puts it here.
+        if (ctx.HasRailSpur)
+        {
+            float spurLocalX = totalWidth / 2f + ctx.SpurOffsetFt - evW / 2f;
+            evX0 = Math.Clamp(spurLocalX, 30f, MathF.Max(30f, totalWidth - evW - 30f));
+        }
         evX0 = Math.Clamp(evX0, 40f, MathF.Max(40f, totalWidth - evW - 40f));
         map.Outbuildings.Add(new Outbuilding
         {
@@ -1321,9 +1350,9 @@ public static class SmallTownGenerator
             float depth = SideLotDepth;
             float lotX0 = eastSide ? streetEdgeX : streetEdgeX - depth;
             float lotX1 = eastSide ? streetEdgeX + depth : streetEdgeX;
-            // The town's own ground: the outer face of the boundary streets is the
-            // edge of the plat, and the long run out to the country road is not town.
-            if (lotX0 < 2f || lotX1 > totalWidth - 2f) return;
+            // The town may reach a little past its outermost street — a street with
+            // nothing on its outside reads as a mistake — but not out into the fields.
+            if (lotX0 < -depth - 60f || lotX1 > totalWidth + depth + 60f) return;
             float cap = MathF.Min(z1, plattedMaxZ);
             if (cap - z0 < 40f) return;
             float walkX = eastSide ? streetEdgeX - 2.25f : streetEdgeX + 2.25f;
@@ -1399,10 +1428,26 @@ public static class SmallTownGenerator
         // empty, then builds most of them, leaving a few plats empty on purpose.
         PlatStreetFrontage();
 
+        // The plat pass may have reached past the town's outermost street, so the
+        // built extent is measured again — the county roads have to clip around
+        // whatever the town actually is now.
+        builtMinX = float.MaxValue; builtMaxX = float.MinValue;
+        foreach (var r in map.LotLines)
+        {
+            builtMinX = MathF.Min(builtMinX, r.X);
+            builtMaxX = MathF.Max(builtMaxX, r.X + r.W);
+        }
+        foreach (var h in map.Houses)
+        {
+            builtMinX = MathF.Min(builtMinX, h.Plan.Footprint.Min(p => p.X));
+            builtMaxX = MathF.Max(builtMaxX, h.Plan.Footprint.Max(p => p.X));
+        }
+        if (builtMinX == float.MaxValue) { builtMinX = 0; builtMaxX = totalWidth; }
+
         // Loop bounds: county roads stop here so they meet a town street. The loop runs
         // from the town's north-of-highway edge out to the perimeter street.
-        map.LoopMinX = 0f;
-        map.LoopMaxX = totalWidth;
+        map.LoopMinX = MathF.Min(0f, builtMinX - 12f);
+        map.LoopMaxX = MathF.Max(totalWidth, builtMaxX + 12f);
         map.LoopMinZ = zBand;
         map.LoopMaxZ = hasOuterRoad ? outerRoadZ + StreetRow : northZ1 + StreetRow;
         map.BuiltMinX = builtMinX;
@@ -1410,6 +1455,8 @@ public static class SmallTownGenerator
         map.BuiltMinZ = zBand;
         map.BuiltMaxZ = builtMaxZ;
 
+        // The plan keeps its nominal width: the town stays centred on its corridor
+        // even though the outer plat may reach a little past its last street.
         map.WidthFeet = totalWidth;
         map.DepthFeet = MathF.Max(map.DepthFeet, northZ1 + StreetRow + (size.DeadEnds > 0 ? 320f : 0f));
 
