@@ -1065,6 +1065,12 @@ public static class WorldMap
             float z0 = WZ(r.Z), z1 = WZ(r.Z + r.H);
             map.LotLines.Add(new MapRect(r.X + ox, MathF.Min(z0, z1), r.W, MathF.Abs(z1 - z0)));
         }
+        foreach (var m in town.Medians)
+        {
+            if (!Keep(m.Z)) continue;
+            float z0 = WZ(m.Z), z1 = WZ(m.Z + m.H);
+            map.Medians.Add(new MapRect(m.X + ox, MathF.Min(z0, z1), m.W, MathF.Abs(z1 - z0)));
+        }
         foreach (var w in town.Walks)
         {
             var d = new Driveway { WidthFeet = w.WidthFeet, Surface = w.Surface };

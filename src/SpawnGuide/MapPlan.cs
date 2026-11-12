@@ -11,7 +11,15 @@ public readonly struct MapRect
     public MapRect(float x, float z, float w, float h) { X = x; Z = z; W = w; H = h; }
 }
 
-public enum OutbuildingKind { MachineShed, PoleBarn, GrainBin, GambrelBarnExisting, DetachedGarage, PropaneTank, Storefront, GrainElevator, Church, School, CityPark }
+public enum OutbuildingKind
+{
+    MachineShed, PoleBarn, GrainBin, GambrelBarnExisting, DetachedGarage, PropaneTank,
+    Storefront, GrainElevator, Church, School, CityPark,
+    // The landmarks a small Iowa town always has. Research:
+    // docs/research/2026-11-11-iowa-town-composition.md
+    WaterTower, Depot, Cemetery, BallField, Library, PostOffice, FireStation,
+    Fairgrounds, GolfCourse, Airstrip,
+}
 
 public sealed class Outbuilding
 {
@@ -136,6 +144,8 @@ public sealed class MapPlan
     /// a dangling end — it leaves town.
     /// </summary>
     public List<MapRect> RoadMayEndFree { get; } = new();
+    /// <summary>Planted medians: the green strip down the middle of a boulevard street.</summary>
+    public List<MapRect> Medians { get; } = new();
     /// <summary>
     /// Bounds of the town's perimeter street loop, in local coordinates. County roads
     /// stop at this rectangle so they meet a town street instead of dangling.

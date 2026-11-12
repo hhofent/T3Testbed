@@ -65,6 +65,8 @@ public static class SmallTownGenerator
         IndustrialSideStreet,
         /// <summary>A green square where the middle streets cross.</summary>
         TownSquare,
+        /// <summary>A wide street with a planted median down the middle.</summary>
+        Boulevard,
     }
 
     sealed class TownSize
@@ -131,6 +133,8 @@ public static class SmallTownGenerator
         if (rng.Chance(0.35f)) extraPool.Add(TownExtra.BypassedHighway);
         if (rng.Chance(0.40f)) extraPool.Add(TownExtra.IndustrialSideStreet);
         if (rng.Chance(0.35f)) extraPool.Add(TownExtra.TownSquare);
+        // A boulevard is a rarity — one town in six or so has one.
+        if (rng.Chance(0.16f)) extraPool.Add(TownExtra.Boulevard);
         for (int i = extraPool.Count - 1; i > 0; i--)
         {
             int j = rng.RangeInt(0, i + 1);
@@ -144,6 +148,7 @@ public static class SmallTownGenerator
         bool hasBypassedHighway = extras.Contains(TownExtra.BypassedHighway);
         bool hasSideStreet = extras.Contains(TownExtra.IndustrialSideStreet);
         bool hasTownSquare = extras.Contains(TownExtra.TownSquare);
+        bool hasBoulevard = extras.Contains(TownExtra.Boulevard);
         // The outlying road and the bypassed highway are the same kind of thing — a
         // street beyond the town edge — but they are dressed differently.
         bool hasOuterRoad = hasOutlyingRoad || hasBypassedHighway;
@@ -615,6 +620,25 @@ public static class SmallTownGenerator
             faceIds.RemoveAt(idx);
         }
 
+        // --- the landmarks -------------------------------------------------------
+        // Every small Iowa town has a water tower; the bigger ones have a library, a
+        // fire hall, a fairground and a golf course. They go on a lot face when they
+        // are buildings, and stand in their own ground when they are not.
+        var freeLandmarks = new List<BusinessCatalogue.Landmark>();
+        foreach (var lm in BusinessCatalogue.Landmarks)
+        {
+            if (lm.MinTier > size.Tier) continue;
+            if (!rng.Chance(lm.Chance)) continue;
+            if (lm.Kind == OutbuildingKind.Depot && !ctx.HasRailSpur) continue;   // no depot without a railroad
+            if (lm.FreeStanding) { freeLandmarks.Add(lm); continue; }
+            // A building: it takes a lot face like any other civic anchor.
+            if (faceIds.Count == 0) continue;
+            int pick = rng.RangeInt(0, faceIds.Count);
+            var face = faceIds[pick];
+            faceIds.RemoveAt(pick);
+            civic[face] = lm.Kind;
+        }
+
         void FillTownLot(int streetIdx, int col, int lotIdx, bool facesSouth, int districtRow, float lotX, float frontage, OutbuildingKind? anchor, bool alley, float? depthOverride = null)
         {
             float streetZ = ewZ[streetIdx];
@@ -806,6 +830,7 @@ public static class SmallTownGenerator
             float dz = z0 + f / 2f - (hzMin + hzSpan / 2f);
             house = house.OffsetCopy(dx, dz);
             map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+            RegisterOccupied(FootprintBounds(house));
 
             var fd = FindFrontDoor(house);
             float walkStartX = west ? lotX - 2.25f : lotX + SideLotDepth + 2.25f;
@@ -1038,6 +1063,19 @@ public static class SmallTownGenerator
             map.Roads.Add(new MapRect(jogX, northZ1, totalWidth - jogX, StreetRow));
             map.RoadDashed.Add(false);
 
+            // A boulevard: one street with a planted median down the middle. Rare,
+            // but a town that has one has it for a reason.
+            if (hasBoulevard && size.EWStreets > 0)
+            {
+                int bs = rng.RangeInt(0, size.EWStreets);
+                if (!ewKeep[bs]) bs = 0;
+                float mz = ewZ[bs] + StreetRow / 2f - 9f;
+                map.Medians.Add(new MapRect(24f, mz, totalWidth - 48f, 18f));
+                // A row of street trees down the median.
+                for (float tx = 60f; tx < totalWidth - 60f; tx += 58f)
+                    map.Trees.Add(new Vec2(tx, mz + 9f));
+            }
+
             // The outlying road (or the bypassed old highway): a street beyond the
             // town, reached by the two boundary streets, so it is a through road.
             if (hasOuterRoad)
@@ -1186,6 +1224,7 @@ public static class SmallTownGenerator
                 float hx = courtX - 12f - house.DepthFeet - rng.Range(8f, 16f);
                 house = house.OffsetCopy(hx, hz);
                 map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+                RegisterOccupied(FootprintBounds(house));
                 map.LotLines.Add(new MapRect(hx - 10f, hz - 8f, house.WidthFeet + 20f, house.DepthFeet + 16f));
                 hz += 92f;
             }
@@ -1246,6 +1285,7 @@ public static class SmallTownGenerator
                     float hz = outerRoadZ - 14f - house.DepthFeet;
                     house = house.OffsetCopy(x, hz);
                     map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = true });
+                    RegisterOccupied(FootprintBounds(house));
                     map.LotLines.Add(new MapRect(x - 12f, hz - 10f, house.WidthFeet + 24f, house.DepthFeet + 20f));
                     x += house.WidthFeet + rng.Range(140f, 230f);
                 }
@@ -1327,6 +1367,7 @@ public static class SmallTownGenerator
                 if (fhx0 < a - 2f || fhx1 > b + 2f || fhz0 < lotZ0 - 2f || fhz1 > lotZ1 + 2f)
                     continue;
                 map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = mirrored });
+                RegisterOccupied(FootprintBounds(house));
                 var fd = FindFrontDoor(house);
                 map.Walks.Add(new Driveway
                 {
@@ -1380,6 +1421,7 @@ public static class SmallTownGenerator
                 if (gx0 < lotX0 - 2f || gx1 > lotX1 + 2f || gz0 < a - 2f || gz1 > b + 2f)
                     continue;
                 map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+                RegisterOccupied(FootprintBounds(house));
                 var fd = FindFrontDoor(house);
                 map.Walks.Add(new Driveway
                 {
@@ -1390,8 +1432,10 @@ public static class SmallTownGenerator
                 var (garageDoor, garageWall, frontEntry) = FindGarageDoor(house);
                 if (!float.IsNaN(garageDoor.X))
                 {
-                    bool gr = !frontEntry && GarageSideIsRight(house, garageWall!);
-                    map.Driveways.Add(DrivewayTo(garageDoor, frontEntry, gr, walkX, "concrete", 17f));
+                    // The house faces across the street, so the drive runs across it.
+                    float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f;
+                    bool garagePositiveZ = garageDoor.Z >= fc;
+                    map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, walkX, "concrete", 17f));
                 }
             }
         }
@@ -1418,6 +1462,39 @@ public static class SmallTownGenerator
                     PlatNSStrip(r.Z, r.Z + r.H, r.X + r.W, true);           // east side
                 }
             }
+        }
+
+        // --- the free-standing landmarks -----------------------------------------
+        // A water tower, a cemetery, a ball field, a fairground: they stand in their
+        // own ground rather than on a lot. They go out at the town's edge, where the
+        // ground is free.
+        foreach (var lm in freeLandmarks)
+        {
+            float lx = rng.Range(40f, MathF.Max(41f, totalWidth - lm.Width - 40f));
+            float lo = zBand + BandDepth + 30f;
+            float hi = northZ0 - lm.Depth - 40f;
+            if (hi < lo) continue;
+            float lz = rng.Range(lo, hi);
+            var ob = new Outbuilding
+            {
+                Kind = lm.Kind,
+                Center = new Vec2(lx + lm.Width / 2f, lz + lm.Depth / 2f),
+                WidthFeet = lm.Width,
+                DepthFeet = lm.Depth,
+                Label = lm.Kind switch
+                {
+                    OutbuildingKind.WaterTower => "WATER TOWER",
+                    OutbuildingKind.Cemetery => "CEMETERY",
+                    OutbuildingKind.BallField => "BALL FIELD",
+                    OutbuildingKind.GolfCourse => "GOLF COURSE",
+                    OutbuildingKind.Fairgrounds => "FAIRGROUNDS",
+                    OutbuildingKind.Airstrip => "AIRSTRIP",
+                    _ => "",
+                },
+            };
+            if (OccupiedCollides(OccupiedBounds(ob))) continue;
+            map.Outbuildings.Add(ob);
+            RegisterOccupied(OccupiedBounds(ob));
         }
 
         // --- final pass: plat every street that has nothing facing it ------------
@@ -1484,6 +1561,10 @@ public static class SmallTownGenerator
             OutbuildingKind.CityPark => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = frontage - 10f, DepthFeet = lotDepth - 14f, Label = "CITY PARK" },
             OutbuildingKind.School => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = MathF.Min(frontage - 8f, 84f), DepthFeet = 64f, Label = "SCHOOL" },
             OutbuildingKind.Church => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = 32f, DepthFeet = 54f, Label = "CHURCH" },
+            OutbuildingKind.Library => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = MathF.Min(frontage - 12f, 62f), DepthFeet = 48f, Label = "LIBRARY" },
+            OutbuildingKind.PostOffice => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = MathF.Min(frontage - 12f, 54f), DepthFeet = 42f, Label = "POST OFFICE" },
+            OutbuildingKind.FireStation => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = MathF.Min(frontage - 12f, 64f), DepthFeet = 48f, Label = "FIRE STATION" },
+            OutbuildingKind.Depot => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = MathF.Min(frontage - 12f, 64f), DepthFeet = 32f, Label = "DEPOT" },
             _ => new Outbuilding { Kind = kind, Center = new Vec2(cx, midZ), WidthFeet = frontage - 12f, DepthFeet = lotDepth / 2f, Label = kind.ToString().ToUpperInvariant() },
         };
     }

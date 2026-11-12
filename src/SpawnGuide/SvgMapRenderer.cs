@@ -170,6 +170,13 @@ public static class SvgMapRenderer
             sb.AppendLine($"<circle cx='{N(c.X)}' cy='{N(c.Y)}' r='{N(r)}' fill='#3f3b34' fill-opacity='{(map.LodSimple ? "0.75" : "0.9")}'/>");
         }
 
+        // Planted medians on a boulevard street.
+        foreach (var m in map.Medians)
+        {
+            var a = Map(new Vec2(m.X, m.Z + m.H));
+            sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(m.W * scale)}' height='{N(m.H * scale)}' fill='#8a9a6b' fill-opacity='0.85' stroke='#5f6b4c' stroke-width='1'/>");
+        }
+
         // Lot boundaries (hidden at countryside zoom).
         foreach (var r in map.LotLines)
         {
@@ -324,12 +331,58 @@ public static class SvgMapRenderer
                 OutbuildingKind.Church => "#d9d4c6",
                 OutbuildingKind.School => "#b0806f",
                 OutbuildingKind.CityPark => "#8a9a6b",
+                OutbuildingKind.Cemetery => "#93a37c",
+                OutbuildingKind.BallField => "#93a06d",
+                OutbuildingKind.GolfCourse => "#8fa473",
+                OutbuildingKind.Fairgrounds => "#c9c0a6",
+                OutbuildingKind.Airstrip => "#b0aa9c",
+                OutbuildingKind.WaterTower => "#cfcabb",
+                OutbuildingKind.Depot => "#b3a794",
+                OutbuildingKind.Library => "#c2ac9a",
+                OutbuildingKind.PostOffice => "#c6bcaa",
+                OutbuildingKind.FireStation => "#b5816f",
                 _ => "#c4bcab",
             };
             var tl = Map(new Vec2(o.Center.X - o.WidthFeet / 2f, o.Center.Z + o.DepthFeet / 2f));
             float wPx = o.WidthFeet * scale, hPx = o.DepthFeet * scale;
-            float fillOpacity = o.Kind == OutbuildingKind.CityPark ? 0.8f : 1f;
-            sb.AppendLine($"<rect x='{N(tl.X)}' y='{N(tl.Y)}' width='{N(wPx)}' height='{N(hPx)}' fill='{fill}' fill-opacity='{fillOpacity:0.##}' stroke='#3a332b' stroke-width='2.5'/>");
+            bool isArea = o.Kind == OutbuildingKind.CityPark || o.Kind == OutbuildingKind.Cemetery
+                || o.Kind == OutbuildingKind.BallField || o.Kind == OutbuildingKind.GolfCourse
+                || o.Kind == OutbuildingKind.Fairgrounds || o.Kind == OutbuildingKind.Airstrip;
+            float fillOpacity = isArea ? 0.8f : 1f;
+            float strokeW = isArea ? 1.2f : 2.5f;
+            sb.AppendLine($"<rect x='{N(tl.X)}' y='{N(tl.Y)}' width='{N(wPx)}' height='{N(hPx)}' fill='{fill}' fill-opacity='{fillOpacity:0.##}' stroke='#3a332b' stroke-width='{N(strokeW)}'/>");
+            if (o.Kind == OutbuildingKind.WaterTower)
+            {
+                // A tank on legs: a circle with a stem.
+                float r = MathF.Min(wPx, hPx) * 0.42f;
+                sb.AppendLine($"<circle cx='{N(tl.X + wPx / 2f)}' cy='{N(tl.Y + hPx / 2f)}' r='{N(r)}' fill='#e2ddd0' stroke='#3a332b' stroke-width='{N(MathF.Max(1f, r * 0.14f))}'/>");
+                sb.AppendLine($"<line x1='{N(tl.X + wPx / 2f)}' y1='{N(tl.Y + hPx / 2f)}' x2='{N(tl.X + wPx / 2f)}' y2='{N(tl.Y + hPx / 2f - r * 1.25f)}' stroke='#3a332b' stroke-width='{N(MathF.Max(1f, r * 0.16f))}'/>");
+            }
+            else if (o.Kind == OutbuildingKind.BallField)
+            {
+                // The diamond and the two bases.
+                float cx = tl.X + wPx / 2f, cy = tl.Y + hPx / 2f;
+                float d = MathF.Min(wPx, hPx) * 0.42f;
+                sb.AppendLine($"<path d='M {N(cx)} {N(cy - d)} L {N(cx + d)} {N(cy)} L {N(cx)} {N(cy + d)} L {N(cx - d)} {N(cy)} Z' fill='none' stroke='#7d6a4e' stroke-width='{N(MathF.Max(1f, d * 0.08f))}'/>");
+                sb.AppendLine($"<circle cx='{N(cx)}' cy='{N(cy)}' r='{N(d * 0.16f)}' fill='#7d6a4e'/>");
+            }
+            else if (o.Kind == OutbuildingKind.Cemetery)
+            {
+                // Headstones, in rows.
+                for (int r = 0; r < 5; r++)
+                    for (int g = 0; g < 8; g++)
+                    {
+                        float hx = tl.X + wPx * (0.12f + g * 0.11f);
+                        float hy = tl.Y + hPx * (0.18f + r * 0.16f);
+                        if (hx > tl.X + wPx - 4f || hy > tl.Y + hPx - 4f) continue;
+                        sb.AppendLine($"<circle cx='{N(hx)}' cy='{N(hy)}' r='{N(MathF.Max(0.7f, MathF.Min(wPx, hPx) * 0.018f))}' fill='#5d6350' fill-opacity='0.75'/>");
+                    }
+            }
+            else if (o.Kind == OutbuildingKind.Airstrip)
+            {
+                // A grass strip with a threshold at each end.
+                sb.AppendLine($"<line x1='{N(tl.X + 6)}' y1='{N(tl.Y + hPx / 2f)}' x2='{N(tl.X + wPx - 6)}' y2='{N(tl.Y + hPx / 2f)}' stroke='#e6e2d2' stroke-width='{N(MathF.Max(1.5f, hPx * 0.35f))}'/>");
+            }
             if (o.Kind == OutbuildingKind.Church)
             {
                 // Top-down cross.

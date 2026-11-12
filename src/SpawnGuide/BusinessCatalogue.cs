@@ -18,6 +18,39 @@ namespace SpawnGuide
 /// </summary>
 public static class BusinessCatalogue
 {
+    /// <summary>
+    /// The landmarks a small Iowa town has, and how likely each is. Research:
+    /// `docs/research/2026-11-11-iowa-town-composition.md`. The water tower is
+    /// near-universal; the depot only exists where the railroad does; the
+    /// fairgrounds and the golf course belong to the bigger places.
+    /// </summary>
+    public sealed class Landmark
+    {
+        public OutbuildingKind Kind;
+        /// <summary>Smallest town tier that gets it (0 crossroads … 3 town).</summary>
+        public int MinTier;
+        /// <summary>Chance the town has one at all.</summary>
+        public float Chance;
+        /// <summary>Width and depth in feet.</summary>
+        public float Width, Depth;
+        /// <summary>True for the ones that stand in their own ground rather than on a lot.</summary>
+        public bool FreeStanding;
+    }
+
+    public static readonly Landmark[] Landmarks =
+    {
+        new Landmark { Kind = OutbuildingKind.WaterTower, MinTier = 0, Chance = 0.70f, Width = 44f, Depth = 44f, FreeStanding = true },
+        new Landmark { Kind = OutbuildingKind.PostOffice, MinTier = 0, Chance = 0.55f, Width = 58f, Depth = 46f },
+        new Landmark { Kind = OutbuildingKind.FireStation, MinTier = 1, Chance = 0.60f, Width = 66f, Depth = 52f },
+        new Landmark { Kind = OutbuildingKind.Library, MinTier = 1, Chance = 0.55f, Width = 60f, Depth = 50f },
+        new Landmark { Kind = OutbuildingKind.BallField, MinTier = 1, Chance = 0.50f, Width = 210f, Depth = 210f, FreeStanding = true },
+        new Landmark { Kind = OutbuildingKind.Cemetery, MinTier = 0, Chance = 0.60f, Width = 260f, Depth = 200f, FreeStanding = true },
+        new Landmark { Kind = OutbuildingKind.Depot, MinTier = 0, Chance = 0.35f, Width = 70f, Depth = 34f },
+        new Landmark { Kind = OutbuildingKind.GolfCourse, MinTier = 2, Chance = 0.30f, Width = 420f, Depth = 380f, FreeStanding = true },
+        new Landmark { Kind = OutbuildingKind.Fairgrounds, MinTier = 2, Chance = 0.28f, Width = 380f, Depth = 300f, FreeStanding = true },
+        new Landmark { Kind = OutbuildingKind.Airstrip, MinTier = 2, Chance = 0.22f, Width = 3600f, Depth = 200f, FreeStanding = true },
+    };
+
     /// <summary>One kind of business, with the rules for where and how big it is.</summary>
     public sealed class Business
     {
