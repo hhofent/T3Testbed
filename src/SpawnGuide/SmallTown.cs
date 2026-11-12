@@ -1367,31 +1367,41 @@ public static class SmallTownGenerator
         {
             // The street's own extent bounds the row; a street may sit on the town's
             // edge, so there is no width limit here.
-            float lotZ0 = northSide ? streetEdgeZ : streetEdgeZ - lotDepth;
             // The town's own ground ends here; a strip that would reach out into the
-            // fields is not platted.
+            // fields is not platted. The depth is measured from the street and the
+            // row of lots is anchored to it; anchoring it to its far edge instead
+            // would pull the plats away from the road whenever the depth was cut.
             float depth = northSide
-                ? MathF.Min(lotDepth, plattedMaxZ - lotZ0)
-                : MathF.Min(lotDepth, lotZ0 - zBand);
+                ? MathF.Min(lotDepth, plattedMaxZ - streetEdgeZ)
+                : MathF.Min(lotDepth, streetEdgeZ - zBand);
             if (depth < 40f) return;
+            float lotZ0 = northSide ? streetEdgeZ : streetEdgeZ - depth;
             float lotZ1 = lotZ0 + depth;
             float walkZ = northSide ? streetEdgeZ - 2.25f : streetEdgeZ + 2.25f;
             float cursor = x0;
             int guard = 0;
             while (cursor < x1 - 30f && guard++ < 30)
             {
-                float frontage = MathF.Min(rng.Range(52f, 82f), x1 - cursor);
-                if (frontage < 34f) break;
-                float a = cursor + 3f, b = cursor + frontage - 3f;
+                float frontage = MathF.Min(rng.Range(58f, 92f), x1 - cursor);
+                if (frontage < 40f) break;
+                float a = cursor + 2f, b = cursor + frontage - 2f;
                 cursor += frontage;
-                if (b - a < 30f) continue;
-                if (!RectFree(a, lotZ0, b, lotZ1)) continue;
+                if (b - a < 36f) continue;
+                if (!RectFree(a, lotZ0, b, lotZ1))
+                {
+                    continue;
+                }
                 map.LotLines.Add(new MapRect(a, lotZ0, b - a, depth));
                 // A few plats stay empty — a town with no vacant lot reads as a
                 // pattern, not a place.
-                if (rng.Chance(0.10f)) continue;
+                if (rng.Chance(0.10f)) { continue; }
                 uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
-                var house = HouseGenerator.Generate(Weighted(rng), hSeed);
+                string arch = Weighted(rng);
+                var house = HouseGenerator.Generate(arch, hSeed);
+                // A house wider than its plat cannot be built there, so the narrow
+                // archetype takes its place.
+                if (house.WidthFeet > (b - a) - 4f && arch != "farmhouse")
+                    house = HouseGenerator.Generate("farmhouse", hSeed ^ 0x5f3759dfu);
                 float setback = rng.Range(9f, 16f);
                 float hx = a + MathF.Max(2f, ((b - a) - house.WidthFeet) / 2f);
                 bool mirrored = !northSide;                 // a south-side lot faces north
@@ -1402,7 +1412,9 @@ public static class SmallTownGenerator
                 float fhx0 = house.Footprint.Min(p => p.X), fhx1 = house.Footprint.Max(p => p.X);
                 float fhz0 = house.Footprint.Min(p => p.Z), fhz1 = house.Footprint.Max(p => p.Z);
                 if (fhx0 < a - 2f || fhx1 > b + 2f || fhz0 < lotZ0 - 2f || fhz1 > lotZ1 + 2f)
+                {
                     continue;
+                }
                 map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = mirrored });
                 RegisterOccupied(FootprintBounds(house));
                 var fd = FindFrontDoor(house);
@@ -1443,9 +1455,9 @@ public static class SmallTownGenerator
                 float a = cursor + 3f, b = cursor + frontage - 3f;
                 cursor += frontage;
                 if (b - a < 30f) continue;
-                if (!RectFree(lotX0, a, lotX1, b)) continue;
+                if (!RectFree(lotX0, a, lotX1, b)) { continue; }
                 map.LotLines.Add(new MapRect(lotX0, a, depth, b - a));
-                if (rng.Chance(0.10f)) continue;
+                if (rng.Chance(0.10f)) { continue; }
                 uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
                 var house = HouseGenerator.Generate(Weighted(rng), hSeed);
                 house = eastSide ? house.Rotate90CCW() : house.Rotate90CW();
@@ -1456,7 +1468,9 @@ public static class SmallTownGenerator
                 float gx0 = house.Footprint.Min(p => p.X), gx1 = house.Footprint.Max(p => p.X);
                 float gz0 = house.Footprint.Min(p => p.Z), gz1 = house.Footprint.Max(p => p.Z);
                 if (gx0 < lotX0 - 2f || gx1 > lotX1 + 2f || gz0 < a - 2f || gz1 > b + 2f)
+                {
                     continue;
+                }
                 map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
                 RegisterOccupied(FootprintBounds(house));
                 var fd = FindFrontDoor(house);
