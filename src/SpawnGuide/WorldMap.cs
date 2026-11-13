@@ -505,11 +505,19 @@ public static class WorldMap
     /// <summary>How far the north–south rail of line n sits off its own section road.</summary>
     static float RailNSOffset(uint worldSeed, int n) => 40f + Hash.F(worldSeed, n, 861) * 170f;
 
+    /// <summary>
+    /// The rail lattice is phased off the paved corridors by this many sections.
+    /// Without it, every second rail line landed exactly on a corridor and ran
+    /// parallel to the paved highway for its whole 75-mile run — a rail and a road
+    /// side by side for 75 miles is exactly the "almost parallel" the rule forbids.
+    /// </summary>
+    const float RailPhaseSections = 3f;
+
     /// <summary>The section line the east–west rail of line m belongs to.</summary>
-    static float RailEWBase(uint worldSeed, int m) => m * RailSpacing;
+    static float RailEWBase(uint worldSeed, int m) => m * RailSpacing + RailPhaseSections * SectionFeet;
 
     /// <summary>The section line the north–south rail of line n belongs to.</summary>
-    static float RailNSBase(uint worldSeed, int n) => n * RailSpacing;
+    static float RailNSBase(uint worldSeed, int n) => n * RailSpacing + RailPhaseSections * SectionFeet;
 
     /// <summary>The one-sided swell of the east–west rail of line m at x.</summary>
     static float RailEWSwell(uint worldSeed, int m, float x)
@@ -603,10 +611,20 @@ public static class WorldMap
         foreach (var t in towns)
         {
             if (!t.Rail.HasRailSpur) continue;
-            float spurX = t.CenterX + t.Rail.SpurOffsetFt;
-            // The spur runs from the rail to the town's highway band.
-            float z0 = MathF.Min(t.Rail.RailZ, t.HighwayZ - WorldMap.HighwayWidth / 2f);
-            float z1 = MathF.Max(t.Rail.RailZ, t.HighwayZ + WorldMap.HighwayWidth / 2f);
+            // The town owns its track: it says where it put it, and the world draws
+            // the spur there rather than guessing a line through the houses.
+            WorldTownPart? owner = null;
+            foreach (var p in t.Parts)
+                if (p.Plan.RailTrackLocalX > 0f) { owner = p; break; }
+            if (owner == null) continue;
+            float spurX = owner.OriginX + owner.Plan.RailTrackLocalX;
+            // The spur ends at the grain elevator, which is the end of the track.
+            float nearZ = owner.Mirrored
+                ? owner.OriginZ + (HighwayWidth - owner.Plan.RailTrackLocalZ0)
+                : owner.OriginZ + owner.Plan.RailTrackLocalZ0;
+            // The spur runs from the rail to the town.
+            float z0 = MathF.Min(t.Rail.RailZ, nearZ);
+            float z1 = MathF.Max(t.Rail.RailZ, nearZ);
             if (z1 - z0 < 100f) continue;
             var line = new RailLine();
             int j0 = (int)MathF.Floor(z0 / 600f), j1 = (int)MathF.Floor(z1 / 600f);
@@ -895,6 +913,48 @@ public static class WorldMap
             && s.HighwayZ > ww.MinZ - 8000f && s.HighwayZ < ww.MinZ + ww.DepthFeet + 8000f).ToList();
     }
 
+    /// <summary>Debug: how the towns' corridors sit against the rail lattice.</summary>
+    public static void ProbeRail(uint worldSeed)
+    {
+        var counts = new Dictionary<string, int>();
+        foreach (var site in TownSitesNear(worldSeed, 0f, 330f * Mile, 0f, 40f * Mile))
+        {
+            var ctx = TownRailContext(worldSeed, site);
+            int m = (int)MathF.Round(site.HighwayZ / RailSpacing);
+            float best = float.MaxValue;
+            for (int k = m - 1; k <= m + 1; k++)
+                best = MathF.Min(best, MathF.Abs(site.HighwayZ - RailEWZ(worldSeed, k, site.CenterX)));
+            string key = $"corridor z={site.HighwayZ / Mile:0} mi  best={best / Mile:0.00} mi  spur={ctx.HasRailSpur}";
+            counts[key] = counts.GetValueOrDefault(key) + 1;
+        }
+        foreach (var kv in counts.OrderBy(k => k.Key)) Console.WriteLine($"{kv.Value,3} x  {kv.Key}");
+
+        // What the towns actually did with their spur.
+        foreach (var site in TownSitesNear(worldSeed, 0f, 330f * Mile, 0f, 40f * Mile))
+        {
+            var ctx = TownRailContext(worldSeed, site);
+            if (!ctx.HasRailSpur) continue;
+            var t = MaterializeTown(worldSeed, site);
+            foreach (var part in t.Parts)
+            {
+                if (part.Plan.RailTrackLocalX <= 0f) continue;
+                float tx = part.Plan.RailTrackLocalX;
+                // The street the track runs beside, and what stands between them.
+                var near = part.Plan.Roads
+                    .Where(r => r.W < r.H && MathF.Abs(r.X - tx) < 200f)
+                    .Select(r => (r.X, r.W))
+                    .OrderBy(r => MathF.Abs(r.X - tx))
+                    .ToList();
+                string streets = string.Join(", ", near.Take(3).Select(r => $"{r.X:0}+{r.W:0}"));
+                var ev = part.Plan.Outbuildings.FirstOrDefault(o => o.Kind == OutbuildingKind.GrainElevator);
+                int shops = part.Plan.Outbuildings.Count(o => o.Kind == OutbuildingKind.Storefront
+                    && MathF.Abs(o.Center.X - tx) < 120f);
+                // Local x maps straight to world x (the mirror is across the highway band).
+                Console.WriteLine($"town {t.Name,-16} track x={tx:0} world={part.OriginX + tx:0}  elevator x={(ev == null ? -1f : ev.Center.X):0}  rail-side works={shops}  streets {streets}");
+            }
+        }
+    }
+
     /// <summary>
     /// Where the branch spur comes in, if the town has one.
     ///
@@ -940,7 +1000,25 @@ public static class WorldMap
 
         void AddPart(uint seed, TownClass cls, bool mirrored)
         {
-            var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false, ctx: town.Rail);
+            var ctx = town.Rail;
+            if (ctx.HasRailSpur)
+            {
+                // The spur comes in from the side the railroad is on. A town that has
+                // blocks on both sides of its highway gives the track to the half it
+                // arrives in; a town on one side has only that side to give.
+                bool railIsNorth = town.Rail.RailZ > site.HighwayZ;
+                bool ownsSpur = site.Layout == WorldTownLayout.Both
+                    ? railIsNorth == !mirrored
+                    : true;
+                ctx = new TownContext
+                {
+                    HasRailSpur = true,
+                    RailZ = town.Rail.RailZ,
+                    SpurOffsetFt = town.Rail.SpurOffsetFt,
+                    OwnsSpur = ownsSpur,
+                };
+            }
+            var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false, ctx: ctx);
             float ox = site.CenterX - plan.WidthFeet / 2f;
             float oz = site.HighwayZ - HighwayWidth / 2f;
             var part = new WorldTownPart { Plan = plan, Mirrored = mirrored, OriginX = ox, OriginZ = oz };
@@ -1691,6 +1769,37 @@ public static class WorldMap
             Name = "rail towns get a branch spur and an elevator on it",
             Pass = withSpur > 0 && withElevator == withSpur,
             Detail = $"{withSpur} of {townsNear} towns on a branch spur, {withElevator} with the elevator on it",
+        });
+
+        // The branch spur must not run through anybody's house. The town takes a
+        // strip of ground for the track and the works beside it, and the houses
+        // stand clear of it.
+        int spurHits = 0;
+        int spurChecked = 0;
+        foreach (var site in TownSitesNear(worldSeed, 0f, 330f * Mile, 0f, 40f * Mile))
+        {
+            var ctx = TownRailContext(worldSeed, site);
+            if (!ctx.HasRailSpur) continue;
+            var t = MaterializeTown(worldSeed, site);
+            foreach (var part in t.Parts)
+            {
+                if (part.Plan.RailTrackLocalX <= 0f) continue;
+                spurChecked++;
+                float sx = part.Plan.RailTrackLocalX;
+                float z0 = part.Plan.RailTrackLocalZ0, z1 = part.Plan.RailTrackLocalZ1;
+                foreach (var h in part.Plan.Houses)
+                {
+                    float hx0 = h.Plan.Footprint.Min(p => p.X), hx1 = h.Plan.Footprint.Max(p => p.X);
+                    float hz = h.Plan.Footprint.Select(p => p.Z).Average();
+                    if (hx0 - 6f < sx && hx1 + 6f > sx && hz > z0 - 30f && hz < z1 + 30f) spurHits++;
+                }
+            }
+        }
+        checks.Add(new Check
+        {
+            Name = "the branch spur runs clear of the houses",
+            Pass = spurHits == 0,
+            Detail = $"{spurChecked} spur corridors, {spurHits} house fronts in the way",
         });
 
         // Every town sits on a paved road, and the town streets close into a loop.

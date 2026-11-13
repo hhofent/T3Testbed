@@ -49,7 +49,29 @@ public static class SvgRenderer
         {
             var c = map(ann.Position);
             var h = ann.DashedHalfExtents!.Value;
-            sb.AppendLine($"<rect class='dash' x='{N(c.X - h.X * scale)}' y='{N(c.Y - h.Z * scale)}' width='{N(2 * h.X * scale)}' height='{N(2 * h.Z * scale)}'/>");
+            if (MathF.Abs(ann.RotateDeg) > 0.01f)
+            {
+                // A turned house turns its porch with it: the dashed slab is drawn as a
+                // rotated rectangle rather than an axis-aligned one.
+                float r = ann.RotateDeg * MathF.PI / 180f;
+                float cs = MathF.Cos(r), sn = MathF.Sin(r);
+                var corners = new[]
+                {
+                    new Vec2(-h.X, -h.Z), new Vec2(h.X, -h.Z),
+                    new Vec2(h.X, h.Z), new Vec2(-h.X, h.Z),
+                };
+                var pts = corners.Select(q =>
+                {
+                    float x = q.X * cs - q.Z * sn, z = q.X * sn + q.Z * cs;
+                    var m = map(ann.Position + new Vec2(x, z));
+                    return $"{N(m.X)},{N(m.Y)}";
+                });
+                sb.AppendLine($"<path class='dash' d='M{string.Join("L", pts)}Z'/>");
+            }
+            else
+            {
+                sb.AppendLine($"<rect class='dash' x='{N(c.X - h.X * scale)}' y='{N(c.Y - h.Z * scale)}' width='{N(2 * h.X * scale)}' height='{N(2 * h.Z * scale)}'/>");
+            }
             if (!quietAnnotations)
                 sb.AppendLine($"<text class='small' x='{N(c.X)}' y='{N(c.Y + 3)}' text-anchor='middle'>{Esc(ann.Text)}</text>");
         }

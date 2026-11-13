@@ -40,6 +40,11 @@ public sealed class PlanAnnotation
     public string Text { get; set; } = "";
     /// <summary>Optional dashed rectangle (porch, garage apron). Half-extents grow from Position.</summary>
     public Vec2? DashedHalfExtents { get; set; }
+    /// <summary>
+    /// How far the dashed rectangle is turned, in degrees. Zero for an upright plan;
+    /// a plan that has been rotated to face a diagonal street carries its angle here.
+    /// </summary>
+    public float RotateDeg { get; set; }
 }
 
 public sealed class HousePlan
@@ -91,7 +96,7 @@ public static class HousePlanExtensions
         }
         foreach (var p in plan.Footprint) copy.Footprint.Add(M(p));
         foreach (var ann in plan.Annotations)
-            copy.Annotations.Add(new PlanAnnotation { Position = M(ann.Position), Text = ann.Text, DashedHalfExtents = ann.DashedHalfExtents });
+            copy.Annotations.Add(new PlanAnnotation { Position = M(ann.Position), Text = ann.Text, DashedHalfExtents = ann.DashedHalfExtents, RotateDeg = -ann.RotateDeg });
         return copy;
     }
 
@@ -139,6 +144,65 @@ public static class HousePlanExtensions
                     : null,
             });
         return copy;
+    }
+
+    /// <summary>
+    /// Rotate the plan about a pivot, by an angle in degrees. A house that fronts a
+    /// diagonal or curved street is turned to face it; the walls keep their tags and
+    /// their openings keep their offsets, so the plan is still the same house.
+    /// </summary>
+    public static HousePlan Rotate(this HousePlan plan, float degrees, Vec2 pivot)
+    {
+        float r = degrees * MathF.PI / 180f;
+        float c = MathF.Cos(r), s = MathF.Sin(r);
+        Vec2 M(Vec2 v)
+        {
+            float x = v.X - pivot.X, z = v.Z - pivot.Z;
+            return new Vec2(pivot.X + x * c - z * s, pivot.Z + x * s + z * c);
+        }
+        var copy = new HousePlan
+        {
+            Archetype = plan.Archetype,
+            Seed = plan.Seed,
+            Storeys = plan.Storeys,
+            RoofNote = plan.RoofNote,
+            SidingNote = plan.SidingNote,
+        };
+        foreach (var wall in plan.Walls)
+        {
+            var w = new WallSegment
+            {
+                Start = M(wall.Start),
+                End = M(wall.End),
+                Tag = wall.Tag,
+                IsExterior = wall.IsExterior,
+                HeightFeet = wall.HeightFeet,
+                ThicknessFeet = wall.ThicknessFeet,
+            };
+            w.Openings.AddRange(wall.Openings);
+            copy.Walls.Add(w);
+        }
+        foreach (var p in plan.Footprint) copy.Footprint.Add(M(p));
+        foreach (var ann in plan.Annotations)
+            copy.Annotations.Add(new PlanAnnotation
+            {
+                Position = M(ann.Position),
+                Text = ann.Text,
+                DashedHalfExtents = ann.DashedHalfExtents,
+                RotateDeg = ann.RotateDeg + degrees,
+            });
+        return copy;
+    }
+
+    /// <summary>
+    /// The point on the front wall that the front door opens from — the middle of
+    /// the main front edge. Used to sit a turned house against a street.
+    /// </summary>
+    public static Vec2 FrontMidpoint(this HousePlan plan)
+    {
+        var front = plan.Walls.FirstOrDefault(w => w.Tag == EdgeTag.MainFront);
+        if (front == null) return new Vec2(plan.MinX + plan.WidthFeet / 2f, plan.MinZ);
+        return new Vec2((front.Start.X + front.End.X) / 2f, (front.Start.Z + front.End.Z) / 2f);
     }
 
     /// <summary>Deep-enough copy of a plan shifted by (dx, dz) feet for placement on a map.</summary>

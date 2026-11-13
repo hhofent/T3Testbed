@@ -17,6 +17,13 @@ static string GetString(string[] args, string name, string fallback)
     return i >= 0 && i + 1 < args.Length ? args[i + 1] : fallback;
 }
 
+if (args.Contains("--probe-rail"))
+{
+    uint pSeed = GetUInt(args, "--seed", 1993u);
+    WorldMap.ProbeRail(pSeed);
+    return;
+}
+
 if (args.Contains("--verify"))
 {
     uint vSeed = GetUInt(args, "--seed", 1993u);
@@ -253,6 +260,18 @@ if (mapMode is "world" or "all")
     float wcx = near != null ? (near.MinX + near.MaxX) / 2f : 0f;
     float wcz = near != null ? (near.MinZ + near.MaxZ) / 2f : 0f;
     float span = WorldMap.CellFeet * 3f;
+    // --center x,z and --span feet aim the lens at one spot, so a single town can be
+    // looked at closely without hunting for it in the 9-mile view.
+    string ctr = GetString(args, "--center", "");
+    if (ctr.Contains(','))
+    {
+        var parts = ctr.Split(',');
+        if (parts.Length == 2 &&
+            float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float cx0) &&
+            float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float cz0))
+        { wcx = cx0; wcz = cz0; }
+    }
+    span = GetUInt(args, "--span", 0) > 0 ? GetUInt(args, "--span", 0) : span;
     world = WorldMap.Generate(seed, wcx, wcz, span, span);
     string worldFile = $"world-{seed}-9mi.svg";
     string worldSvg = SvgMapRenderer.Render(world.Map, bare: true, targetWidth: 1400f);
@@ -273,6 +292,10 @@ if (mapMode is "world" or "all")
             ("creeks", world.Map.Waters.Count.ToString()),
         },
     });
+
+    if (Environment.GetEnvironmentVariable("SPAWNGUIDE_PROBE") == "1")
+        foreach (var t in world.Towns)
+            Console.Error.WriteLine($"PROBE town {t.Name} cx={t.CenterX:0} hwZ={t.HighwayZ:0} spur={t.Rail.HasRailSpur} off={t.Rail.SpurOffsetFt:0} railZ={t.Rail.RailZ:0} minX={t.MinX:0} maxX={t.MaxX:0} minZ={t.MinZ:0} maxZ={t.MaxZ:0} layout={t.Layout}");
 
     var cell = WorldMap.Generate(seed, wcx, wcz, WorldMap.CellFeet, WorldMap.CellFeet);
     string cellFile = $"world-{seed}-cell.svg";

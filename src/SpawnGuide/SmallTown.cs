@@ -19,6 +19,12 @@ public sealed class TownContext
     public float RailZ;
     /// <summary>The spur's x offset from the town's centre, in feet.</summary>
     public float SpurOffsetFt;
+    /// <summary>
+    /// True when this half of the town is the one the spur comes in on. A town
+    /// straddles its highway, and the branch line arrives from one side only, so
+    /// the half it arrives in owns the track and the other half never sees it.
+    /// </summary>
+    public bool OwnsSpur;
 
     public static readonly TownContext None = new TownContext();
 }
@@ -330,6 +336,31 @@ public static class SmallTownGenerator
         // --- (roads are created after the column sweep — empty columns get dropped first,
         //      so the grid only includes blocks that actually have content.)
 
+        // --- the branch spur's ground ---------------------------------------------
+        // A town on a branch line puts the railroad through it, and the railroad
+        // takes a strip of its own: the block's side-lot row on the far side of one
+        // of the town's streets. The track runs down that strip and the small works
+        // that grow up along a railroad stand between the track and the street.
+        // Nothing is built on the track's ground, and the track is 80 ft clear of the
+        // street it runs beside, so it never reads as running along the pavement.
+        int spurIdx = -1;
+        float spurTrackX = 0f;
+        // Ground that nothing may be built on: the railroad's strip.
+        var reserved = new List<MapRect>();
+        if (ctx.HasRailSpur && ctx.OwnsSpur && size.Columns >= 3)
+        {
+            float want = totalWidth / 2f + ctx.SpurOffsetFt;
+            int best = -1;
+            float bestD = float.MaxValue;
+            for (int s = 1; s < size.Columns; s++)
+            {
+                float d = MathF.Abs(nsX[s] + StreetRow / 2f - want);
+                if (d < bestD) { bestD = d; best = s; }
+            }
+            if (best > 0) spurIdx = best;
+        }
+        if (spurIdx >= 0) spurTrackX = nsX[spurIdx] - 64f;
+
         // --- commercial band along the highway. Main street extends south to it.
         // The mix, the sizes, the names and the order are all drawn per town: two
         // towns on the same street never end up with the same row of shops. What
@@ -348,6 +379,11 @@ public static class SmallTownGenerator
                 ? rng.Range(60f, MathF.Max(61f, mainX - StreetRow - 120f))
                 : rng.Range(mainX + StreetRow + 120f, MathF.Max(mainX + StreetRow + 121f, totalWidth - 120f));
             sideStreetX = Math.Clamp(sideStreetX, 50f, MathF.Max(50f, totalWidth - 120f));
+            if (spurIdx >= 0 && sideStreetX + StreetRow > spurTrackX - 16f && sideStreetX - StreetRow / 2f < spurTrackX + 64f)
+            {
+                // The railroad's ground: the side street goes east of the track.
+                sideStreetX = Math.Clamp(spurTrackX + 76f, 50f, MathF.Max(50f, totalWidth - 120f));
+            }
             bandOcc.Add((sideStreetX - StreetRow / 2f - 6f, sideStreetX + StreetRow / 2f + 6f));
         }
 
@@ -358,14 +394,18 @@ public static class SmallTownGenerator
         float evX0 = elevatorRight ? mainX + StreetRow + rng.Range(45f, 150f)
                                    : mainX - StreetRow - rng.Range(45f, 150f) - evW;
         // A grain elevator is a railroad institution: it stands at the end of the
-        // branch spur, because that is where the grain comes in. The town's centre is
-        // the middle of its grid, so the spur's offset puts it here.
-        if (ctx.HasRailSpur)
+        // branch spur, because that is where the grain comes in. The town owns the
+        // track, so the elevator stands on it.
+        if (spurIdx >= 0)
         {
-            float spurLocalX = totalWidth / 2f + ctx.SpurOffsetFt - evW / 2f;
-            evX0 = Math.Clamp(spurLocalX, 30f, MathF.Max(30f, totalWidth - evW - 30f));
+            // Keep the track inside the town: it runs down the block's side-lot row.
+            spurTrackX = Math.Clamp(spurTrackX, 60f, MathF.Max(60f, totalWidth - 60f));
+            evX0 = spurTrackX - evW / 2f;
         }
-        evX0 = Math.Clamp(evX0, 40f, MathF.Max(40f, totalWidth - evW - 40f));
+        else
+        {
+            evX0 = Math.Clamp(evX0, 40f, MathF.Max(40f, totalWidth - evW - 40f));
+        }
         map.Outbuildings.Add(new Outbuilding
         {
             Kind = OutbuildingKind.GrainElevator,
@@ -390,6 +430,52 @@ public static class SmallTownGenerator
                 Label = "",
             });
         bandOcc.Add((binX - 8f, binX + binRowW + 8f));
+
+        // --- the rail-side industrial strip ---------------------------------------
+        // The small works that grow up along a railroad: a cabinet shop, a metal
+        // shop, a feed mill. They stand between the track and the street, with
+        // their long sides along the track, so a wagon can pull up to the door.
+        if (spurIdx >= 0)
+        {
+            // The track's ground is the railroad's: nothing else goes there.
+            bandOcc.Add((spurTrackX - 16f, spurTrackX + 64f));
+            // The works stand in the gaps between the cross streets, up the line
+            // from the elevator, so the railroad side reads as a strip.
+            var railOcc = new List<(float x0, float z0, float x1, float z1)>
+            {
+                (evX0, zBand + BandDepth / 2f - evD / 2f, evX0 + evW, zBand + BandDepth / 2f + evD / 2f),
+                (binX, zBand + BandDepth / 2f + evD / 2f + 10f, binX + binRowW, zBand + BandDepth / 2f + evD / 2f + 10f + binD),
+            };
+            var railPool = BusinessCatalogue.Industrial.Where(b => b.MinTier <= size.Tier).ToList();
+            for (int row = 0; row < blockRows && railPool.Count > 0; row++)
+            {
+                // The depot has the far end of the line to itself.
+                if (row == blockRows - 1 && blockRows > 1) continue;
+                float z0 = ewZ[row] + StreetRow;
+                float z1 = row + 1 < ewZ.Length ? ewZ[row + 1] : zBand + BandDepth;
+                float along = rng.Range(56f, 84f);
+                if (z1 - z0 < along + 24f) continue;
+                int pick = rng.RangeInt(0, railPool.Count);
+                var biz = railPool[pick];
+                railPool.RemoveAt(pick);
+                float across = rng.Range(biz.MinDepth, biz.MaxDepth);
+                if (across > 52f) across = 52f;
+                float cz = z0 + (z1 - z0) / 2f + rng.Range(-16f, 16f);
+                float cx = spurTrackX + 12f + across / 2f;
+                bool clash = railOcc.Any(o => cx - across / 2f < o.x1 && cx + across / 2f > o.x0
+                                          && cz - along / 2f < o.z1 && cz + along / 2f > o.z0);
+                if (clash) continue;
+                map.Outbuildings.Add(new Outbuilding
+                {
+                    Kind = OutbuildingKind.Storefront,
+                    Center = new Vec2(cx, cz),
+                    WidthFeet = across,
+                    DepthFeet = along,
+                    Label = BusinessCatalogue.LabelFor(rng, biz),
+                });
+                railOcc.Add((cx - across / 2f, cz - along / 2f, cx + across / 2f, cz + along / 2f));
+            }
+        }
 
         // --- pick this town's row of businesses -----------------------------------
         // A gas station is always in; everything else is drawn from what the town tier
@@ -660,7 +746,23 @@ public static class SmallTownGenerator
         {
             if (lm.MinTier > size.Tier) continue;
             if (!rng.Chance(lm.Chance)) continue;
-            if (lm.Kind == OutbuildingKind.Depot && !ctx.HasRailSpur) continue;   // no depot without a railroad
+            if (lm.Kind == OutbuildingKind.Depot && spurIdx < 0) continue;   // no depot without a railroad
+            if (lm.Kind == OutbuildingKind.Depot)
+            {
+                // A depot stands beside the track, with its long side along the rail
+                // and its doors on the railroad's ground — not on a lot in the grid.
+                // It has the far end of the line to itself.
+                float depotZ = ewZ[Math.Max(0, blockRows - 1)] + StreetRow + 45f;
+                map.Outbuildings.Add(new Outbuilding
+                {
+                    Kind = OutbuildingKind.Depot,
+                    Center = new Vec2(spurTrackX + 28f, depotZ),
+                    WidthFeet = 34f,
+                    DepthFeet = 70f,
+                    Label = "DEPOT",
+                });
+                continue;
+            }
             if (lm.FreeStanding) { freeLandmarks.Add(lm); continue; }
             // A building: it takes a lot face like any other civic anchor.
             if (faceIds.Count == 0) continue;
@@ -928,6 +1030,9 @@ public static class SmallTownGenerator
                 float bx1 = bx0 + BlockWidth(col);
                 bool four = IsFourSide(blockRow, col);
                 if (four || col == 0) FillSideFace(blockRow, col, 0, bx0, bx1, bz0, bz1);
+                // The block on the far side of the railroad's street gives up its side
+                // row: that ground belongs to the track and the works beside it.
+                if (col == spurIdx - 1) continue;
                 if (four || col == size.Columns - 1) FillSideFace(blockRow, col, 1, bx0, bx1, bz0, bz1);
             }
         }
@@ -980,6 +1085,9 @@ public static class SmallTownGenerator
         }
         for (int c = size.Columns - 1; c >= 0; c--)
         {
+            // The block the railroad runs beside is never dropped: the street on the
+            // far side of it is the one the track is measured from.
+            if (c == spurIdx - 1) continue;
             bool has = ColumnHasContent(c);
             if (has) continue;
             float colW = colFrontages[c].Sum() + 2 * SideLotDepth + StreetRow;
@@ -1004,6 +1112,44 @@ public static class SmallTownGenerator
             map.WidthFeet = totalWidth;
         }
         int effColumns = nsX.Count - 1;   // effective column count after sweep
+
+        // The railroad's ground, in the town's final geometry: the strip of block
+        // on the far side of the street the track runs beside. No lot, no house and
+        // no alley goes on it.
+        float spurTrackXFinal = 0f;
+        if (spurIdx >= 0)
+        {
+            spurTrackXFinal = nsX[spurIdx] - 64f;
+            reserved.Add(new MapRect(nsX[spurIdx] - SideLotDepth, zBand, SideLotDepth, totalDepth + 200f));
+        }
+
+        // True when a stretch of street would be laid on the railroad's ground, or
+        // on top of the street the railroad runs beside.
+        bool OnRailGround(float x0, float x1) =>
+            spurIdx >= 0 && ((x1 > spurTrackXFinal - 16f && x0 < spurTrackXFinal + 64f)
+                          || (x0 < nsX[spurIdx] + 36f && x1 > nsX[spurIdx]));
+
+        // Nudge a street clear of the railroad's ground. False when there is no
+        // room for it, and the street is left out.
+        bool ClearRailGround(ref float x, float width)
+        {
+            if (spurIdx < 0) return true;
+            if (!OnRailGround(x, x + width)) return true;
+            // Try a few places east of the railroad street: clear of it, clear of
+            // each other, and inside the plat.
+            for (int step = 0; step < 8; step++)
+            {
+                float east = nsX[spurIdx] + 58f + step * 74f;
+                if (east + width > totalWidth - 30f) break;
+                bool clash = false;
+                foreach (var r in map.Roads)
+                    if (r.W < r.H && r.X < east + width && r.X + r.W > east) { clash = true; break; }
+                if (clash) continue;
+                x = east;
+                return true;
+            }
+            return false;
+        }
 
         // --- the street network ---------------------------------------------------
         // The highway band is the town's south side. The outermost N–S streets are the
@@ -1140,8 +1286,13 @@ public static class SmallTownGenerator
             {
                 if (!colFilled[row, col]) continue;
                 float bX = nsX[col] + StreetRow;
+                float bW = colFrontages[col].Sum() + 2 * SideLotDepth;
+                // The alley stops short of the railroad's ground: a gravel lane does
+                // not run under the track.
+                if (col == spurIdx - 1) bW -= 84f;
+                if (bW <= 20f) continue;
                 if (bX + colFrontages[col].Sum() > totalWidth + 1f) continue;
-                map.Alleys.Add(new MapRect(bX, aZ, colFrontages[col].Sum() + 2 * SideLotDepth, AlleyRow));
+                map.Alleys.Add(new MapRect(bX, aZ, bW, AlleyRow));
             }
         }
 
@@ -1183,6 +1334,8 @@ public static class SmallTownGenerator
             if (!nsKeep[s]) continue;
             int ni = s < mainStreetIndex ? s : s - 1;
             string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length];
+            // The street the railroad runs beside is named for the railroad.
+            if (s == spurIdx) nm = "RAILROAD";
             map.Labels.Add(new MapLabel
             {
                 Position = new Vec2(nsX[s] + StreetRow / 2f, zBand + (PerimZ(nsX[s]) - zBand) * 0.62f),
@@ -1204,6 +1357,7 @@ public static class SmallTownGenerator
             if (stubX > jogX - 90f && stubX < jogX + StreetRow + 90f)
                 stubX = stubX < jogX ? jogX - 90f : jogX + StreetRow + 90f;
             stubX = Math.Clamp(stubX, 60f, MathF.Max(60f, totalWidth - 90f));
+            if (!ClearRailGround(ref stubX, StreetRow)) continue;
             float stubLen = rng.Range(210f, 300f);
             float stubZ = PerimZ(stubX) + StreetRow;
             map.Roads.Add(new MapRect(stubX, stubZ, StreetRow, stubLen));
@@ -1236,8 +1390,15 @@ public static class SmallTownGenerator
             if (courtX > jogX - 110f && courtX < jogX + StreetRow + 110f)
                 courtX = courtX < jogX ? jogX - 110f : jogX + StreetRow + 110f;
             courtX = Math.Clamp(courtX, 100f, MathF.Max(100f, totalWidth - 180f));
+            if (!ClearRailGround(ref courtX, StreetRow))
+            {
+                // No room clear of the railroad: the town does without the court.
+                courtX = -1f;
+            }
             float courtLen = rng.Range(240f, 340f);
             float courtZ = PerimZ(courtX) + StreetRow;
+            if (courtX > 0f)
+            {
             map.Roads.Add(new MapRect(courtX, courtZ, StreetRow, courtLen));
             map.RoadDashed.Add(false);
             map.Bulbs.Add(new RoadBulb
@@ -1260,6 +1421,7 @@ public static class SmallTownGenerator
                 map.LotLines.Add(new MapRect(hx - 10f, hz - 8f, house.WidthFeet + 20f, house.DepthFeet + 16f));
                 hz += 92f;
             }
+            }
         }
 
         // --- a street that runs out to the edge of the plat ----------------------
@@ -1271,12 +1433,16 @@ public static class SmallTownGenerator
             if (edgeX > jogX - 120f && edgeX < jogX + StreetRow + 120f)
                 edgeX = edgeX < jogX ? jogX - 120f : jogX + StreetRow + 120f;
             edgeX = Math.Clamp(edgeX, 130f, MathF.Max(130f, totalWidth - 220f));
+            if (!ClearRailGround(ref edgeX, StreetRow)) edgeX = -1f;
             float edgeZ = PerimZ(edgeX) + StreetRow;
             float edgeLen = rng.Range(260f, 420f);
-            map.Roads.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen));
-            map.RoadDashed.Add(false);
-            // It leaves town; the far end is not a dead end.
-            map.RoadMayEndFree.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen));
+            if (edgeX > 0f)
+            {
+                map.Roads.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen));
+                map.RoadDashed.Add(false);
+                // It leaves town; the far end is not a dead end.
+                map.RoadMayEndFree.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen));
+            }
         }
 
         // --- the outlying road's buildings ---------------------------------------
@@ -1338,6 +1504,8 @@ public static class SmallTownGenerator
         // on purpose: real towns have vacant lots.
         bool RectFree(float x0, float z0, float x1, float z1)
         {
+            foreach (var r in reserved)
+                if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false;
             foreach (var r in map.LotLines)
                 if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false;
             foreach (var r in map.Alleys)
@@ -1587,6 +1755,15 @@ public static class SmallTownGenerator
         // even though the outer plat may reach a little past its last street.
         map.WidthFeet = totalWidth;
         map.DepthFeet = MathF.Max(map.DepthFeet, northZ1 + StreetRow + (size.DeadEnds > 0 ? 320f : 0f));
+
+        // Where the track runs, so the world can draw the spur where the town
+        // actually put it instead of guessing.
+        if (spurIdx >= 0)
+        {
+            map.RailTrackLocalX = spurTrackXFinal;
+            map.RailTrackLocalZ0 = zBand + BandDepth / 2f;     // the elevator: the spur's end
+            map.RailTrackLocalZ1 = PerimZ(nsX[spurIdx]) + StreetRow;
+        }
 
         map.Labels.Add(new MapLabel
         {

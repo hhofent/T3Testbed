@@ -42,6 +42,8 @@ public static class SvgMapRenderer
             minZ = MathF.Min(minZ, z); maxZ = MathF.Max(maxZ, z + h);
         }
         foreach (var r in map.Roads) Box(r.X, r.Z, r.W, r.H);
+        foreach (var p in map.RoadPaths)
+            foreach (var q in p.Points) Box(q.X - p.WidthFeet / 2f, q.Z - p.WidthFeet / 2f, p.WidthFeet, p.WidthFeet);
         foreach (var r in map.Alleys) Box(r.X, r.Z, r.W, r.H);
         foreach (var r in map.LotLines) Box(r.X, r.Z, r.W, r.H);
         foreach (var w in map.Waters)
@@ -230,6 +232,16 @@ public static class SvgMapRenderer
             sb.AppendLine($"<rect x='{N(a.X)}' y='{N(a.Y)}' width='{N(r.W * scale)}' height='{N(r.H * scale)}' fill='#c9c3b2'/>");
         }
 
+        // Streets that are not axis-aligned: a diagonal rail-corridor street, a
+        // curved residential street. Drawn as a stroke along the centre line.
+        foreach (var p in map.RoadPaths)
+        {
+            if (p.Points.Count < 2) continue;
+            string fill = p.Paved ? "#8f8b83" : "#c8c3b5";
+            float w = MathF.Max(1.5f, p.WidthFeet * scale);
+            sb.AppendLine($"<polyline points='{string.Join(" ", p.Points.Select(q => { var m = Map(q); return $"{N(m.X)},{N(m.Y)}"; }))}' fill='none' stroke='{fill}' stroke-width='{N(w)}' stroke-linecap='butt' stroke-linejoin='round'/>");
+        }
+
         // Cul-de-sac bulbs (asphalt turnarounds) on top of road ends.
         foreach (var b in map.Bulbs)
         {
@@ -350,7 +362,31 @@ public static class SvgMapRenderer
                 || o.Kind == OutbuildingKind.Fairgrounds || o.Kind == OutbuildingKind.Airstrip;
             float fillOpacity = isArea ? 0.8f : 1f;
             float strokeW = isArea ? 1.2f : 2.5f;
-            sb.AppendLine($"<rect x='{N(tl.X)}' y='{N(tl.Y)}' width='{N(wPx)}' height='{N(hPx)}' fill='{fill}' fill-opacity='{fillOpacity:0.##}' stroke='#3a332b' stroke-width='{N(strokeW)}'/>");
+            if (MathF.Abs(o.RotateDeg) > 0.01f)
+            {
+                // A building turned to face a diagonal street: the footprint is a
+                // rectangle spun about its own centre.
+                float r = o.RotateDeg * MathF.PI / 180f;
+                float cs = MathF.Cos(r), sn = MathF.Sin(r);
+                var corners = new[]
+                {
+                    new Vec2(-o.WidthFeet / 2f, -o.DepthFeet / 2f),
+                    new Vec2(o.WidthFeet / 2f, -o.DepthFeet / 2f),
+                    new Vec2(o.WidthFeet / 2f, o.DepthFeet / 2f),
+                    new Vec2(-o.WidthFeet / 2f, o.DepthFeet / 2f),
+                };
+                var poly = corners.Select(q =>
+                {
+                    float x = q.X * cs - q.Z * sn, z = q.X * sn + q.Z * cs;
+                    var m = Map(new Vec2(o.Center.X + x, o.Center.Z + z));
+                    return $"{N(m.X)},{N(m.Y)}";
+                });
+                sb.AppendLine($"<polygon points='{string.Join(" ", poly)}' fill='{fill}' fill-opacity='{fillOpacity:0.##}' stroke='#3a332b' stroke-width='{N(strokeW)}'/>");
+            }
+            else
+            {
+                sb.AppendLine($"<rect x='{N(tl.X)}' y='{N(tl.Y)}' width='{N(wPx)}' height='{N(hPx)}' fill='{fill}' fill-opacity='{fillOpacity:0.##}' stroke='#3a332b' stroke-width='{N(strokeW)}'/>");
+            }
             if (o.Kind == OutbuildingKind.WaterTower)
             {
                 // A tank on legs: a circle with a stem.

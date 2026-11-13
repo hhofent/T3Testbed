@@ -32,6 +32,11 @@ public sealed class Outbuilding
     /// <summary>Grain bins only: diameter, feet.</summary>
     public float DiameterFeet { get; set; }
     public string Label { get; set; } = "";
+    /// <summary>
+    /// How far the building is turned, in degrees. Zero for the usual upright
+    /// building; a shop fronting a diagonal street is turned to face it.
+    /// </summary>
+    public float RotateDeg { get; set; }
 }
 
 public sealed class Driveway
@@ -94,6 +99,19 @@ public sealed class MapLabel
 /// one or more positioned houses, outbuildings and shelterbelt trees.
 /// Coordinates: X east, Z north-into-the-lot; the street edge is at z = 0.
 /// </summary>
+/// <summary>
+/// A street that is not axis-aligned: a polyline with a width. Iowa towns have
+/// them — a rail-corridor street that follows the old track, a curved residential
+/// street — and a rectangle cannot draw them.
+/// </summary>
+public sealed class RoadPath
+{
+    public List<Vec2> Points { get; } = new();
+    /// <summary>Width of the travelled way, feet.</summary>
+    public float WidthFeet { get; set; } = 36f;
+    public bool Paved { get; set; } = true;
+}
+
 public sealed class MapPlan
 {
     public string Title { get; set; } = "";
@@ -111,6 +129,8 @@ public sealed class MapPlan
 
     /// <summary>Road/street bands. Negative Z.</summary>
     public List<MapRect> Roads { get; } = new();
+    /// <summary>Streets that are not axis-aligned: a polyline with a width.</summary>
+    public List<RoadPath> RoadPaths { get; } = new();
     /// <summary>Gravel alleys behind town lots.</summary>
     public List<MapRect> Alleys { get; } = new();
     /// <summary>Large terrain fills (fields), drawn under everything else. Parallel with FieldFills.</summary>
@@ -146,6 +166,16 @@ public sealed class MapPlan
     public List<MapRect> RoadMayEndFree { get; } = new();
     /// <summary>Planted medians: the green strip down the middle of a boulevard street.</summary>
     public List<MapRect> Medians { get; } = new();
+    /// <summary>
+    /// The branch spur's right-of-way, in local coordinates. Zero when the town has
+    /// no spur. The world reads this to draw the track where the town actually put
+    /// it, rather than guessing.
+    /// </summary>
+    public float RailTrackLocalX { get; set; }
+    /// <summary>Local z of the spur's near end (the elevator) and its far end.</summary>
+    public float RailTrackLocalZ0 { get; set; }
+    public float RailTrackLocalZ1 { get; set; }
+
     /// <summary>
     /// Bounds of the town's perimeter street loop, in local coordinates. County roads
     /// stop at this rectangle so they meet a town street instead of dangling.
