@@ -1,0 +1,62 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='690.28' height='530.81' viewBox='0 0 690.28 530.81' font-family='Georgia, serif'>
+<style>
+.wall{stroke:#3a332b;fill:none}
+.floor{fill:#e7dfd0}
+.thin{stroke:#3a332b;stroke-width:1.4;fill:none}
+.dash{stroke:#8a7f70;stroke-width:1.4;fill:none;stroke-dasharray:6 5}
+.txt{fill:#3a332b;font-size:12px;text-anchor:middle}
+.small{fill:#6b6154;font-size:10px}
+.title{fill:#3a332b;font-size:17px;font-weight:bold}
+</style>
+<rect x='0' y='0' width='690.28' height='530.81' fill='#faf7ef'/>
+<path class='floor' fill-rule='evenodd' d='M46 471.31L417.92 471.31L644.28 471.31L644.28 230.7L417.92 230.7L417.92 64L46 64Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='46' y1='471.31' x2='417.92' y2='471.31' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='101.81' y1='471.31' x2='140.81' y2='471.31' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='101.81' y1='471.31' x2='101.81' y2='432.31' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 140.81 471.31 A 39 39 0 0 1 101.81 432.31' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='211.56' y1='471.31' x2='250.56' y2='471.31' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='211.56' y1='470.97' x2='250.56' y2='470.97' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='211.56' y1='471.31' x2='250.56' y2='471.31' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='211.56' y1='471.66' x2='250.56' y2='471.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='319.47' y1='471.31' x2='358.47' y2='471.31' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='319.47' y1='470.97' x2='358.47' y2='470.97' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='319.47' y1='471.31' x2='358.47' y2='471.31' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='319.47' y1='471.66' x2='358.47' y2='471.66' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='417.92' y1='471.31' x2='644.28' y2='471.31' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='644.28' y1='471.31' x2='644.28' y2='230.7' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='644.28' y1='409.5' x2='644.28' y2='292.5' stroke='#faf7ef' stroke-width='1.81'/>
+<text class='small' x='644.28' y='351' text-anchor='middle' transform='rotate(-90 644.28 351)'>GARAGE DOOR 9 FT</text>
+<line class='wall' vector-effect='non-scaling-stroke' x1='644.28' y1='230.7' x2='417.92' y2='230.7' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='417.92' y1='230.7' x2='417.92' y2='64' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='417.92' y1='166.08' x2='417.92' y2='127.08' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='417.57' y1='166.08' x2='417.57' y2='127.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='417.92' y1='166.08' x2='417.92' y2='127.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='418.26' y1='166.08' x2='418.26' y2='127.08' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='417.92' y1='64' x2='46' y2='64' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='338.72' y1='64' x2='299.72' y2='64' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='338.72' y1='64.34' x2='299.72' y2='64.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='338.72' y1='64' x2='299.72' y2='64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='338.72' y1='63.66' x2='299.72' y2='63.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='183.34' y1='64' x2='144.34' y2='64' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='183.34' y1='64.34' x2='144.34' y2='64.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='183.34' y1='64' x2='144.34' y2='64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='183.34' y1='63.66' x2='144.34' y2='63.66' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='46' y1='64' x2='46' y2='471.31' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='46' y1='180.51' x2='46' y2='219.51' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='46.34' y1='180.51' x2='46.34' y2='219.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='46' y1='180.51' x2='46' y2='219.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='45.66' y1='180.51' x2='45.66' y2='219.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='46' y1='346.3' x2='46' y2='385.3' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='46.34' y1='346.3' x2='46.34' y2='385.3' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='46' y1='346.3' x2='46' y2='385.3' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='45.66' y1='346.3' x2='45.66' y2='385.3' stroke='#3a332b' stroke-width='0.52'/>
+<text class='txt' x='531.1' y='351'>GARAGE</text>
+<line class='thin' x1='46' y1='490.21' x2='644.28' y2='490.21'/>
+<text class='small' x='345.14' y='502.21' text-anchor='middle'>46 FT</text>
+<line class='thin' x1='32' y1='64' x2='32' y2='471.31'/>
+<text class='small' x='28' y='267.66' text-anchor='middle' transform='rotate(-90 28 267.66)'>31.3 FT</text>
+<text class='title' x='26' y='26'>SPAWNER GUIDE — SPLIT-LEVEL</text>
+<text class='small' x='26' y='43'>seed 17831 · 2 stories · 7 walls · 9 openings — walls spawn already fastened; placement only</text>
+<text class='small' x='26' y='57'>framed per Builder-Guy (2×6 plates + precut studs, 97.125 in = 8′-1⅛″ per story) · roof: 4/12 offset gable, 3-tab asphalt shingle — split entry · siding: LightGrayVinyl</text>
+<text class='small' x='345.14' y='520.81' text-anchor='middle'>— STREET (front faces south) —</text>
+</svg>

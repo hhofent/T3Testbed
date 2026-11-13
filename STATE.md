@@ -72,7 +72,7 @@ ports later.
   pass reaches past the town's outermost street, so the edges are built out too.
 - **Town field is a queryable lattice, not a sequential Poisson pass:** one candidate per
   10-mi slot on the 10-mi paved corridor lattice (both directions), a town only exists
-  if rail runs within 9 mi, priority suppression inside 10 mi, and a trunk river within
+  if rail runs within 9 mi, priority suppression inside 20 mi, and a trunk river within
   1,200 ft vetoes the site. The highway through a town is continuous; county roads are
   clipped inside town footprints.
 - **Town names are generic place names (user, 2026-11-11).** Boyden/Hull/George are
@@ -113,7 +113,7 @@ ports later.
   E/W and N/S. Paved corridors every 10 mi (E/W **and** N/S) carry the gravel
   section-road grid on every mile line, with ~1.8% missing / ~2.2% paved exceptions.
   Towns are a queryable 10-mi lattice on the paved corridors, only where rail runs
-  within 9 mi, priority-suppressed to ≥10 mi apart, class ladder crossroads/hamlet/
+  within 9 mi, priority-suppressed to ≥20 mi apart, class ladder crossroads/hamlet/
   village/town, generic names, north/south/straddling the road (46/24/30%). Per-section
   farmsteads stamp/rotate the existing `RuralLot` leaf (0–3 per section), fields are
   four quarter fills. `ExactBounds` + bare SVG maps pixels 1:1 to the world rectangle.

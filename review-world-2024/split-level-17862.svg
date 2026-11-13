@@ -1,0 +1,66 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='769.75' height='501.67' viewBox='0 0 769.75 501.67' font-family='Georgia, serif'>
+<style>
+.wall{stroke:#3a332b;fill:none}
+.floor{fill:#e7dfd0}
+.thin{stroke:#3a332b;stroke-width:1.4;fill:none}
+.dash{stroke:#8a7f70;stroke-width:1.4;fill:none;stroke-dasharray:6 5}
+.txt{fill:#3a332b;font-size:12px;text-anchor:middle}
+.small{fill:#6b6154;font-size:10px}
+.title{fill:#3a332b;font-size:17px;font-weight:bold}
+</style>
+<rect x='0' y='0' width='769.75' height='501.67' fill='#faf7ef'/>
+<path class='floor' fill-rule='evenodd' d='M723.75 442.17L257.48 442.17L46 442.17L46 233.03L257.48 233.03L257.48 64L723.75 64Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='723.75' y1='442.17' x2='257.48' y2='442.17' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='619.66' y1='442.17' x2='580.66' y2='442.17' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='619.66' y1='442.17' x2='619.66' y2='403.17' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 580.66 442.17 A 39 39 0 0 1 619.66 403.17' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='513.14' y1='442.17' x2='474.14' y2='442.17' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='513.14' y1='442.51' x2='474.14' y2='442.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='513.14' y1='442.17' x2='474.14' y2='442.17' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='513.14' y1='441.83' x2='474.14' y2='441.83' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='384.23' y1='442.17' x2='345.23' y2='442.17' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='384.23' y1='442.51' x2='345.23' y2='442.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='384.23' y1='442.17' x2='345.23' y2='442.17' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='384.23' y1='441.83' x2='345.23' y2='441.83' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='257.48' y1='442.17' x2='46' y2='442.17' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='46' y1='442.17' x2='46' y2='233.03' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='46' y1='396.1' x2='46' y2='279.1' stroke='#faf7ef' stroke-width='1.81'/>
+<text class='small' x='46' y='337.6' text-anchor='middle' transform='rotate(-90 46 337.6)'>GARAGE DOOR 9 FT</text>
+<line class='wall' vector-effect='non-scaling-stroke' x1='46' y1='233.03' x2='257.48' y2='233.03' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='257.48' y1='233.03' x2='257.48' y2='64' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='257.48' y1='165.35' x2='257.48' y2='126.35' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='257.14' y1='165.35' x2='257.14' y2='126.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='257.48' y1='165.35' x2='257.48' y2='126.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='257.83' y1='165.35' x2='257.83' y2='126.35' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='257.48' y1='64' x2='723.75' y2='64' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='336.08' y1='64' x2='375.08' y2='64' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='336.08' y1='63.66' x2='375.08' y2='63.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.08' y1='64' x2='375.08' y2='64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.08' y1='64.34' x2='375.08' y2='64.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='489.11' y1='64' x2='528.11' y2='64' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='489.11' y1='63.66' x2='528.11' y2='63.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='489.11' y1='64' x2='528.11' y2='64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='489.11' y1='64.34' x2='528.11' y2='64.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='595.84' y1='64' x2='634.84' y2='64' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='595.84' y1='63.66' x2='634.84' y2='63.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='595.84' y1='64' x2='634.84' y2='64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='595.84' y1='64.34' x2='634.84' y2='64.34' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='723.75' y1='64' x2='723.75' y2='442.17' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='723.75' y1='154.02' x2='723.75' y2='193.02' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='724.09' y1='154.02' x2='724.09' y2='193.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='723.75' y1='154.02' x2='723.75' y2='193.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='723.41' y1='154.02' x2='723.41' y2='193.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='723.75' y1='311.33' x2='723.75' y2='350.33' stroke='#faf7ef' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='724.09' y1='311.33' x2='724.09' y2='350.33' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='723.75' y1='311.33' x2='723.75' y2='350.33' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='723.41' y1='311.33' x2='723.41' y2='350.33' stroke='#3a332b' stroke-width='0.52'/>
+<text class='txt' x='151.74' y='337.6'>GARAGE</text>
+<line class='thin' x1='46' y1='461.07' x2='723.75' y2='461.07'/>
+<text class='small' x='384.88' y='473.07' text-anchor='middle'>52.1 FT</text>
+<line class='thin' x1='32' y1='64' x2='32' y2='442.17'/>
+<text class='small' x='28' y='253.09' text-anchor='middle' transform='rotate(-90 28 253.09)'>29.1 FT</text>
+<text class='title' x='26' y='26'>SPAWNER GUIDE — SPLIT-LEVEL</text>
+<text class='small' x='26' y='43'>seed 17862 · 2 stories · 7 walls · 10 openings — walls spawn already fastened; placement only</text>
+<text class='small' x='26' y='57'>framed per Builder-Guy (2×6 plates + precut studs, 97.125 in = 8′-1⅛″ per story) · roof: 4/12 offset gable, 3-tab asphalt shingle — split entry · siding: WoodLap</text>
+<text class='small' x='384.88' y='491.67' text-anchor='middle'>— STREET (front faces south) —</text>
+</svg>

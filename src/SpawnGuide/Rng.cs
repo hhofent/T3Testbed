@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 namespace SpawnGuide
 {
@@ -31,5 +32,39 @@ public sealed class Rng
     public bool Chance(float probability) => NextFloat() < probability;
 
     public T Pick<T>(IReadOnlyList<T> items) => items[RangeInt(0, items.Count)];
+
+    /// <summary>Generate a Gaussian (normal) random value using Box-Muller transform.</summary>
+    public float NextGaussian()
+    {
+        // Box-Muller transform
+        float u1 = NextFloat();
+        float u2 = NextFloat();
+        float mag = MathF.Sqrt(-2f * MathF.Log(u1));
+        return mag * MathF.Cos(2f * MathF.PI * u2);
+    }
+
+    /// <summary>Generate a Poisson random value using Knuth's algorithm.</summary>
+    public int NextPoisson(float lambda)
+    {
+        if (lambda < 20f)
+        {
+            // Knuth's algorithm for small lambda
+            float L = MathF.Exp(-lambda);
+            float p = 1f;
+            int k = 0;
+            do
+            {
+                k++;
+                p *= NextFloat();
+            } while (p > L);
+            return k - 1;
+        }
+        else
+        {
+            // Normal approximation for large lambda
+            float g = NextGaussian();
+            return (int)MathF.Max(0, MathF.Round(lambda + MathF.Sqrt(lambda) * g));
+        }
+    }
 }
 }

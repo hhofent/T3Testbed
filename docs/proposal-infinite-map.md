@@ -84,7 +84,7 @@ deterministic suppression:
   started the town, and the class ladder is rolled only for rail-adjacent sites:
   4.5% town, 9% village, 18.5% hamlet, 32% crossroads, the rest empty.
 - Each candidate gets a stable 64-bit priority. A candidate survives only if no
-  stronger candidate in the adjacent slots is within **10 miles**. That is a local
+  stronger candidate in the configured neighboring slots is within **20 miles**. That is a local
   query evaluated the same way from any window, so town spacing never depends on visit
   order.
 - Town names come from a generic 40-name pool (`COLD SPRING`, `PINEHURST`,
@@ -195,7 +195,7 @@ The ladder in `WorldMap.Verify()` checks:
 2. A window 100 miles from the origin is still reproducible.
 3. Two overlapping windows agree on every house, outbuilding and tree in the overlap.
 4. A 3-mile cell equals the same land inside a 9-mile window.
-5. Town ladder: no towns inside 10 miles; the big town stays rare.
+5. Town ladder: no towns inside 20 miles; the big town stays rare.
 6. Towns tend to be near rail lines.
 7. No building overlaps another across towns and farms.
 8. Rivers exist and every tributary merges southward into a bigger river.

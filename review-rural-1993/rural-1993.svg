@@ -1,0 +1,113 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='417' height='992' viewBox='0 0 417 992' font-family='Georgia, serif'>
+<style>
+.floor{fill:#e9e4d2}
+.wall{stroke:#3a332b;fill:none}
+.thin{stroke:#3a332b;stroke-width:1.3;fill:none}
+.dash{stroke:#8a7f70;stroke-width:1.3;fill:none;stroke-dasharray:7 5}
+.txt{fill:#3a332b;font-size:13px;text-anchor:middle}
+.small{fill:#57503f;font-size:11px}
+.title{fill:#3a332b;font-size:19px;font-weight:bold}
+.roadlabel{fill:#57503f;font-size:13px;letter-spacing:3px;text-anchor:middle}
+</style>
+<rect x='0' y='0' width='417' height='992' fill='#f0efe0'/>
+<circle cx='52.45' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='83.16' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='111.49' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='144.59' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='175.47' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='204.05' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='231.34' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='264.95' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='291.71' cy='465.56' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='727.35' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='689.65' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='654.12' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='620.23' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='586.14' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='558.05' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='521.6' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<circle cx='41.9' cy='492.06' r='4.36' fill='#3f3b34' fill-opacity='0.9'/>
+<rect class='dash' x='41.58' y='66' width='297.58' height='769.07'/>
+<rect x='41.58' y='835.07' width='297.58' height='130.94' fill='#c8c3b5'/>
+<line x1='41.58' y1='837.07' x2='339.15' y2='837.07' stroke='#a9a495' stroke-width='1.5'/>
+<line x1='41.58' y1='964' x2='339.15' y2='964' stroke='#a9a495' stroke-width='1.5'/>
+<polyline points='110.23,950.13 110.23,835.07 110.23,784.07 110.23,624.27 101.42,624.27' fill='none' stroke='#d6c9a3' stroke-width='23.81' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='110.23,784.07 272.33,784.07 272.33,720.84 254.48,720.84' fill='none' stroke='#d6c9a3' stroke-width='23.81' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='124.12,835.07 124.12,784.07 153.91,768.2 153.91,744.39' fill='none' stroke='#e3e0d8' stroke-width='6.94' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<path class='floor' fill-rule='evenodd' d='M139.99 744.39L214.13 744.39L254.48 744.39L254.48 697.28L214.13 697.28L214.13 675.85L139.99 675.85Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='139.99' y1='744.39' x2='214.13' y2='744.39' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='150.93' y1='744.39' x2='156.88' y2='744.39' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='150.93' y1='744.39' x2='150.93' y2='738.44' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 156.88 744.39 A 5.95 5.95 0 0 1 150.93 738.44' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='173.25' y1='744.39' x2='179.2' y2='744.39' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='173.25' y1='744.05' x2='179.2' y2='744.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='173.25' y1='744.39' x2='179.2' y2='744.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='173.25' y1='744.73' x2='179.2' y2='744.73' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.31' y1='744.39' x2='199.26' y2='744.39' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='193.31' y1='744.05' x2='199.26' y2='744.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.31' y1='744.39' x2='199.26' y2='744.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.31' y1='744.73' x2='199.26' y2='744.73' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='214.13' y1='744.39' x2='254.48' y2='744.39' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='254.48' y1='744.39' x2='254.48' y2='697.28' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='254.48' y1='729.76' x2='254.48' y2='711.91' stroke='#f0efe0' stroke-width='1.81'/>
+<text class='small' x='254.48' y='720.84' text-anchor='middle' transform='rotate(-90 254.48 720.84)'>GARAGE DOOR 9 FT</text>
+<line class='wall' vector-effect='non-scaling-stroke' x1='254.48' y1='697.28' x2='214.13' y2='697.28' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='214.13' y1='697.28' x2='214.13' y2='675.85' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='214.13' y1='689.83' x2='214.13' y2='683.88' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='213.79' y1='689.83' x2='213.79' y2='683.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='214.13' y1='689.83' x2='214.13' y2='683.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='214.47' y1='689.83' x2='214.47' y2='683.88' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='214.13' y1='675.85' x2='139.99' y2='675.85' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='198.22' y1='675.85' x2='192.26' y2='675.85' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='198.22' y1='676.19' x2='192.26' y2='676.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='198.22' y1='675.85' x2='192.26' y2='675.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='198.22' y1='675.51' x2='192.26' y2='675.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='178.9' y1='675.85' x2='172.95' y2='675.85' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='178.9' y1='676.19' x2='172.95' y2='676.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='178.9' y1='675.85' x2='172.95' y2='675.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='178.9' y1='675.51' x2='172.95' y2='675.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='160.11' y1='675.85' x2='154.16' y2='675.85' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='160.11' y1='676.19' x2='154.16' y2='676.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='160.11' y1='675.85' x2='154.16' y2='675.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='160.11' y1='675.51' x2='154.16' y2='675.51' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='139.99' y1='675.85' x2='139.99' y2='744.39' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='139.99' y1='690.05' x2='139.99' y2='696' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='140.33' y1='690.05' x2='140.33' y2='696' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.99' y1='690.05' x2='139.99' y2='696' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.64' y1='690.05' x2='139.64' y2='696' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.99' y1='721.3' x2='139.99' y2='727.26' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='140.33' y1='721.3' x2='140.33' y2='727.26' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.99' y1='721.3' x2='139.99' y2='727.26' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.64' y1='721.3' x2='139.64' y2='727.26' stroke='#3a332b' stroke-width='0.52'/>
+<text class='txt' x='234.3' y='720.84'>GARAGE</text>
+<rect x='61.74' y='544.91' width='79.35' height='79.35' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='63.74' y1='584.59' x2='139.1' y2='584.59' stroke-dasharray='5 4'/>
+<text class='small' x='101.42' y='636.27' text-anchor='middle'>MACHINE SHED 40×40</text>
+<circle cx='81.25' cy='505.24' r='23.81' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='81.25' cy='505.24' r='4.29' fill='#57503f'/>
+<line class='thin' x1='81.25' y1='505.24' x2='81.25' y2='481.43'/>
+<circle cx='144.74' cy='505.24' r='23.81' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='144.74' cy='505.24' r='4.29' fill='#57503f'/>
+<line class='thin' x1='144.74' y1='505.24' x2='144.74' y2='481.43'/>
+<circle cx='208.22' cy='505.24' r='23.81' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='208.22' cy='505.24' r='4.29' fill='#57503f'/>
+<line class='thin' x1='208.22' y1='505.24' x2='208.22' y2='481.43'/>
+<circle cx='271.7' cy='505.24' r='23.81' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='271.7' cy='505.24' r='4.29' fill='#57503f'/>
+<line class='thin' x1='271.7' y1='505.24' x2='271.7' y2='481.43'/>
+<rect x='99.02' y='326.69' width='55.55' height='87.29' fill='#c4bcab' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='126.8' y1='328.69' x2='126.8' y2='411.98' stroke-dasharray='5 4'/>
+<rect x='124.02' y='676.84' width='8.93' height='21.82' rx='4.46' fill='#d8d8d0' stroke='#57503f' stroke-width='1.5'/>
+<text class='small' x='128.48' y='690.75' text-anchor='middle'>LP</text>
+<text class='small' x='190.36' y='900.53' text-anchor='middle'>COUNTY ROAD</text>
+<text class='small' x='176.48' y='465.56' text-anchor='middle'>STEEL BINS ×4</text>
+<text class='small' x='174.66' y='451.67' text-anchor='middle'>SHELTERBELT</text>
+<text class='small' x='327.25' y='819.19' text-anchor='end'>150′ × 388′ — 1.3 AC</text>
+<circle cx='383' cy='40' r='13' fill='none' stroke='#57503f' stroke-width='1.5'/>
+<line x1='383' y1='49' x2='383' y2='31' stroke='#57503f' stroke-width='1.5'/>
+<path d='M 383 30 L 379 38 L 387 38 Z' fill='#57503f'/>
+<text class='small' x='383' y='64' text-anchor='middle'>N</text>
+<text class='title' x='30' y='26'>RURAL FARMSTEAD — SEED 1993</text>
+<text class='small' x='30' y='45'>seed 1993 · 1 house · 7 outbuildings · drive aisles and walks shown — placement guide, not construction</text>
+<text class='small' x='30' y='59'>grid: section lines 1 mi · front doors open to walks · garage aprons face the lane (gravel rural / concrete town)</text>
+</svg>

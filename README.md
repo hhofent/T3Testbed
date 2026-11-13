@@ -90,8 +90,8 @@ in order: **hills → rivers → rail → roads → towns and lots → farms**. 
 Great-Plains swells (under 130 ft of relief) drawn as 20-ft contours; trunk rivers run
 north-to-south every ~28 miles with tributaries merging into them; rail lines cross
 every ~75 miles; paved corridors every ~10 miles carry a gravel section-road grid on
-every mile line. Towns are a queryable 10-mile lattice **on the paved corridors**,
-only where a rail line runs within 9 miles, forced ≥10 miles apart, with generic place
+every mile line. Town candidates are a queryable 10-mile lattice **on the paved corridors**,
+only where a rail line runs within 9 miles, spaced at least 20 miles apart, with generic place
 names and four sizes (crossroads / hamlet / village / town). Each town sits north of,
 south of, or astride its highway, is encircled by a perimeter street that jogs, and has
 exactly one dead-end street with empty lots on it. Farmsteads stamp the rural-lot leaf

@@ -1,0 +1,876 @@
+{
+    "Houses":  {
+                   "ranchWidthFt":  [
+                                        36,
+                                        48
+                                    ],
+                   "ranchDepthFt":  [
+                                        24,
+                                        32
+                                    ],
+                   "ranchGarageWidthFt":  [
+                                              12,
+                                              19
+                                          ],
+                   "ranchGarageDepthFt":  [
+                                              17,
+                                              24
+                                          ],
+                   "ranchGarageLeftChance":  0.5,
+                   "farmhouseWidthFt":  [
+                                            28,
+                                            36
+                                        ],
+                   "farmhouseDepthFt":  [
+                                            30,
+                                            38
+                                        ],
+                   "farmhousePorchWidthFraction":  [
+                                                       0.55,
+                                                       0.75
+                                                   ],
+                   "farmhousePorchDepthFt":  [
+                                                 6,
+                                                 8
+                                             ],
+                   "farmhouseDoorCenteredChance":  1,
+                   "splitLevelWidthFt":  [
+                                             28,
+                                             36
+                                         ],
+                   "splitLevelDepthFt":  [
+                                             28,
+                                             36
+                                         ],
+                   "splitLevelGarageWidthFt":  [
+                                                   12,
+                                                   18
+                                               ],
+                   "splitLevelGarageDepthFt":  [
+                                                   16,
+                                                   22
+                                               ],
+                   "splitLevelGarageLeftChance":  0.5,
+                   "splitLevelGarageDoorOnSideChance":  1,
+                   "sidingOptions":  [
+                                         "WhiteVinyl",
+                                         "IvoryVinyl",
+                                         "BeigeVinyl",
+                                         "LightGrayVinyl",
+                                         "BrickFrontVinylSides",
+                                         "WoodLap",
+                                         "Aluminum"
+                                     ],
+                   "doorOffsetFractionRange":  [
+                                                   0.18,
+                                                   0.32
+                                               ],
+                   "frontWindowJitterFraction":  0.06,
+                   "sideWindowJitterFraction":  0.05,
+                   "garageDoorWidth16ftChance":  0.35,
+                   "garageDoorMinWidthFt":  9,
+                   "garageDoorMaxWidthFt":  16,
+                   "twoWindowMinWallFt":  22,
+                   "oneWindowMinWallFt":  9
+               },
+    "Rural":  {
+                  "lotWidthFt":  [
+                                     215,
+                                     285
+                                 ],
+                  "lotDepthFt":  [
+                                     300,
+                                     420
+                                 ],
+                  "houseXFraction":  [
+                                         0.22,
+                                         0.38
+                                     ],
+                  "houseSetbackFt":  [
+                                         38,
+                                         62
+                                     ],
+                  "machineShedWidthOptionsFt":  [
+                                                    36,
+                                                    40,
+                                                    48
+                                                ],
+                  "machineShedDepthOptionsFt":  [
+                                                    30,
+                                                    36,
+                                                    40
+                                                ],
+                  "machineShedXFractionRight":  [
+                                                    0.06,
+                                                    0.18
+                                                ],
+                  "machineShedXFractionLeft":  [
+                                                   0.08,
+                                                   0.2
+                                               ],
+                  "machineShedBehindHouseFt":  26,
+                  "drivewayEntrySideMarginFt":  15,
+                  "drivewayYardDepthFt":  20,
+                  "drivewayWidthFt":  12,
+                  "drivewaySurface":  "Gravel",
+                  "walkWidthFt":  3.5,
+                  "walkSurface":  "Concrete",
+                  "walkOffsetFromLaneFt":  7,
+                  "shopChance":  0.4,
+                  "shopWidthFt":  22,
+                  "shopDepthFt":  28,
+                  "shopOffsetFromShedFt":  10,
+                  "binCountRange":  [
+                                        2,
+                                        5
+                                    ],
+                  "binDiameterOptionsFt":  {
+                                               "min":  18,
+                                               "shape":  "Uniform",
+                                               "max":  24
+                                           },
+                  "binSpacingExtraFt":  8,
+                  "binRowBehindShedFt":  8,
+                  "poleBarnChance":  0.4,
+                  "poleBarnWidthFt":  28,
+                  "poleBarnDepthFt":  44,
+                  "poleBarnBehindBinsFt":  12,
+                  "poleBarnXJitterFt":  30,
+                  "gambrelBarnChance":  0.2,
+                  "gambrelBarnWidthFt":  32,
+                  "gambrelBarnDepthFt":  54,
+                  "gambrelBarnXFraction":  {
+                                               "Min":  0.6,
+                                               "Max":  0.8
+                                           },
+                  "gambrelBarnFromBackFt":  14,
+                  "lpTankChance":  0.3,
+                  "lpTankOffsetFromHouseFt":  8,
+                  "shelterbeltChance":  0.55,
+                  "shelterbeltTreeSpacingFt":  15,
+                  "shelterbeltTreeJitterFt":  2,
+                  "shelterbeltNorthOffsetFt":  8,
+                  "shelterbeltWestOffsetFt":  10,
+                  "shelterbeltTreeSpacingZ":  17,
+                  "detachedGarageWidthFt":  22,
+                  "detachedGarageDepthFt":  24,
+                  "detachedGarageSideOffsetFt":  16,
+                  "detachedGarageBehindHouseFt":  4,
+                  "outbuildingDensity":  1,
+                  "buildingCollisionPadFt":  3
+              },
+    "TownBlock":  {
+                      "streetRowFt":  36,
+                      "alleyRowFt":  16,
+                      "lotDepthFt":  [
+                                         120,
+                                         140
+                                     ],
+                      "alleyChance":  0.35,
+                      "lotCountPerSide":  4,
+                      "lotFrontageFt":  [
+                                            72,
+                                            88
+                                        ],
+                      "setbackFt":  [
+                                        10,
+                                        22
+                                    ],
+                      "houseXJitterFt":  3,
+                      "garageViaAlleyChance":  0.6,
+                      "detachedGarageWidthFt":  22,
+                      "detachedGarageDepthFt":  26,
+                      "detachedGarageXJitterFt":  6,
+                      "detachedGarageFromAlleyFt":  9,
+                      "farmhouseDetachedGarageWidthFt":  20,
+                      "farmhouseDetachedGarageDepthFt":  22,
+                      "farmhouseDetachedGarageSideMarginFt":  3,
+                      "farmhouseDetachedGarageDepthFraction":  0.25,
+                      "drivewayWidthFt":  17,
+                      "drivewaySurface":  "Concrete",
+                      "drivewayStartOffsetFt":  31,
+                      "alleyDrivewayWidthFt":  10,
+                      "alleyDrivewaySurface":  "Gravel",
+                      "walkWidthFt":  4,
+                      "walkSurface":  "Concrete",
+                      "walkStartInsetFt":  4.5,
+                      "streetTreeSpacingFt":  [
+                                                  28,
+                                                  46
+                                              ],
+                      "streetTreeChance":  0.75,
+                      "streetTreeSidewalkOffsetFt":  7,
+                      "yardTreeCountRange":  [
+                                                 2,
+                                                 4
+                                             ],
+                      "yardTreePadFt":  5,
+                      "yardTreeSideMarginFt":  4,
+                      "houseDensity":  1,
+                      "streetNamePool":  [
+                                             "OAK",
+                                             "MAPLE",
+                                             "CEDAR",
+                                             "ELM",
+                                             "WASHINGTON",
+                                             "MAIN",
+                                             "COLLEGE",
+                                             "SECOND"
+                                         ],
+                      "streetSuffixStreetChance":  0.7
+                  },
+    "SmallTown":  {
+                      "highwayWidthFt":  66,
+                      "streetRowFt":  36,
+                      "alleyRowFt":  16,
+                      "blockLotDepthFt":  122,
+                      "sideLotDepthFt":  80,
+                      "bandDepthFt":  175,
+                      "fourSideBlockChance":  0.85,
+                      "lotDepthJitterFt":  6,
+                      "sizePresets":  {
+                                          "crossroads":  {
+                                                             "Columns":  2,
+                                                             "EWStreets":  2,
+                                                             "LotsMin":  2,
+                                                             "LotsMax":  3,
+                                                             "CommercialPads":  3,
+                                                             "CivicAnchors":  1,
+                                                             "DeadEnds":  1,
+                                                             "Tier":  0,
+                                                             "Label":  "CROSSROADS"
+                                                         },
+                                          "hamlet":  {
+                                                         "Columns":  4,
+                                                         "EWStreets":  3,
+                                                         "LotsMin":  3,
+                                                         "LotsMax":  4,
+                                                         "CommercialPads":  6,
+                                                         "CivicAnchors":  2,
+                                                         "DeadEnds":  1,
+                                                         "Tier":  1,
+                                                         "Label":  "HAMLET"
+                                                     },
+                                          "village":  {
+                                                          "Columns":  7,
+                                                          "EWStreets":  5,
+                                                          "LotsMin":  3,
+                                                          "LotsMax":  5,
+                                                          "CommercialPads":  10,
+                                                          "CivicAnchors":  4,
+                                                          "DeadEnds":  1,
+                                                          "Tier":  2,
+                                                          "Label":  "VILLAGE"
+                                                      },
+                                          "town":  {
+                                                       "Columns":  10,
+                                                       "EWStreets":  6,
+                                                       "LotsMin":  3,
+                                                       "LotsMax":  5,
+                                                       "CommercialPads":  14,
+                                                       "CivicAnchors":  5,
+                                                       "DeadEnds":  2,
+                                                       "Tier":  3,
+                                                       "Label":  "TOWN"
+                                                   },
+                                          "boyden":  {
+                                                         "Columns":  7,
+                                                         "EWStreets":  5,
+                                                         "LotsMin":  3,
+                                                         "LotsMax":  5,
+                                                         "CommercialPads":  10,
+                                                         "CivicAnchors":  4,
+                                                         "DeadEnds":  1,
+                                                         "Tier":  2,
+                                                         "Label":  "VILLAGE"
+                                                     },
+                                          "hull":  {
+                                                       "Columns":  10,
+                                                       "EWStreets":  6,
+                                                       "LotsMin":  3,
+                                                       "LotsMax":  5,
+                                                       "CommercialPads":  14,
+                                                       "CivicAnchors":  5,
+                                                       "DeadEnds":  2,
+                                                       "Tier":  3,
+                                                       "Label":  "TOWN"
+                                                   }
+                                      },
+                      "extraCourtChance":  0.5,
+                      "extraPlatEdgeChance":  0.45,
+                      "extraOutlyingRoadChance":  0.45,
+                      "extraBypassedHighwayChance":  0.35,
+                      "extraIndustrialSideStreetChance":  0.4,
+                      "extraTownSquareChance":  0.35,
+                      "extraBoulevardChance":  0.16,
+                      "extraNoneChance":  0.35,
+                      "extraOneChance":  0.6,
+                      "maxExtrasPerTown":  2,
+                      "rowAlleyChance":  0.55,
+                      "placeNames":  [
+                                         "MAPLE CROSSING",
+                                         "ELM CREEK",
+                                         "WALNUT GROVE",
+                                         "CEDAR RIDGE",
+                                         "PRAIRIE ROSE",
+                                         "STONE BRIDGE",
+                                         "NORTH BEND",
+                                         "SILVER LAKE",
+                                         "OAKDALE",
+                                         "FAIRVIEW",
+                                         "CLOVER HILL",
+                                         "GRANDVIEW",
+                                         "HICKORY GROVE",
+                                         "PLEASANT VALLEY",
+                                         "RIVERSIDE",
+                                         "BRISTOL",
+                                         "LINN GROVE",
+                                         "COLD SPRING",
+                                         "UNION CENTER",
+                                         "HARTFORD",
+                                         "BETHANY",
+                                         "MORNINGSIDE",
+                                         "SUNNYSIDE",
+                                         "GREENFIELD",
+                                         "BROOKVILLE",
+                                         "PINEHURST",
+                                         "RIDGEWAY",
+                                         "LAKEVIEW",
+                                         "MILLBROOK",
+                                         "WESTFIELD",
+                                         "GLENDALE",
+                                         "HOMESTEAD",
+                                         "PRAIRIE VIEW",
+                                         "SPRINGDALE",
+                                         "ASH GROVE",
+                                         "BENTON",
+                                         "CARLTON",
+                                         "DOVER",
+                                         "EASTON",
+                                         "FRANKLIN"
+                                     ],
+                      "ewStreetNamePool":  [
+                                               "IOWA",
+                                               "MICHIGAN",
+                                               "MINNESOTA",
+                                               "DAKOTA",
+                                               "CALUMET",
+                                               "OHIO",
+                                               "NEBRASKA",
+                                               "KANSAS",
+                                               "ILLINOIS",
+                                               "WISCONSIN",
+                                               "ARKANSAS",
+                                               "NEBASKA"
+                                           ],
+                      "nsStreetNamePool":  [
+                                               "DIVISION",
+                                               "LINCOLN",
+                                               "WASHINGTON",
+                                               "HARRIS",
+                                               "WILLIAMS",
+                                               "CHESTNUT",
+                                               "BURROUGHS",
+                                               "ADA",
+                                               "PARK",
+                                               "ELEANOR",
+                                               "VINE",
+                                               "CHELSEA",
+                                               "STONE",
+                                               "HUGH",
+                                               "LOCUST",
+                                               "DELTA",
+                                               "JEFFERSON",
+                                               "MADISON",
+                                               "MONROE",
+                                               "WILSON",
+                                               "MAPLE",
+                                               "ELM",
+                                               "ASH",
+                                               "OAK",
+                                               "CEDAR",
+                                               "POPLAR",
+                                               "WALNUT",
+                                               "SPRUCE"
+                                           ],
+                      "lotFrontageFt":  [
+                                            55,
+                                            80
+                                        ],
+                      "blobHarmonic1Range":  [
+                                                 2,
+                                                 4
+                                             ],
+                      "blobHarmonic2Range":  [
+                                                 5,
+                                                 8
+                                             ],
+                      "blobAmplitude1Range":  [
+                                                  0.02,
+                                                  0.06
+                                              ],
+                      "blobAmplitude2Range":  [
+                                                  0.01,
+                                                  0.03
+                                              ],
+                      "blobPhaseRange":  [
+                                             0,
+                                             6.2831855
+                                         ],
+                      "blobRadiusMultiplier":  1.04,
+                      "freeStreetBlobPadding":  0.32,
+                      "vacantOuterChance":  0.14,
+                      "vacantMidChance":  0.05,
+                      "vacantCoreChance":  0.015,
+                      "vacantOuterRadius":  0.7,
+                      "vacantMidRadius":  0.5,
+                      "radialPlatVacantChance":  0.22,
+                      "commercialStartXRangeFt":  [
+                                                      40,
+                                                      260
+                                                  ],
+                      "commercialGapFt":  [
+                                              45,
+                                              140
+                                          ],
+                      "commercialMainGapMarginFt":  12,
+                      "commercialBandOccMarginFt":  5,
+                      "industrialBoxCountChance":  0.55,
+                      "crossStreetShopMax":  3,
+                      "crossStreetShopDepthRangeFt":  [
+                                                          24,
+                                                          100
+                                                      ],
+                      "crossStreetShopWidthRangeFt":  [
+                                                          24,
+                                                          100
+                                                      ],
+                      "elevatorWidthFt":  48,
+                      "elevatorDepthFt":  88,
+                      "elevatorRightChance":  0.62,
+                      "elevatorOffsetFromMainFt":  [
+                                                       45,
+                                                       150
+                                                   ],
+                      "binCountRange":  [
+                                            4,
+                                            6
+                                        ],
+                      "binDiameterFt":  22,
+                      "binSpacingFt":  30,
+                      "binRowBehindElevatorFt":  10,
+                      "railIndustrialRowSpacingFt":  [
+                                                         56,
+                                                         84
+                                                     ],
+                      "railIndustrialDepthRangeFt":  [
+                                                         24,
+                                                         52
+                                                     ],
+                      "railIndustrialZJitterFt":  16,
+                      "southBandDepthFt":  [
+                                               150,
+                                               210
+                                           ],
+                      "southHouseCountRange":  [
+                                                   1,
+                                                   3
+                                               ],
+                      "southHouseWidthFt":  [
+                                                150,
+                                                220
+                                            ],
+                      "southHouseSpacingFt":  [
+                                                  24,
+                                                  60
+                                              ],
+                      "southIndustrialChance":  0.6,
+                      "churchCountTier0":  [
+                                               0,
+                                               1
+                                           ],
+                      "churchCountTier1":  [
+                                               1,
+                                               2
+                                           ],
+                      "churchCountTier2Plus":  [
+                                                   1,
+                                                   2
+                                               ],
+                      "schoolChanceTier0":  0.3,
+                      "schoolChanceTier1":  0.6,
+                      "schoolChanceTier2Plus":  0.95,
+                      "parkChanceTier0":  0.35,
+                      "parkChanceTier1":  0.6,
+                      "parkChanceTier2Plus":  0.85,
+                      "lotSetbackFt":  [
+                                           8,
+                                           17
+                                       ],
+                      "garageModeIntegralChance":  0.55,
+                      "garageModeDetachedChance":  0.35,
+                      "garageModeNoneChance":  0.1,
+                      "houseFrontageNarrowThresholdFt":  46,
+                      "housePlacementJitterFt":  2,
+                      "houseFitPadFt":  8,
+                      "houseSetbackMinFt":  4,
+                      "shedChance":  0.12,
+                      "shedWidthFt":  [
+                                          8,
+                                          11
+                                      ],
+                      "shedDepthFt":  [
+                                          10,
+                                          13
+                                      ],
+                      "shedSideMarginFt":  4,
+                      "shedBackMarginFt":  5,
+                      "detachedGarageViaAlleyChance":  0.6,
+                      "detachedGarageWidthFt":  22,
+                      "detachedGarageDepthFt":  26,
+                      "detachedGarageXJitterFt":  6,
+                      "detachedGarageFromAlleyFt":  9,
+                      "farmhouseDetachedGarageWidthFt":  20,
+                      "farmhouseDetachedGarageDepthFt":  22,
+                      "farmhouseDetachedGarageSideMarginFt":  3,
+                      "farmhouseDetachedGarageZRangeFt":  [
+                                                              22,
+                                                              100
+                                                          ],
+                      "drivewayWidthFt":  17,
+                      "drivewaySurface":  "Concrete",
+                      "drivewayStartOffsetFt":  31,
+                      "alleyDrivewayWidthFt":  10,
+                      "alleyDrivewaySurface":  "Gravel",
+                      "walkWidthFt":  4,
+                      "walkSurface":  "Concrete",
+                      "walkSidewalkInsetFt":  2.25,
+                      "railCorridorStreetChance":  0.3,
+                      "curvedStreetChance":  0.3,
+                      "railCorridorEraseHalfFt":  20,
+                      "curvedStreetEraseHalfFt":  20,
+                      "platLotFrontageFt":  [
+                                                58,
+                                                92
+                                            ],
+                      "platVacantChance":  0.1,
+                      "platSetbackFt":  [
+                                            9,
+                                            16
+                                        ],
+                      "platHouseJitterFt":  2,
+                      "platGarageIntegralChance":  0.55,
+                      "platGarageDetachedChance":  0.35,
+                      "platGarageNoneChance":  0.1,
+                      "platDetachedGarageWidthFt":  22,
+                      "platDetachedGarageDepthFt":  26,
+                      "platDetachedGarageXJitterFt":  6,
+                      "platDetachedGarageFromAlleyFt":  9,
+                      "courtXRangeFt":  [
+                                            120,
+                                            1000
+                                        ],
+                      "courtLenFt":  [
+                                         240,
+                                         340
+                                     ],
+                      "courtHouseCountRange":  [
+                                                   2,
+                                                   3
+                                               ],
+                      "courtHouseFrontageFt":  [
+                                                   54,
+                                                   72
+                                               ],
+                      "courtHouseSetbackFt":  [
+                                                  9,
+                                                  15
+                                              ],
+                      "courtHouseJitterFt":  2,
+                      "platEdgeXRangeFt":  [
+                                               150,
+                                               1000
+                                           ],
+                      "platEdgeLenFt":  [
+                                            260,
+                                            420
+                                        ],
+                      "platEdgeLotFrontageFt":  [
+                                                    52,
+                                                    82
+                                                ],
+                      "outlyingRoadZOffsetFt":  [
+                                                    200,
+                                                    300
+                                                ],
+                      "outlyingRoadHouseCountRange":  [
+                                                          3,
+                                                          5
+                                                      ],
+                      "outlyingRoadHouseFrontageFt":  [
+                                                          58,
+                                                          88
+                                                      ],
+                      "outlyingRoadHouseDepthFt":  [
+                                                       44,
+                                                       58
+                                                   ],
+                      "outlyingRoadHouseSpacingFt":  [
+                                                         300,
+                                                         430
+                                                     ],
+                      "bypassedHighwayXRangeFt":  [
+                                                      90,
+                                                      1000
+                                                  ],
+                      "bypassedHighwayShopCountRange":  [
+                                                            3,
+                                                            5
+                                                        ],
+                      "bypassedHighwayShopFrontageFt":  [
+                                                            58,
+                                                            88
+                                                        ],
+                      "boulevardMedianWidthFt":  16,
+                      "perimeterGapNFt":  [
+                                              30,
+                                              70
+                                          ],
+                      "perimeterJogHeightFt":  [
+                                                   24,
+                                                   130
+                                               ],
+                      "deadEndStubXJitterFt":  40,
+                      "deadEndStubLenFt":  [
+                                               210,
+                                               300
+                                           ],
+                      "deadEndBulbRadiusFt":  44,
+                      "residentialDensity":  1,
+                      "commercialDensity":  1,
+                      "industrialDensity":  1,
+                      "civicDensity":  1,
+                      "landmarkDensity":  1
+                  },
+    "World":  {
+                  "mileFt":  5280,
+                  "sectionFeet":  5280,
+                  "cellFeet":  15840,
+                  "minSpanFt":  150,
+                  "contourIntervalFt":  20,
+                  "contourLatticeCellFt":  1320,
+                  "elevationWavelength1Ft":  11000,
+                  "elevationWavelength2Ft":  5200,
+                  "elevationWavelength3Ft":  26000,
+                  "elevationWavelength4Ft":  1600,
+                  "elevationWavelength5Ft":  1900,
+                  "elevationAmplitude1Ft":  20,
+                  "elevationAmplitude2Ft":  12,
+                  "elevationAmplitude3Ft":  26,
+                  "elevationAmplitude4Ft":  4,
+                  "elevationAmplitude5Ft":  5,
+                  "trunkRiverSpacingMi":  28,
+                  "tributarySpacingMi":  8,
+                  "trunkRiverBaseJitterMi":  12,
+                  "trunkRiverWidthBaseFt":  58,
+                  "trunkRiverWidthAmp1Ft":  20,
+                  "trunkRiverWidthWave1Ft":  17000,
+                  "trunkRiverWidthAmp2Ft":  10,
+                  "trunkRiverWidthWave2Ft":  6000,
+                  "trunkRiverMeanderAmp1Ft":  1500,
+                  "trunkRiverMeanderWave1Ft":  9500,
+                  "trunkRiverMeanderAmp2Ft":  700,
+                  "trunkRiverMeanderWave2Ft":  3300,
+                  "trunkRiverMeanderAmp3Ft":  260,
+                  "trunkRiverMeanderWave3Ft":  1250,
+                  "tributaryLengthBaseMi":  2,
+                  "tributaryLengthJitterMi":  2.4,
+                  "tributaryHeadJitterMi":  2.4,
+                  "tributaryGapFromTrunkMi":  2.6,
+                  "tributaryGapJitterMi":  5.4,
+                  "tributaryBowAmpFt":  800,
+                  "tributaryWidthFt":  16,
+                  "riverBankTreeChance":  0.46,
+                  "riverBankTreeOffsetFt":  [
+                                                14,
+                                                104
+                                            ],
+                  "tributaryBankTreeChance":  0.34,
+                  "tributaryBankTreeOffsetFt":  [
+                                                    12,
+                                                    72
+                                                ],
+                  "riverVetoDistanceFt":  1200,
+                  "railSpacingMi":  75,
+                  "railPhaseSections":  3,
+                  "railOffsetBaseFt":  40,
+                  "railOffsetJitterFt":  170,
+                  "railSwellAmpBaseFt":  60,
+                  "railSwellAmpJitterFt":  150,
+                  "railSwellWavelengthBaseFt":  9000,
+                  "railSwellWavelengthJitterFt":  12000,
+                  "railSpurMaxDistanceMi":  5.6,
+                  "railSpurOffsetBaseFt":  100,
+                  "railSpurOffsetJitterFt":  180,
+                  "railSpurSideChance":  0.5,
+                  "pavedSpacingMi":  10,
+                  "townSlotFeet":  52800,
+                  "minTownSpacingFeet":  52800,
+                  "highwayWidthFt":  66,
+                  "roadHalfPavedFt":  33,
+                  "roadHalfGravelFt":  20,
+                  "roadLineAbsentChance":  0.018,
+                  "roadLinePavedChance":  0.022,
+                  "farmMarginFt":  300,
+                  "townRailProximityMi":  9,
+                  "townLayoutNorthChance":  0.46,
+                  "townLayoutSouthChance":  0.24,
+                  "townLayoutBothChance":  0.3,
+                  "townClassCrossroadsChance":  0.315,
+                  "townClassHamletChance":  0.185,
+                  "townClassVillageChance":  0.09,
+                  "townClassTownChance":  0.045,
+                  "townSlotJitterFraction":  0.035,
+                  "townDensity":  1,
+                  "farmsPerSectionMax":  3,
+                  "farmSectionJitterFt":  [
+                                              -380,
+                                              380
+                                          ],
+                  "farmAlongJitterFt":  [
+                                            0,
+                                            1000
+                                        ],
+                  "farmDensity":  1,
+                  "fieldEntrancePerQuarterChance":  1,
+                  "fieldEntranceMaxPerQuarter":  2,
+                  "fieldEntranceWidthFt":  26,
+                  "fieldEntranceLengthFt":  [
+                                                95,
+                                                170
+                                            ],
+                  "fieldEntranceSetbackFromIntersectionFt":  110,
+                  "fieldEntranceSurface":  "Dirt",
+                  "highwayNames":  [
+                                       "HWY 12",
+                                       "HWY 7",
+                                       "HWY 31",
+                                       "HWY 46",
+                                       "HWY 22",
+                                       "HWY 38",
+                                       "HWY 5",
+                                       "HWY 17"
+                                   ]
+              },
+    "Countryside":  {
+                        "cellFeet":  15840,
+                        "sectionRoadWidthFt":  66,
+                        "highwayWidthFt":  66,
+                        "sectionMidFt":  7920,
+                        "townXJitterFt":  [
+                                              -220,
+                                              220
+                                          ],
+                        "townZJitterFt":  [
+                                              -220,
+                                              220
+                                          ],
+                        "farmsteadCountRange":  [
+                                                    6,
+                                                    12
+                                                ],
+                        "farmsteadXRangeFt":  [
+                                                  600,
+                                                  15240
+                                              ],
+                        "farmsteadZRangeFt":  [
+                                                  600,
+                                                  15240
+                                              ],
+                        "farmsteadHouseRingCount":  10,
+                        "farmsteadHouseRingRadiusFt":  [
+                                                           55,
+                                                           95
+                                                       ],
+                        "farmsteadHouseRingAngleJitter":  0.2,
+                        "farmsteadGroveCountRange":  [
+                                                         6,
+                                                         12
+                                                     ],
+                        "farmsteadGroveRadiusFt":  [
+                                                       35,
+                                                       95
+                                                   ],
+                        "farmsteadGroveAngleJitter":  0.3,
+                        "fieldPalette":  [
+                                             "#ded9bd",
+                                             "#d6d0b4",
+                                             "#cbc4a2",
+                                             "#e4e0cb",
+                                             "#d2cbb0",
+                                             "#dcd6b8",
+                                             "#d8d2b6"
+                                         ],
+                        "farmsteadDensity":  1,
+                        "fieldFeatureDensity":  1
+                    },
+    "Render":  {
+                   "houseWallScreenPx":  0.95,
+                   "houseGapScreenPxExtra":  0.6,
+                   "houseThinScreenPxFactor":  0.55,
+                   "mapTargetWidthPx":  920,
+                   "mapMaxHeightPx":  900,
+                   "mapMarginPx":  30,
+                   "mapTitleHeightPx":  66,
+                   "mapFooterHeightPx":  26,
+                   "lodSimpleTreeRadiusPx":  3.2,
+                   "lodDetailTreeRadiusPxFactor":  2.2,
+                   "lodRailTieMinScale":  0.015,
+                   "colorBackground":  "#f0efe0",
+                   "colorFloor":  "#e7dfd0",
+                   "colorWall":  "#3a332b",
+                   "colorGap":  "#faf7ef",
+                   "colorWindow":  "#3a332b",
+                   "colorDoor":  "#3a332b",
+                   "colorDoorSwing":  "#8a7f70",
+                   "colorDash":  "#8a7f70",
+                   "colorText":  "#3a332b",
+                   "colorSmallText":  "#6b6154",
+                   "colorRoadAsphalt":  "#8f8b83",
+                   "colorRoadGravel":  "#c8c3b5",
+                   "colorRoadEdgeGravel":  "#a9a495",
+                   "colorCenterline":  "#e8d44d",
+                   "colorAlley":  "#c9c3b2",
+                   "colorDrivewayConcrete":  "#dcd9d2",
+                   "colorDrivewayGravel":  "#d6c9a3",
+                   "colorDrivewayDirt":  "#bda882",
+                   "colorWalk":  "#e3e0d8",
+                   "colorWater":  "#7f989b",
+                   "colorWaterEdge":  "#a8bfc0",
+                   "colorRailBallast":  "#b7ae9c",
+                   "colorRailRail":  "#4a453d",
+                   "colorRailTie":  "#57503d",
+                   "colorTree":  "#3f3b34",
+                   "colorContourIndex":  "#b3aa90",
+                   "colorContourMinor":  "#c8c0a7",
+                   "colorMedian":  "#8a9a6b",
+                   "colorMedianEdge":  "#5f6b4c",
+                   "viewerMaxZoom":  300,
+                   "viewerNiceSpanLadderFt":  [
+                                                  150,
+                                                  300,
+                                                  600,
+                                                  1200,
+                                                  2400,
+                                                  4800,
+                                                  9600,
+                                                  19200,
+                                                  38400,
+                                                  76800,
+                                                  153600
+                                              ],
+                   "viewerDebounceMs":  120,
+                   "viewerCacheSize":  24
+               },
+    "SchemaVersion":  1
+}

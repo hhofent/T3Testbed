@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,10 +17,14 @@ public static class MapGenerator
 {
     // ---------- shared helpers ----------
 
-    static string WeightedArchetype(Rng rng, bool town)
+    static string WeightedArchetype(Rng rng, bool town, RuralConfig? ruralCfg = null, TownBlockConfig? townCfg = null)
     {
         float r = rng.NextFloat();
-        if (town) return r < 0.50f ? "ranch" : r < 0.80f ? "split-level" : "farmhouse";
+        if (town)
+        {
+            // Town uses default weights for now; could be made configurable
+            return r < 0.50f ? "ranch" : r < 0.80f ? "split-level" : "farmhouse";
+        }
         return r < 0.45f ? "ranch" : r < 0.80f ? "split-level" : "farmhouse";
     }
 
@@ -123,13 +128,14 @@ public static class MapGenerator
 
     // ---------- rural farmstead ----------
 
-    public static MapPlan RuralLot(uint seed)
+    public static MapPlan RuralLot(uint seed, RuralConfig? config = null)
     {
+        var cfg = config ?? new RuralConfig();
         var rng = new Rng(seed);
         // Farmstead parcel only — the few-acre cluster, not the surrounding fields.
         // Fields are separate parcels in the world, not part of this lot.
-        float lotW = rng.Range(215, 285);
-        float lotD = rng.Range(300, 420);
+        float lotW = cfg.LotWidth.Sample(rng);
+        float lotD = cfg.LotDepth.Sample(rng);
         float acres = lotW * lotD / 43560f;
 
         var map = new MapPlan
@@ -310,7 +316,7 @@ public static class MapGenerator
             float gZ = lotD - gD - 14f;
             var barn = new Outbuilding
             {
-                Kind = OutbuildingKind.GambrelBarnExisting,
+                Kind = OutbuildingKind.GambrelBarn,
                 Center = new Vec2(Math.Clamp(gX, 8, lotW - gW - 8) + gW / 2f, gZ),
                 WidthFeet = gW,
                 DepthFeet = gD,
@@ -452,14 +458,15 @@ public static class MapGenerator
             new[] { house }, pad: 5f);
     }
 
-    public static MapPlan TownBlock(uint seed)
+    public static MapPlan TownBlock(uint seed, TownBlockConfig? config = null)
     {
+        var cfg = config ?? new TownBlockConfig();
         var rng = new Rng(seed);
-        string street = rng.Pick(new[] { "OAK", "MAPLE", "CEDAR", "ELM", "WASHINGTON", "MAIN", "COLLEGE", "SECOND" })
-            + (rng.Chance(0.7f) ? " STREET" : " AVENUE");
-        int lotCount = 4;
-        float lotDepth = rng.Range(120, 140);
-        bool alley = rng.Chance(0.35f);
+        string street = rng.Pick(cfg.StreetNamePool)
+            + (rng.Chance(cfg.StreetSuffixStreetChance) ? " STREET" : " AVENUE");
+        int lotCount = cfg.LotCountPerSide;
+        float lotDepth = cfg.LotDepth.Sample(rng);
+        bool alley = rng.Chance(cfg.AlleyChance.Sample(rng));
 
         var frontages = new List<float>();
         float blockW = 0f;

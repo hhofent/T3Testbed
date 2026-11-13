@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -337,7 +338,7 @@ public static class SvgMapRenderer
                 OutbuildingKind.MachineShed => "#b9b09e",
                 OutbuildingKind.PoleBarn => "#c4bcab",
                 OutbuildingKind.DetachedGarage => "#b9b09e",
-                OutbuildingKind.GambrelBarnExisting => "#a89f8f",
+                OutbuildingKind.GambrelBarn => "#a89f8f",
                 OutbuildingKind.Storefront => "#b8b0a0",
                 OutbuildingKind.GrainElevator => "#8f887a",
                 OutbuildingKind.Church => "#d9d4c6",

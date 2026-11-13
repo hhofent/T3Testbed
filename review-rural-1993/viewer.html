@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>SpawnGuide viewer — 1990s rural Iowa</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #221f1a; color: #e8e2d4; font-family: Georgia, serif; overflow: hidden; }
+  #bar { display: flex; gap: 8px; align-items: center; padding: 7px 10px; background: #2a2721; border-bottom: 1px solid #3a352c; height: 38px; box-sizing: content-box; }
+  #bar select, #bar button { background: #221f1a; color: #e8e2d4; border: 1px solid #57503f; border-radius: 6px; padding: 6px 10px; font-family: Georgia, serif; font-size: 13px; }
+  #bar button { cursor: pointer; min-width: 38px; }
+  #bar button:hover { background: #33302a; }
+  #bar .spacer { flex: 1; }
+  #stage { position: absolute; inset: 52px 0 0 0; overflow: hidden; touch-action: none; cursor: grab; background: #1c1a16; }
+  #stage:active { cursor: grabbing; }
+  .layer { position: absolute; left: 0; top: 0; transform-origin: 0 0; user-select: none; -webkit-user-drag: none; }
+  #hud { position: absolute; right: 10px; bottom: 10px; background: rgba(34,31,26,.85); padding: 6px 10px; border-radius: 6px; font-size: 11px; color: #a89f8d; pointer-events: none; letter-spacing: .2px; max-width: calc(100% - 40px); }
+  #fname { color: #a89f8d; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <select id="mapSel" aria-label="map"></select>
+  <input id="seedInput" type="number" min="0" placeholder="seed…" aria-label="seed" style="width:86px;background:#221f1a;color:#e8e2d4;border:1px solid #57503f;border-radius:6px;padding:6px 8px;font-size:13px">
+  <button id="seedGo" title="load the entered seed">go</button>
+  <button id="random" title="random seed">🎲 random</button>
+  <button id="zoomOut" title="zoom out">−</button>
+  <button id="zoomIn" title="zoom in">+</button>
+  <button id="reset" title="fit to window">fit</button>
+  <div class="spacer"></div>
+  <span id="seedErr" style="color:#e0705f;font-size:12px;display:none"></span>
+  <span id="fname"></span>
+</div>
+<div id="stage">
+  <img id="far" class="layer" draggable="false" alt="map (far view)">
+  <img id="near" class="layer" draggable="false" alt="map (detail)" style="opacity:0">
+</div>
+<div id="hud"></div>
+<script>
+// Injected by the generator: [{ name, far, near, lodSwitch, world? }]
+const MAPS = [];
+const stage = document.getElementById('stage');
+const far = document.getElementById('far');
+const near = document.getElementById('near');
+const sel = document.getElementById('mapSel');
+const fname = document.getElementById('fname');
+const seedInput = document.getElementById('seedInput');
+const seedGo = document.getElementById('seedGo');
+const randomBtn = document.getElementById('random');
+const seedErr = document.getElementById('seedErr');
+const hud = document.getElementById('hud');
+const seedToIndex = new Map();
+const MILE = 5280;
+const MAX_ZOOM = 300;          // magnification against the opening view
+const SERVER = 'http://127.0.0.1:8735';
+let serverUp = false;
+fetch(SERVER + '/', { method: 'HEAD' }).then(
+  () => { serverUp = true; seedInput.placeholder = 'any seed… (live)'; },
+  () => {}
+);
+
+let cur = null;
+// The world image on screen: which seed, which window, how big, and how many screen
+// pixels a world foot covers at natural size.
+let worldView = null;          // { seed, cx, cz, span, ppf }
+let worldReady = false;        // the on-screen world image has decoded
+let worldBasePPF = 1;          // screen px per foot at the opening view
+let worldEpoch = 0;            // invalidates in-flight stream swaps on map change
+let streamTimer = 0;
+let streamInFlight = null;
+let streamLastKey = '';
+let streaming = false;
+let fitOnLoad = true;
+let s = 1, tx = 0, ty = 0, fitS = 1, natW = 1000, natH = 700;
+const pointers = new Map();
+let pinchPrev = null;
+
+function stageRect() { return stage.getBoundingClientRect(); }
+function isWorld() { return !!(cur && cur.world && worldView); }
+
+// How many screen pixels the whole image is drawn at, relative to its natural size.
+function apply() {
+  far.style.transform = `translate(${tx}px, ${ty}px) scale(${s})`;
+  near.style.transform = far.style.transform;
+  const hasNear = !!(cur && cur.near);
+  const detail = hasNear && s >= fitS * (cur ? cur.lodSwitch : 1.7);
+  if (hasNear) {
+    near.style.opacity = detail ? 1 : 0;
+    far.style.opacity = detail ? 0 : 1;
+  } else {
+    near.style.opacity = 0;
+    far.style.opacity = 1;
+  }
+  updateHud();
+}
+
+function updateHud() {
+  if (isWorld()) {
+    const c = screenToWorld(stage.clientWidth / 2, stage.clientHeight / 2);
+    if (c) {
+      const zoom = (onScreenPpft() / worldBasePPF).toFixed(1);
+      hud.textContent = `seed ${worldView.seed} · ${(c.x / MILE).toFixed(1)}, ${(c.z / MILE).toFixed(1)} mi · `
+        + `${(worldView.span / MILE).toFixed(2)} mi window · ${zoom}×`
+        + (streaming ? ' · streaming…' : ' · drag to roam');
+      return;
+    }
+  }
+  hud.textContent = 'wheel zoom · drag pan · pinch zoom · detail fades in when zoomed';
+}
+
+// --- world <-> screen -------------------------------------------------------
+// A bare world SVG is exactly its world rectangle: x from cx-span/2, z from
+// cz+span/2 (top of image, +Z up) to cz-span/2 (bottom).
+function onScreenPpft() {
+  if (!worldView || !natW) return worldBasePPF;
+  return s * natW / worldView.span;
+}
+function screenToWorld(px, py) {
+  if (!worldView) return null;
+  const kx = worldView.span / natW;
+  const kz = worldView.span / natH;
+  return {
+    x: worldView.cx - worldView.span / 2 + ((px - tx) / s) * kx,
+    z: worldView.cz + worldView.span / 2 - ((py - ty) / s) * kz,
+  };
+}
+
+function clampView() {
+  if (worldView) return; // the world is unbounded; a stream fetch re-centres it
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const margin = Math.min(w, h) * 0.25;
+  tx = Math.min(Math.max(tx, w - natW * s - margin), margin);
+  ty = Math.min(Math.max(ty, h - natH * s - margin), margin);
+}
+
+function fit() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  fitS = Math.min(w / natW, h / natH) * 0.97;
+  s = fitS;
+  tx = (w - natW * s) / 2;
+  ty = (h - natH * s) / 2;
+  apply();
+}
+
+// A smooth "round" window size, so the zoom reads as a continuous lens rather than
+// a set of rungs. Two significant figures keeps the server's cache warm while the
+// lens still moves in small steps.
+function niceSpan(w) {
+  if (!(w > 0)) return 150;
+  const e = Math.pow(10, Math.floor(Math.log10(w)));
+  const m = w / e;
+  let n;
+  if (m <= 1.2) n = 1.2; else if (m <= 1.6) n = 1.6; else if (m <= 2.4) n = 2.4;
+  else if (m <= 4) n = 4; else if (m <= 7) n = 7; else n = 10;
+  return Math.max(150, Math.round(n * e));
+}
+
+// The window is always drawn at screen resolution, so its pixels are screen pixels:
+// every line weight in the SVG is then exactly what it looks like on screen.
+function drawWidth() {
+  return Math.round(Math.min(2600, Math.max(800, Math.max(stage.clientWidth, stage.clientHeight) * 1.15)));
+}
+// World feet the window must cover to fill the stage.
+function coverFeet() {
+  return Math.max(stage.clientWidth, stage.clientHeight) * 1.15;
+}
+// The zoom limits, in screen pixels per world foot.
+function maxPpft() { return worldBasePPF * MAX_ZOOM; }
+function minPpft() { return coverFeet() / (30 * MILE); }
+
+function zoomAt(cx, cy, factor) {
+  if (isWorld()) {
+    // Zooming in the world means asking for a finer lens. The old image is scaled as
+    // a preview until the new one decodes, then the new one is drawn 1:1.
+    const now = onScreenPpft();
+    const target = Math.min(Math.max(now * factor, minPpft()), maxPpft());
+    const k = target / (now || 1);
+    tx = cx - (cx - tx) * k;
+    ty = cy - (cy - ty) * k;
+    s = s * k;
+    apply();
+    scheduleStream();
+    return;
+  }
+  const sMin = fitS * 0.5, sMax = fitS * 33.4;
+  const s2 = Math.min(Math.max(s * factor, sMin), sMax);
+  const k = s2 / s;
+  tx = cx - (cx - tx) * k;
+  ty = cy - (cy - ty) * k;
+  s = s2;
+  clampView();
+  apply();
+  scheduleStream();
+}
+
+// --- live world streaming ---------------------------------------------------
+function setStreaming(v) { streaming = v; updateHud(); }
+
+function scheduleStream() {
+  if (!worldView || !worldReady || !serverUp) return;
+  clearTimeout(streamTimer);
+  streamTimer = setTimeout(maybeStream, 110);
+}
+
+function maybeStream() {
+  if (!worldView || !worldReady || !serverUp || streamInFlight) return;
+  const vw = stage.clientWidth, vh = stage.clientHeight;
+  if (!vw || !vh) return;
+  const c = screenToWorld(vw / 2, vh / 2);
+  if (!c) return;
+
+  // The lens we want: enough ground to cover the stage at the current zoom.
+  const wantPpft = onScreenPpft();
+  const wanted = coverFeet() / wantPpft;
+  const span = niceSpan(wanted);
+
+  // Re-centre when the view has drifted toward the edge of the loaded window, or
+  // when the lens has changed enough to be worth a new render.
+  const drift = Math.max(Math.abs(c.x - worldView.cx), Math.abs(c.z - worldView.cz)) > worldView.span * 0.16;
+  const relens = Math.abs(span - worldView.span) / Math.max(span, 1) > 0.12;
+  if (!drift && !relens) return;
+
+  const key = Math.round(c.x / 60) + '|' + Math.round(c.z / 60) + '|' + span + '|' + Math.round(wantPpft * 1e4);
+  if (key === streamLastKey) return;
+  streamLastKey = key;
+  streamInFlight = key;
+  const epoch = worldEpoch;
+  const meta = { seed: worldView.seed, cx: c.x, cz: c.z, span, ppft: wantPpft };
+  const url = `${SERVER}/world?seed=${meta.seed}&cx=${meta.cx.toFixed(0)}&cz=${meta.cz.toFixed(0)}&span=${meta.span.toFixed(0)}&ppf=${meta.ppft.toFixed(6)}`;
+  const img = new Image();
+  img.onload = () => {
+    if (epoch !== worldEpoch || streamInFlight !== key) return;
+    streamInFlight = null;
+    commitWorld(img, meta);
+  };
+  img.onerror = () => {
+    if (streamInFlight === key) { streamInFlight = null; streamLastKey = ''; }
+    setStreaming(false);
+    showSeedError('world stream failed — is the server still up?');
+  };
+  img.src = url;
+  setStreaming(true);
+}
+
+function commitWorld(img, meta) {
+  const vw = stage.clientWidth, vh = stage.clientHeight;
+  const anchor = screenToWorld(vw / 2, vh / 2);   // old window/scales
+  worldView = { seed: meta.seed, cx: meta.cx, cz: meta.cz, span: meta.span, ppf: 0 };
+  natW = img.naturalWidth || 1400;
+  natH = img.naturalHeight || 1400;
+  worldView.ppf = natW / worldView.span;         // px per foot at natural size
+  worldReady = true;
+  fitS = Math.min(vw / natW, vh / natH) * 0.97;
+  // The server drew this window at exactly the resolution we asked for, so it is
+  // shown 1:1 — its pixels are screen pixels and the line weights are true.
+  s = 1;
+  const kx = worldView.span / natW;
+  const kz = worldView.span / natH;
+  tx = vw / 2 - ((anchor.x - (worldView.cx - worldView.span / 2)) / kx) * s;
+  ty = vh / 2 - (((worldView.cz + worldView.span / 2) - anchor.z) / kz) * s;
+  fitOnLoad = false;
+  near.src = '';
+  near.style.opacity = 0;
+  far.style.opacity = 1;
+  far.src = img.src;
+  setStreaming(false);
+  apply();
+  scheduleStream(); // keep the window centred on the view
+}
+
+// --- input ------------------------------------------------------------------
+stage.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = stageRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, Math.exp(-e.deltaY * 0.0016));
+}, { passive: false });
+
+stage.addEventListener('pointerdown', (e) => {
+  stage.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 2) {
+    const pts = [...pointers.values()];
+    pinchPrev = { d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), mx: (pts[0].x + pts[1].x) / 2, my: (pts[0].y + pts[1].y) / 2 };
+  }
+});
+stage.addEventListener('pointermove', (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  const r = stageRect();
+  if (pointers.size === 1) {
+    tx += e.clientX - prev.x;
+    ty += e.clientY - prev.y;
+    clampView();
+    apply();
+    scheduleStream();
+  } else if (pointers.size === 2) {
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pts = [...pointers.values()];
+    const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+    const mx = (pts[0].x + pts[1].x) / 2 - r.left, my = (pts[0].y + pts[1].y) / 2 - r.top;
+    if (pinchPrev && pinchPrev.d > 0) {
+      // pan by midpoint delta, zoom by finger-distance ratio around the midpoint
+      tx += mx - pinchPrev.mx;
+      ty += my - pinchPrev.my;
+      zoomAt(mx, my, d / pinchPrev.d);
+    }
+    pinchPrev = { d, mx, my };
+    clampView();
+    apply();
+    scheduleStream();
+    return;
+  }
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+});
+const clearPointer = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinchPrev = null; };
+stage.addEventListener('pointerup', clearPointer);
+stage.addEventListener('pointercancel', clearPointer);
+
+document.getElementById('zoomIn').onclick = () => zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, 1.5);
+document.getElementById('zoomOut').onclick = () => zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, 1 / 1.5);
+document.getElementById('reset').onclick = fit;
+window.addEventListener('resize', () => {
+  fitS = Math.min(stage.clientWidth / natW, stage.clientHeight / natH) * 0.97;
+  clampView();
+  apply();
+  scheduleStream();
+});
+
+// --- maps / seeds -----------------------------------------------------------
+MAPS.forEach((m, i) => {
+  const o = document.createElement('option');
+  o.value = i;
+  o.textContent = m.name;
+  sel.appendChild(o);
+  if (typeof m.seed === 'number' && !seedToIndex.has(m.seed)) seedToIndex.set(m.seed, i);
+});
+
+function showSeedError(text) {
+  seedErr.textContent = text;
+  seedErr.style.display = 'inline';
+  setTimeout(() => { seedErr.style.display = 'none'; }, 2600);
+}
+
+function loadWorldSeed(seed) {
+  fetch(SERVER + '/world-center?seed=' + seed).then(
+    (r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
+  ).then((meta) => {
+    const span = meta.span || 47520;
+    loadMap({
+      name: 'Infinite world — seed ' + seed,
+      far: `${SERVER}/world?seed=${seed}&cx=${meta.cx}&cz=${meta.cz}&span=${span}&w=${drawWidth()}`,
+      lodSwitch: 2.0,
+      file: 'world seed ' + seed + ' (live)',
+      seed,
+      world: { seed, cx: meta.cx, cz: meta.cz, span },
+    });
+  }).catch(() => showSeedError('could not open world seed ' + seed + ' — start the SpawnGuide server'));
+}
+
+function jumpToSeed(seed) {
+  if (serverUp) {
+    if (isWorld()) { loadWorldSeed(seed); return; }
+    loadMap({ name: 'seed ' + seed, far: SERVER + '/gen?seed=' + seed + '&size=hamlet', lodSwitch: 1.55, file: 'seed ' + seed + ' (live)', seed });
+    return;
+  }
+  const idx = seedToIndex.get(seed);
+  if (idx === undefined) { showSeedError('seed ' + seed + ' not baked — start the SpawnGuide server for live seeds'); return; }
+  sel.value = idx;
+  loadMap(MAPS[idx]);
+}
+seedGo.onclick = () => {
+  const v = Math.floor(Number(seedInput.value));
+  if (!Number.isFinite(v) || seedInput.value.trim() === '') { showSeedError('enter a number'); return; }
+  jumpToSeed(v >>> 0);
+};
+seedInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') seedGo.click(); });
+randomBtn.onclick = () => {
+  if (serverUp) {
+    const seed = (Math.random() * 0xffffffff) >>> 0;
+    seedInput.value = seed;
+    jumpToSeed(seed);
+    return;
+  }
+  if (MAPS.length < 2) return;
+  let idx;
+  do { idx = Math.floor(Math.random() * MAPS.length); } while (idx === sel.selectedIndex);
+  sel.value = idx;
+  loadMap(MAPS[idx]);
+};
+
+sel.onchange = () => loadMap(MAPS[+sel.value]);
+function loadMap(m) {
+  cur = m;
+  worldView = m.world ? { ...m.world, ppf: 0 } : null;
+  worldReady = false;
+  worldEpoch++;
+  streamInFlight = null;
+  streamLastKey = '';
+  clearTimeout(streamTimer);
+  streaming = false;
+  fname.textContent = m.file || m.far;
+  fitOnLoad = true;
+  near.onload = () => apply();
+  if (m.near) near.src = m.near; else near.src = '';
+  far.src = m.far;
+  updateHud();
+}
+far.onload = () => {
+  natW = far.naturalWidth || natW;
+  natH = far.naturalHeight || natH;
+  if (cur && cur.world) {
+    worldReady = true;
+    if (worldView) worldView.ppf = natW / worldView.span;
+  }
+  if (fitOnLoad) {
+    fitOnLoad = false;
+    fit();
+    // The opening view sets the zoom yardstick: 300x means 300 times this.
+    if (cur && cur.world) worldBasePPF = onScreenPpft();
+  } else apply();
+};
+if (MAPS.length) loadMap(MAPS[0]);
+</script>
+</body>
+</html>

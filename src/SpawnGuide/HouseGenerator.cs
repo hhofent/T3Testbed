@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,36 +17,37 @@ public static class HouseGenerator
     /// <param name="garageMode">"integral" (default) | "detached" | "none" — integral bakes the
     /// attached wing into the plan; detached/none produce a garage-free rectangle (the map layer
     /// then places a pole-built detached garage, or none at all). Farmhouse has no integral mode.</param>
-    public static HousePlan Generate(string archetype, uint seed, string garageMode = "integral") => archetype switch
+    public static HousePlan Generate(string archetype, uint seed, string garageMode = "integral", HouseConfig? config = null) => archetype switch
     {
-        "ranch" => Ranch(seed, garageMode),
-        "farmhouse" => Farmhouse(seed),
-        "split-level" => SplitLevel(seed, garageMode),
+        "ranch" => Ranch(seed, garageMode, config),
+        "farmhouse" => Farmhouse(seed, config),
+        "split-level" => SplitLevel(seed, garageMode, config),
         _ => throw new ArgumentException($"Unknown archetype '{archetype}'. Expected one of: {string.Join(", ", Archetypes)}"),
     };
 
-    static readonly string[] Siding1990s =
+    static readonly string[] DefaultSiding1990s =
     {
         "Ivory vinyl", "Sage vinyl", "Desert Tan vinyl", "Light Blue vinyl",
         "Beige vinyl", "Brick front + Ivory vinyl sides", "White vinyl",
     };
 
-    static HousePlan Ranch(uint seed, string garageMode)
+    static HousePlan Ranch(uint seed, string garageMode, HouseConfig? config)
     {
+        var cfg = config ?? new HouseConfig();
         var rng = new Rng(seed);
-        float w = rng.Range(36, 48);
-        float d = rng.Range(24, 32);
-        float gw = rng.Range(12, 19);
-        float gd = rng.Range(17, 24);
-        bool garageLeft = rng.Chance(0.5f);
+        float w = rng.Range(cfg.RanchWidth.Min, cfg.RanchWidth.Max);
+        float d = rng.Range(cfg.RanchDepth.Min, cfg.RanchDepth.Max);
+        float gw = rng.Range(cfg.RanchGarageWidth.Min, cfg.RanchGarageWidth.Max);
+        float gd = rng.Range(cfg.RanchGarageDepth.Min, cfg.RanchGarageDepth.Max);
+        bool garageLeft = rng.Chance(cfg.RanchGarageLeftChance);
 
         var plan = BasePlan("ranch", seed, storeys: 1,
             roof: "3.5/12 gable, 3-tab asphalt shingle",
-            siding: rng.Pick(Siding1990s));
+            siding: rng.Pick<string>((cfg.SidingOptions.Length > 0 ? cfg.SidingOptions.Select(e => e.ToString()).ToArray() : DefaultSiding1990s).ToList()));
 
         if (garageMode == "integral")
         {
-            BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng);
+            BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng, cfg);
             AnnotateGarage(plan, w, d, gw, gd, garageLeft);
         }
         else
@@ -53,31 +55,32 @@ public static class HouseGenerator
             // Garage-free rectangle; the map layer places a detached garage or none.
             AddQuad(plan, new Vec2(0, 0), new Vec2(w, 0), new Vec2(w, d), new Vec2(0, d),
                 EdgeTag.MainFront, EdgeTag.Right, EdgeTag.Back, EdgeTag.Left);
-            PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false);
-            PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)));
-            PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
-            PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+            PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false, cfg);
+            PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)), cfg);
+            PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)), cfg);
+            PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)), cfg);
         }
         return Normalize(plan);
     }
 
-    static HousePlan Farmhouse(uint seed)
+    static HousePlan Farmhouse(uint seed, HouseConfig? config)
     {
+        var cfg = config ?? new HouseConfig();
         var rng = new Rng(seed);
-        float w = rng.Range(28, 36);
-        float d = rng.Range(30, 38);
+        float w = rng.Range(cfg.FarmhouseWidth.Min, cfg.FarmhouseWidth.Max);
+        float d = rng.Range(cfg.FarmhouseDepth.Min, cfg.FarmhouseDepth.Max);
 
         var plan = BasePlan("farmhouse", seed, storeys: 2,
             roof: "6/12 gable, 3-tab asphalt, white 1×4 trim",
-            siding: rng.Pick(Siding1990s));
+            siding: rng.Pick<string>((cfg.SidingOptions.Length > 0 ? cfg.SidingOptions.Select(e => e.ToString()).ToArray() : DefaultSiding1990s).ToList()));
 
         // Simple rectangle, four tagged edges.
         AddQuad(plan, new Vec2(0, 0), new Vec2(w, 0), new Vec2(w, d), new Vec2(0, d),
             EdgeTag.MainFront, EdgeTag.Right, EdgeTag.Back, EdgeTag.Left);
 
         // Full-width-ish front porch, dashed — no wall, just a covered slab.
-        float porchW = w * rng.Range(0.55f, 0.75f);
-        float porchD = rng.Range(6, 8);
+        float porchW = w * rng.Range(cfg.FarmhousePorchWidthFraction.Min, cfg.FarmhousePorchWidthFraction.Max);
+        float porchD = rng.Range(cfg.FarmhousePorchDepth.Min, cfg.FarmhousePorchDepth.Max);
         plan.Annotations.Add(new PlanAnnotation
         {
             Position = new Vec2((w - porchW) / 2f + porchW / 2f, -porchD / 2f),
@@ -85,41 +88,42 @@ public static class HouseGenerator
             DashedHalfExtents = new Vec2(porchW / 2f, porchD / 2f),
         });
 
-        PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: true);
-        PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)));
-        PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
-        PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+        PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: true, cfg);
+        PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)), cfg);
+        PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)), cfg);
+        PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)), cfg);
         return Normalize(plan);
     }
 
-    static HousePlan SplitLevel(uint seed, string garageMode)
+    static HousePlan SplitLevel(uint seed, string garageMode, HouseConfig? config)
     {
+        var cfg = config ?? new HouseConfig();
         var rng = new Rng(seed);
-        float w = rng.Range(28, 36);
-        float d = rng.Range(28, 36);
-        float gw = rng.Range(12, 18);
-        float gd = rng.Range(16, 22);
-        bool garageLeft = rng.Chance(0.5f);
+        float w = rng.Range(cfg.SplitLevelWidth.Min, cfg.SplitLevelWidth.Max);
+        float d = rng.Range(cfg.SplitLevelDepth.Min, cfg.SplitLevelDepth.Max);
+        float gw = rng.Range(cfg.SplitLevelGarageWidth.Min, cfg.SplitLevelGarageWidth.Max);
+        float gd = rng.Range(cfg.SplitLevelGarageDepth.Min, cfg.SplitLevelGarageDepth.Max);
+        bool garageLeft = rng.Chance(cfg.SplitLevelGarageLeftChance);
 
         var plan = BasePlan("split-level", seed, storeys: 2,
             roof: "4/12 offset gable, 3-tab asphalt shingle — split entry",
-            siding: rng.Pick(Siding1990s));
+            siding: rng.Pick<string>((cfg.SidingOptions.Length > 0 ? cfg.SidingOptions.Select(e => e.ToString()).ToArray() : DefaultSiding1990s).ToList()));
 
         if (garageMode == "integral")
         {
             // Same L footprint as the ranch, but the garage door faces the side
             // (classic split-level with side-entry garage).
-            BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng, garageDoorOnSide: true);
+            BuildLFootprint(plan, w, d, gw, gd, garageLeft, rng, cfg, garageDoorOnSide: true);
             AnnotateGarage(plan, w, d, gw, gd, garageLeft);
         }
         else
         {
             AddQuad(plan, new Vec2(0, 0), new Vec2(w, 0), new Vec2(w, d), new Vec2(0, d),
                 EdgeTag.MainFront, EdgeTag.Right, EdgeTag.Back, EdgeTag.Left);
-            PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false);
-            PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)));
-            PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
-            PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)));
+            PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false, cfg);
+            PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 13f)), cfg);
+            PlaceWindowsOn(plan, EdgeTag.Left, rng, Math.Max(1, (int)MathF.Round(d / 13f)), cfg);
+            PlaceWindowsOn(plan, EdgeTag.Right, rng, Math.Max(1, (int)MathF.Round(d / 13f)), cfg);
         }
         return Normalize(plan);
     }
@@ -135,7 +139,7 @@ public static class HouseGenerator
         };
 
     static void BuildLFootprint(HousePlan plan, float w, float d, float gw, float gd,
-        bool garageLeft, Rng rng, bool garageDoorOnSide = false)
+        bool garageLeft, Rng rng, HouseConfig cfg, bool garageDoorOnSide = false)
     {
         // Tagged outline from the front-left corner, garage on the right unless
         // mirrored. Front is at z = 0. AddEdge also accumulates the Footprint polygon.
@@ -160,7 +164,7 @@ public static class HouseGenerator
             AddEdge(plan, new Vec2(w, d), new Vec2(w, 0), EdgeTag.Right);
         }
 
-        PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false);
+        PlaceFrontOpenings(plan, EdgeTag.MainFront, rng, doorCentered: false, cfg);
 
         var garageFront = FindWall(plan, EdgeTag.GarageFront);
         var garageSide = FindWall(plan, EdgeTag.GarageSide);
@@ -175,7 +179,9 @@ public static class HouseGenerator
         }
         else
         {
-            float doorWidth = garageFront!.LengthFeet >= 17f && rng.Chance(0.35f) ? 16f : 9f;
+            float doorWidth = garageFront!.LengthFeet >= 17f
+                ? cfg.GarageDoorWidthFt.Sample(rng)
+                : cfg.GarageDoorWidthFt.Min; // Use bimodal distribution
             garageFront!.Openings.Add(new WallOpening
             {
                 OffsetFeet = garageFront.LengthFeet / 2f,
@@ -190,10 +196,10 @@ public static class HouseGenerator
         {
             var wall = FindWall(plan, tag);
             if (wall is null) continue;
-            int count = wall.LengthFeet >= 22 ? 2 : wall.LengthFeet >= 9 ? 1 : 0;
-            if (count > 0) PlaceWindowsOn(plan, tag, rng, count);
+            int count = wall.LengthFeet >= cfg.TwoWindowMinWall ? 2 : wall.LengthFeet >= cfg.OneWindowMinWall ? 1 : 0;
+            if (count > 0) PlaceWindowsOn(plan, tag, rng, count, cfg);
         }
-        PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 14f)));
+        PlaceWindowsOn(plan, EdgeTag.Back, rng, Math.Max(2, (int)MathF.Round(w / 14f)), cfg);
     }
 
     static void AddEdge(HousePlan plan, Vec2 a, Vec2 b, EdgeTag tag)
@@ -221,13 +227,13 @@ public static class HouseGenerator
     static WallSegment? FindWall(HousePlan plan, EdgeTag tag) =>
         plan.Walls.FirstOrDefault(w => w.Tag == tag);
 
-    static void PlaceFrontOpenings(HousePlan plan, EdgeTag tag, Rng rng, bool doorCentered)
+    static void PlaceFrontOpenings(HousePlan plan, EdgeTag tag, Rng rng, bool doorCentered, HouseConfig cfg)
     {
         var wall = FindWall(plan, tag);
         if (wall is null) return;
         float len = wall.LengthFeet;
 
-        float doorOffset = doorCentered ? len / 2f : len * rng.Range(0.18f, 0.32f);
+        float doorOffset = doorCentered ? len / 2f : len * rng.Range(cfg.DoorOffsetFraction.Min, cfg.DoorOffsetFraction.Max);
         wall.Openings.Add(new WallOpening { OffsetFeet = doorOffset, WidthFeet = 3f, Kind = OpeningKind.Door });
 
         // Windows in the stretch of wall away from the door.
@@ -238,7 +244,7 @@ public static class HouseGenerator
         for (int i = 0; i < count; i++)
         {
             float t = count == 1 ? 0.5f : (i + 0.5f) / count;
-            float jitter = rng.Range(-0.06f, 0.06f) * freeLen;
+            float jitter = rng.Range(-cfg.FrontWindowJitterFraction.Max, cfg.FrontWindowJitterFraction.Max) * freeLen;
             wall.Openings.Add(new WallOpening
             {
                 OffsetFeet = freeStart + t * freeLen + jitter,
@@ -248,7 +254,7 @@ public static class HouseGenerator
         }
     }
 
-    static void PlaceWindowsOn(HousePlan plan, EdgeTag tag, Rng rng, int count)
+    static void PlaceWindowsOn(HousePlan plan, EdgeTag tag, Rng rng, int count, HouseConfig cfg)
     {
         var wall = FindWall(plan, tag);
         if (wall is null) return;
@@ -259,7 +265,7 @@ public static class HouseGenerator
         for (int i = 0; i < count; i++)
         {
             float t = count == 1 ? 0.5f : (i + 0.5f) / count;
-            float jitter = rng.Range(-0.05f, 0.05f) * usable;
+            float jitter = rng.Range(-cfg.SideWindowJitterFraction.Max, cfg.SideWindowJitterFraction.Max) * usable;
             float offset = 3f + t * usable + jitter;
             offset = Math.Clamp(offset, 2.5f, len - 2.5f);
             wall.Openings.Add(new WallOpening { OffsetFeet = offset, WidthFeet = 3f, Kind = OpeningKind.Window });

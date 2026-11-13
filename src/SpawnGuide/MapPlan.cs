@@ -11,16 +11,6 @@ public readonly struct MapRect
     public MapRect(float x, float z, float w, float h) { X = x; Z = z; W = w; H = h; }
 }
 
-public enum OutbuildingKind
-{
-    MachineShed, PoleBarn, GrainBin, GambrelBarnExisting, DetachedGarage, PropaneTank,
-    Storefront, GrainElevator, Church, School, CityPark,
-    // The landmarks a small Iowa town always has. Research:
-    // docs/research/2026-11-11-iowa-town-composition.md
-    WaterTower, Depot, Cemetery, BallField, Library, PostOffice, FireStation,
-    Fairgrounds, GolfCourse, Airstrip,
-}
-
 public sealed class Outbuilding
 {
     public OutbuildingKind Kind { get; set; }
