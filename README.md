@@ -177,7 +177,9 @@ Requires the .NET SDK (built with 5.0; no external packages).
    the Lyon County signature) and trailer-court archetype (curved street, 40×70
    pads at town fringe) — both visible in the reference images, not built yet.
 4. Infinite world follow-ups: bridge decks where roads cross rivers, cross-window town
-   cache, a real place-name list, optional diagonal rail-corridor street. The land
-   pipeline (hills → rivers → rail → roads → towns → farms) is built in `WorldMap.cs`.
+   cache, a real place-name list. The land pipeline (hills → rivers → rail → roads →
+   towns → farms) is built in `WorldMap.cs`, and the town envs include the diagonal
+   rail-corridor street (`OLD RAIL`) and the curved crescent (`CRESCENT`), with houses
+   turned to face them.
 5. Unity port: same plan dataclasses → spawns already-fastened wall prefabs.
    Keep this console app as the rule reference.

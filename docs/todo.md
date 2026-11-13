@@ -91,11 +91,18 @@ from a shuffled pool (35% of towns get none):
 | PlatEdge | a street that runs out of town and stops at the edge of the plat |
 | TownSquare | the park goes on the most central face, so the middle streets frame the green |
 
-**Still to do:** the **diagonal rail-corridor street** and a **curved street**. Both
-need the town's surroundings threaded further into `SmallTownGenerator`; the branch
-spur (item 5) is the piece that came first.
+**Done 2026-11-13:** the **diagonal rail-corridor street** (`OLD RAIL`) and the
+**curved street** (`CRESCENT`). Laid after the grid and the plat pass; whatever grid
+content ends up under the travelled way comes down, the street goes in as a polyline
+(`RoadPath`), and houses front it on both sides, turned to face it (`HousePlan.Rotate`).
+The crescent arcs over the NW corner from the top E–W street onto the perimeter street;
+the diagonal runs SW→NE across the whole town (seed 1993: ~30% of towns draw each).
+They are decided at the end of the generator from the town's stream, so a town without
+either is byte-identical to before they existed. The world stamps `RoadPaths` into
+windows and counts their ends in the dangling-ends check.
 
-**Files:** `SmallTown.cs` (street network + the final lot pass), `WorldMap.cs`
+**Files:** `TownStreets.cs` (geometry), `SmallTown.cs` (the free-street pass),
+`WorldMap.cs` (`StampTown`, `CountDanglingRoads`).
 (`RoadClip` — the loop bounds must grow to enclose the new streets, or county roads
 will run through them).
 
@@ -131,11 +138,13 @@ miles away** — so a town could have an elevator with no railroad beside it.
   elevator stands. Seventeen of the thirty-seven towns in the check window have one.
 - The industrial boxes come from the catalogue.
 
-**Still to do:** a **rail-side industrial strip** (small manufacturing: cabinet shop,
-metal fabrication, feed mill) along the spur inside the town. Industrial building form
-(NRHP Iowa Malleable Iron): 1-story metal building on a concrete foundation, e.g.
-90'×240'; concrete-block ancillary with 14–16 ft walls and an overhead door. Creamery is
-a ghost-town element by the 1990s — rare.
+**Done 2026-11-13:** a **rail-side industrial strip** — small works (cabinet shop,
+metal fabrication, feed mill) along the spur inside the town, long side along the
+track, between the cross streets, tier-gated by the town's industrial catalogue. The
+grain elevator stands at the spur's end, the depot beside the track with the far end
+of the line to itself, and the town streets yield to the railroad's ground. The rail
+lattice is phased three sections off the paved corridors, and the world draws the
+spur where the town put it. Creamery remains a ghost-town element — rare by the 1990s.
 
 ## 6. Civic and institutional landmarks — **DONE 2026-11-12**
 
@@ -154,12 +163,10 @@ own ground at the edge of town; the rest take a lot face.
 ## 7. Street variety — **MOSTLY DONE**
 
 Done: the outlying road, the bypassed old highway, the industrial side-street, the
-cul-de-sac court, the plat-edge street, the town square, and a **boulevard street with
-a planted median** (about one town in six).
-
-**Still to do:** a genuinely *diagonal* rail-corridor street and a curved street. Both
-need the town's surroundings threaded further into `SmallTownGenerator`; the branch
-spur (item 5) is the piece that came first.
+cul-de-sac court, the plat-edge street, the town square, a **boulevard street with
+a planted median** (about one town in six), and — 2026-11-13 — the **diagonal
+rail-corridor street** (`OLD RAIL`, whole town diagonal) and the **curved street**
+(`CRESCENT`, arc over the NW corner), with houses rotated to face them.
 
 ## 8. Sidewalk realism
 

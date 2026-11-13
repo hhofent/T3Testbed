@@ -62,8 +62,12 @@ ports later.
 - **Rail and road crossings (user, 2026-11-12): a rail crosses roads square.** The rail
   sits on the section grid, offset 40–210 ft to one side of its own road, with a
   one-sided swell — so it can never cross the road it parallels, and every crossing it
-  makes is with a perpendicular road. A town near the rail gets a **branch spur** that
-  leaves the rail at a right angle, and the grain elevator stands at the end of it.
+  makes is with a perpendicular road. The lattice is phased three sections off the paved
+  corridors so it never runs parallel to one for its whole length. A town near the rail
+  gets a **branch spur** that leaves the rail at a right angle, and the grain elevator
+  stands at the end of it. The town owns its track — it says where the spur runs and
+  the world draws it there, past the small works (cabinet shop, metal fabrication,
+  feed mill) that line the line inside the town.
 - **Town streets must not have nothing on their outside (user, 2026-11-12):** the plat
   pass reaches past the town's outermost street, so the edges are built out too.
 - **Town field is a queryable lattice, not a sequential Poisson pass:** one candidate per
@@ -113,10 +117,12 @@ ports later.
   village/town, generic names, north/south/straddling the road (46/24/30%). Per-section
   farmsteads stamp/rotate the existing `RuralLot` leaf (0–3 per section), fields are
   four quarter fills. `ExactBounds` + bare SVG maps pixels 1:1 to the world rectangle.
-  `--verify --seed 1993` passes all **10** checks (byte determinism, 100-mi
+  `--verify --seed 1993` passes all **13** checks (byte determinism, 100-mi
   reproducibility, overlapping-window equality, cell-vs-window equality, town spacing,
-  rail proximity, zero building overlaps, rivers, every town on a paved road, zero
-  dangling street ends). `--map world` writes a 9-mi window, a 3-mi cell and the viewer;
+  rail proximity, zero building overlaps, rivers, rail-crosses-roads-square, rail towns
+  get a spur and an elevator, the spur runs clear of the houses, every town on a paved
+  road, zero dangling street ends). `--map world` writes a 9-mi window, a 3-mi cell and
+  the viewer;
   seed 1993 = 1 town, 65 farms, 219 houses, 683 outbuildings, 3 creek runs.
 - `out/viewer.html` (~2 MB for `--map world`; ~10 MB with all maps baked): pan/zoom
   viewer, wheel+drag+pinch, far↔detail LOD crossfade for old fixed maps. In world mode
@@ -194,11 +200,16 @@ ports later.
    cemetery, depot, golf course, fairgrounds, airstrip), a final "plat and build" pass
    over every street, sidewalks and drives that actually reach the houses, one
    driveway per farm lot, and dirt field entrances on the section lines. The rail was
-   redesigned: it sits on the section grid, offset from its own road, swelling to one
-   side, so it never crosses the road it parallels and every crossing is square; a
-   town near the rail gets a **branch spur** and the grain elevator stands at the end
-   of it. **Still to do:** a diagonal rail-corridor street, a curved street, and a
-   rail-side industrial strip.
+   redesigned: it sits on the section grid, phased off the corridors, offset from its
+   own road, swelling to one side, so it never crosses the road it parallels and every
+   crossing is square; a town near the rail gets a **branch spur** and the grain
+   elevator stands at the end of it. **Done 2026-11-13:** the rail-side industrial
+   strip (works along the spur; depot beside the track with the far end of the line to
+   itself; street names yield to the railroad's ground; the world draws the spur where
+   the town put it), and the two streets off the grid — **OLD RAIL**, a diagonal
+   rail-corridor street, and **CRESCENT**, a curved street arcing over the NW corner —
+   with houses turned to face them. Both are decided at the end of the generator, so a
+   town without either is byte-identical to before they existed.
 4. World follow-ups: bridge/culvert decks where roads cross rivers; cache materialized
    towns across windows; a real place-name list (the 40 generic names repeat).
    Cattle-yard archetype still unconfirmed.

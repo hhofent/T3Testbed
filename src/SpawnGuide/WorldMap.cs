@@ -1131,6 +1131,16 @@ public static class WorldMap
                 MathF.Abs(f.W - r.W) < 0.5f && MathF.Abs(f.H - r.H) < 0.5f))
                 map.RoadMayEndFree.Add(placed);
         }
+        // Streets that do not run on the grid (the old rail-corridor street, the
+        // curved crescent) travel with the town: the same points, shifted and
+        // mirrored like every other element. They never cross the highway band.
+        foreach (var p in town.RoadPaths)
+        {
+            var path = new RoadPath { WidthFeet = p.WidthFeet, Paved = p.Paved };
+            foreach (var q in p.Points)
+                path.Points.Add(new Vec2(q.X + ox, WZ(q.Z)));
+            if (path.Points.Count >= 2) map.RoadPaths.Add(path);
+        }
         foreach (var r in town.Alleys)
         {
             if (!Keep(r.Z)) continue;
@@ -1196,6 +1206,8 @@ public static class WorldMap
                 DepthFeet = o.DepthFeet,
                 DiameterFeet = o.DiameterFeet,
                 Label = o.Label,
+                // A mirror across the highway band turns a building the other way.
+                RotateDeg = mir ? -o.RotateDeg : o.RotateDeg,
             });
         }
         foreach (var t in town.Trees)
@@ -1725,6 +1737,9 @@ public static class WorldMap
         });
 
         var census = Generate(worldSeed, 0f, 0f, 12f * Mile, 12f * Mile);
+        if (Environment.GetEnvironmentVariable("SPAWNGUIDE_PROBE") == "1")
+            foreach (var t in census.Towns)
+                Console.Error.WriteLine($"PROBE census town {t.Name} cx={t.CenterX:0} hwZ={t.HighwayZ:0} minX={t.MinX:0} maxX={t.MaxX:0} minZ={t.MinZ:0} maxZ={t.MaxZ:0} layout={t.Layout} houses={t.Houses}");
         int overlaps = CountBuildingOverlaps(census.Map, out string overlapInfo);
         checks.Add(new Check
         {
@@ -1858,6 +1873,15 @@ public static class WorldMap
             }
             foreach (var b in part.Plan.Bulbs)
                 bulbs.Add(new Vec2(ox + b.Center.X, WZ(b.Center.Z)));
+            // A free street's two ends count like any other street's ends. Its
+            // endpoints sit on the grid streets it joins.
+            foreach (var p in part.Plan.RoadPaths)
+                foreach (var tip in new[] { p.Points[0], p.Points[p.Points.Count - 1] })
+                {
+                    float tz = WZ(tip.Z);
+                    segs.Add((ox + tip.X, tz, ox + tip.X, tz));
+                    through.Add(false);
+                }
         }
 
         int dangling = 0;
@@ -1999,6 +2023,7 @@ public static class WorldMap
             rects.Add((o.Center.X - hw, o.Center.Z - hd, o.Center.X + hw, o.Center.Z + hd, "out:" + o.Kind));
         }
         int overlaps = 0;
+        var pairs = new List<string>();
         for (int i = 0; i < rects.Count; i++)
             for (int j = i + 1; j < rects.Count; j++)
             {
@@ -2006,10 +2031,11 @@ public static class WorldMap
                 if (a.x0 < b.x1 - 1f && a.x1 > b.x0 + 1f && a.z0 < b.z1 - 1f && a.z1 > b.z0 + 1f)
                 {
                     overlaps++;
-                    if (info == "")
-                        info = $" (first: {a.what} @ {a.x0:0},{a.z0:0} vs {b.what} @ {b.x0:0},{b.z0:0})";
+                    if (pairs.Count < 4)
+                        pairs.Add($"{a.what} @ {a.x0:0},{a.z0:0} vs {b.what} @ {b.x0:0},{b.z0:0}");
                 }
             }
+        if (pairs.Count > 0) info = $" (first: {string.Join(" | ", pairs)})";
         return overlaps;
     }
 }

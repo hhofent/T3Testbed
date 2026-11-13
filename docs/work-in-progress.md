@@ -121,8 +121,8 @@ Each stage is independently committable and keeps `--verify` green.
       street's edge) instead of 4.5 ft past the lot line, which had left a measured
       6.75-ft gap between the walk and the sidewalk. The side lots were already
       right and were left alone.
-- [ ] **Stage 6 — docs.** Update `docs/todo.md` (tick what is done), `STATE.md`,
-      `README.md`, and this file.
+- [x] **Stage 6 — docs.** Update `docs/todo.md` (tick what is done), `STATE.md`,
+      `README.md`, and this file. *Done 2026-11-13.*
 - [x] **Stage 7 — the rail-corridor street.** The research is clear that Iowa's
       industrial follows the railroad: a grain elevator is a co-op on a rail siding,
       and every reference town has the elevator at the rail/main junction. The world
@@ -134,11 +134,33 @@ Each stage is independently committable and keeps `--verify` green.
       rail gets a **branch spur** that leaves the rail at a right angle, and the
       grain elevator moves to the end of it. 17 of the 37 towns in the check
       window have one.
-- [ ] **Stage 8 — a diagonal rail-corridor street and a curved street.** Still to
-      do. Both need the town's surroundings threaded further into
-      `SmallTownGenerator`. The spur (stage 7) is the piece that came first.
-- [ ] **Stage 9 — a rail-side industrial strip.** Small manufacturing (cabinet
-      shop, metal fabrication, feed mill) along the spur inside the town.
+- [x] **Stage 8 — a diagonal rail-corridor street and a curved street.**
+      *Done 2026-11-13.* Two streets off the grid, drawn from the town's stream at the
+      very end of the generator (so a town without either is byte-identical to before):
+      **OLD RAIL** — a straight diagonal from the west boundary street at the first
+      E–W street to the east boundary street at the top one, SW→NE; **CRESCENT** — a
+      quadratic-bezier arc from the top E–W street at the west boundary onto the
+      perimeter street mid-town, sweeping the NW corner. Both go in as `RoadPath`
+      polylines with their own name label (`OLD RAIL` and `CRESCENT`, drawn rotated
+      along the street); whatever grid lots and houses end
+      up under the travelled way come down first (the "erase" pass, `PathHitsRect` with
+      a 20-ft margin), and houses are then placed along both sides, rotated to face the
+      street (`HousePlan.Rotate` about the front midpoint), with walks and drives
+      kerb→door. Lots may reach a little past the grid's ragged silhouette — the
+      street extends the town — so they judge against a looser `FreeStreetFit` (+0.32).
+      The free-street houses also honour the railroad's reserved strip and the other
+      free street's corridor. The world stamps `RoadPaths` into windows and counts
+      their ends in the dangling-ends check. New renderer paths: `RoadPath.Polyline`
+      streets, rotated outbuildings and rotated porch slabs; houses were already
+      generalised via `HousePlan.Rotate` + `FrontMidpoint`.
+- [x] **Stage 9 — a rail-side industrial strip.** *Done 2026-11-13.* Small
+      manufacturing (cabinet shop, metal fabrication, feed mill) along the spur inside
+      the town — long side along the track, tier-gated on the industrial catalogue,
+      the depot with the far end of the line to itself, all honouring the railroad's
+      reserved strip. The rail lattice is phased three sections off the paved corridors
+      (no more parallel-to-corridor rails), and the world draws the spur where the town
+      actually put it (`MapPlan.RailTrackLocalX`), with a new verify check: **the
+      branch spur runs clear of the houses**.
 
 ## Landmarks — DONE 2026-11-12
 

@@ -59,12 +59,11 @@ public static class StreetGeom
     }
 
     /// <summary>
-    /// True when an axis-aligned rectangle comes within the reserved width of the
-    /// street's centre line — that is, the street would run through it.
+    /// True when an axis-aligned rectangle comes within <paramref name="pad"/> feet of
+    /// the street's centre line — that is, the street would run through it.
     /// </summary>
-    public static bool PathHitsRect(FreeStreet fs, float x0, float z0, float x1, float z1)
+    public static bool PathHitsRect(FreeStreet fs, float x0, float z0, float x1, float z1, float pad)
     {
-        float pad = fs.HalfWidth;
         // The street's own vertices, if they fall inside the rectangle.
         foreach (var p in fs.Path.Points)
             if (p.X >= x0 - pad && p.X <= x1 + pad && p.Z >= z0 - pad && p.Z <= z1 + pad)
@@ -76,6 +75,22 @@ public static class StreetGeom
         };
         foreach (var c in corners)
             if (PathDist(fs.Path.Points, c.X, c.Z) < pad) return true;
+        // Segments that pass clean through the rectangle cross its four edges.
+        var pts = fs.Path.Points;
+        float rx0 = x0 - pad, rx1 = x1 + pad, rz0 = z0 - pad, rz1 = z1 + pad;
+        var rectCorners = new[] { new Vec2(rx0, rz0), new Vec2(rx1, rz0), new Vec2(rx1, rz1), new Vec2(rx0, rz1) };
+        for (int i = 0; i + 1 < pts.Count; i++)
+            for (int c = 0; c < 4; c++)
+                if (SegsCross(pts[i], pts[i + 1], rectCorners[c], rectCorners[(c + 1) % 4])) return true;
+        return false;
+    }
+
+    /// <summary>True when the two segments cross (proper intersection or touch).</summary>
+    static bool SegsCross(Vec2 a, Vec2 b, Vec2 c, Vec2 d)
+    {
+        float Cross(Vec2 o, Vec2 p, Vec2 q) => (p.X - o.X) * (q.Z - o.Z) - (p.Z - o.Z) * (q.X - o.X);
+        float d1 = Cross(c, d, a), d2 = Cross(c, d, b), d3 = Cross(a, b, c), d4 = Cross(a, b, d);
+        if (((d1 > 0f) != (d2 > 0f)) && ((d3 > 0f) != (d4 > 0f))) return true;
         return false;
     }
 

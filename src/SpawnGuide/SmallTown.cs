@@ -148,6 +148,8 @@ public static class SmallTownGenerator
         }
         int extraCount = rng.Chance(0.35f) ? 0 : (rng.Chance(0.60f) ? 1 : 2);
         var extras = extraPool.Take(extraCount).ToList();
+        if (Environment.GetEnvironmentVariable("SPAWNGUIDE_PROBE") == "1")
+            Console.Error.WriteLine($"PROBE extras size={sizeName} pool={extraPool.Count} count={extraCount} picked={string.Join(",", extras)}");
         bool hasCourt = extras.Contains(TownExtra.Court);
         bool hasPlatEdge = extras.Contains(TownExtra.PlatEdge);
         bool hasOutlyingRoad = extras.Contains(TownExtra.OutlyingRoad);
@@ -155,6 +157,11 @@ public static class SmallTownGenerator
         bool hasSideStreet = extras.Contains(TownExtra.IndustrialSideStreet);
         bool hasTownSquare = extras.Contains(TownExtra.TownSquare);
         bool hasBoulevard = extras.Contains(TownExtra.Boulevard);
+        // The two streets that do not run on the grid are decided at the end of
+        // the generator (they need the final geometry), so they draw from the
+        // stream after everything else — keeping the rest of the town untouched.
+        // The old rail line through town, or the curving residential street.
+        // (research: Hull; George's Boiler Ave)
         // The outlying road and the bypassed highway are the same kind of thing — a
         // street beyond the town edge — but they are dressed differently.
         bool hasOuterRoad = hasOutlyingRoad || hasBypassedHighway;
@@ -253,6 +260,19 @@ public static class SmallTownGenerator
             float ang = MathF.Atan2(nz, nx);
             float r = MathF.Sqrt(nx * nx + nz * nz);
             float boundary = 1.0f + ha1 * MathF.Cos(hb1 * ang + hp1) + ha2 * MathF.Cos(hb2 * ang + hp2);
+            return r <= boundary;
+        }
+
+        // A street that does not run on the grid extends the town along its own arc,
+        // so houses on it are judged against a looser silhouette: they may stand a
+        // little past the grid's ragged edge, as the crescent extends the town.
+        bool FreeStreetFit(float x, float z)
+        {
+            if (!blobReady) return true;
+            float nx = (x - blobCX) / blobRX, nz = (z - blobCZ) / blobRZ;
+            float ang = MathF.Atan2(nz, nx);
+            float r = MathF.Sqrt(nx * nx + nz * nz);
+            float boundary = 1.0f + ha1 * MathF.Cos(hb1 * ang + hp1) + ha2 * MathF.Cos(hb2 * ang + hp2) + 0.32f;
             return r <= boundary;
         }
 
@@ -1723,6 +1743,138 @@ public static class SmallTownGenerator
         // every street and plats a row of lots along any side that is completely
         // empty, then builds most of them, leaving a few plats empty on purpose.
         PlatStreetFrontage();
+
+        // --- a street that does not run on the grid --------------------------------
+        // Iowa towns have one: the old rail line came through diagonally before the
+        // section-grid rail was laid (George ran Boiler Ave along it), and Hull put a
+        // curved residential street on its east side. It is laid after the grid and
+        // the plat pass, and whatever ends up under it comes down — the street never
+        // inherits a town that was built out first.
+        // Drawn here, after everything else on the stream, so a town without either
+        // street generates byte-identically to a town from before they existed.
+        bool hasRailCorridor = rng.Chance(0.30f);
+        bool hasCurvedStreet = rng.Chance(0.30f);
+        if (hasRailCorridor || hasCurvedStreet)
+        {
+            var freeStreets = new List<FreeStreet>();
+            if (hasRailCorridor)
+            {
+                // Diagonal across the whole town, from the west boundary street at the
+                // first E–W street to the east boundary street at the top one. Both
+                // ends land on streets, the way a real rail-corridor street does.
+                var path = new RoadPath { WidthFeet = 34f, Paved = true };
+                path.Points.Add(new Vec2(nsX[0] + StreetRow / 2f, ewZ[0] + StreetRow / 2f));
+                path.Points.Add(new Vec2(nsX[nsX.Count - 1] + StreetRow / 2f, ewZ[lastKeptEW] + StreetRow / 2f));
+                freeStreets.Add(new FreeStreet { Path = path, StreetHalf = 17f, Name = "OLD RAIL" });
+            }
+            if (hasCurvedStreet)
+            {
+                // A crescent across the north-west corner: leaves the west boundary
+                // street, arcs over the top blocks of the grid and lands on the
+                // perimeter street — a curved residential street, not a rounded
+                // chord. The control point is the corner of the two streets it joins,
+                // so the arc hugs the corner and sweeps wide. It runs long enough to
+                // carry a row of frontage on both sides.
+                float westMid = nsX[0] + StreetRow / 2f;
+                float aZ = ewZ[lastKeptEW] + StreetRow / 2f;   // leaves the top E–W street at the west boundary
+                float bX = MathF.Min(MathF.Max(totalWidth * 0.62f, westMid + 500f), nsX[nsX.Count - 1] + StreetRow / 2f);
+                float bZ = PerimZ(bX) + StreetRow / 2f;
+                float cZ = PerimZ(westMid) + StreetRow / 2f;
+                var path = new RoadPath { WidthFeet = 34f, Paved = true };
+                const int steps = 24;
+                for (int i = 0; i <= steps; i++)
+                {
+                    float t = i / (float)steps, u = 1f - t;
+                    path.Points.Add(new Vec2(
+                        u * u * westMid + 2f * u * t * westMid + t * t * bX,
+                        u * u * aZ + 2f * u * t * cZ + t * t * bZ));
+                }
+                freeStreets.Add(new FreeStreet { Path = path, StreetHalf = 17f, Name = "CRESCENT" });
+            }
+
+            // Whatever the grid already put down on the street's path comes down.
+            const float eraseHalf = 20f;   // travelled way + a margin
+            var erased = new List<(float x0, float z0, float x1, float z1)>();
+            bool Hit(FreeStreet fs, float x0, float z0, float x1, float z1) =>
+                StreetGeom.PathHitsRect(fs, x0, z0, x1, z1, eraseHalf);
+            map.Houses.RemoveAll(h =>
+            {
+                if (!freeStreets.Any(fs => Hit(fs, h.Plan.Footprint.Min(p => p.X), h.Plan.Footprint.Min(p => p.Z), h.Plan.Footprint.Max(p => p.X), h.Plan.Footprint.Max(p => p.Z)))) return false;
+                erased.Add(FootprintBounds(h.Plan));
+                return true;
+            });
+            map.Outbuildings.RemoveAll(o =>
+            {
+                var b = OccupiedBounds(o);
+                if (!freeStreets.Any(fs => Hit(fs, b.x0, b.z0, b.x1, b.z1))) return false;
+                erased.Add(b);
+                return true;
+            });
+            occupied.RemoveAll(o => erased.Contains(o));
+            map.Walks.RemoveAll(w => freeStreets.Any(fs => w.Points.Any(p => StreetGeom.PathDist(fs.Path.Points, p.X, p.Z) < eraseHalf)));
+            map.Driveways.RemoveAll(d => freeStreets.Any(fs => d.Points.Any(p => StreetGeom.PathDist(fs.Path.Points, p.X, p.Z) < eraseHalf)));
+            map.LotLines.RemoveAll(r => freeStreets.Any(fs => Hit(fs, r.X, r.Z, r.X + r.W, r.Z + r.H)));
+            map.Alleys.RemoveAll(r => freeStreets.Any(fs => Hit(fs, r.X, r.Z, r.X + r.W, r.Z + r.H)));
+            map.Trees.RemoveAll(t => freeStreets.Any(fs => StreetGeom.PathDist(fs.Path.Points, t.X, t.Z) < eraseHalf));
+            map.Bulbs.RemoveAll(b => freeStreets.Any(fs => StreetGeom.PathDist(fs.Path.Points, b.Center.X, b.Center.Z) < eraseHalf));
+
+            // Then the street goes in, with houses fronting it on both sides,
+            // turned to face it. Every slot is its own decision.
+            foreach (var fs in freeStreets)
+            {
+                var pts = fs.Path.Points;
+                float len = StreetGeom.PathLength(pts);
+                float d = 46f;
+                int placed = 0, rejBlob = 0, rejOcc = 0, rejRail = 0, rejOther = 0, skipped = 0;
+                while (d < len - 46f)
+                {
+                    float frontage = rng.Range(54f, 72f);
+                    var (pt, tan) = StreetGeom.AlongPath(pts, d);
+                    for (int side = 1; side >= -1; side -= 2)
+                    {
+                        float nx = -tan.Z * side, nz = tan.X * side;   // out of the pavement, into the lot
+                        if (rng.Chance(0.10f)) { skipped++; continue; } // a few platted-but-empty
+                        uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u;
+                        string arch = Weighted(rng);
+                        var house = HouseGenerator.Generate(arch, hSeed);
+                        // Turn the house to face the street: the front wall is the
+                        // MainFront edge, and its midpoint is the pivot.
+                        float theta = MathF.Atan2(tan.Z * side, tan.X * side) * 180f / MathF.PI;
+                        var front0 = house.FrontMidpoint();
+                        house = house.Rotate(theta, front0);
+                        float setback = rng.Range(9f, 15f);
+                        float fx = pt.X + nx * (fs.StreetHalf + setback), fz = pt.Z + nz * (fs.StreetHalf + setback);
+                        var fm = house.FrontMidpoint();
+                        house = house.OffsetCopy(fx - fm.X, fz - fm.Z);
+                        if (!FreeStreetFit(house.Footprint.Select(p => p.X).Average(), house.Footprint.Select(p => p.Z).Average())) { rejBlob++; continue; }
+                        var hb = FootprintBounds(house);
+                        if (OccupiedCollides(hb)) { rejOcc++; continue; }
+                        // The railroad's ground is the railroad's: nothing is built on
+                        // the reserved strip, whoever draws the street.
+                        if (reserved.Any(r => r.X < hb.x1 && r.X + r.W > hb.x0 && r.Z < hb.z1 && r.Z + r.H > hb.z0)) { rejRail++; continue; }
+                        if (freeStreets.Any(other => other != fs && StreetGeom.PathHitsRect(other, hb.x0, hb.z0, hb.x1, hb.z1, 6f))) { rejOther++; continue; }
+                        map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false });
+                        RegisterOccupied(hb);
+                        placed++;
+                        float kbx = pt.X + nx * fs.StreetHalf, kbz = pt.Z + nz * fs.StreetHalf;
+                        var kerb = new Vec2(kbx, kbz);
+                        var fd = FindFrontDoor(house);
+                        map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4f, Points = { kerb, fd } });
+                        var (garageDoor, _, _) = FindGarageDoor(house);
+                        if (!float.IsNaN(garageDoor.X))
+                            map.Driveways.Add(new Driveway { Surface = "concrete", WidthFeet = 16f, Points = { kerb, garageDoor } });
+                    }
+                    d += frontage + rng.Range(4f, 10f);
+                }
+                if (Environment.GetEnvironmentVariable("SPAWNGUIDE_PROBE") == "1")
+                    Console.Error.WriteLine($"PROBE freestreet {fs.Name} len={len:0} placed={placed} rejBlob={rejBlob} rejOcc={rejOcc} rejRail={rejRail} rejOther={rejOther} skipped={skipped}");
+                map.RoadPaths.Add(fs.Path);
+                var mid = StreetGeom.AlongPath(pts, len / 2f);
+                float labAng = MathF.Atan2(mid.Tangent.Z, mid.Tangent.X) * 180f / MathF.PI;
+                if (labAng > 90f) labAng -= 180f; else if (labAng < -90f) labAng += 180f;
+                map.Labels.Add(new MapLabel { Position = mid.Point, Text = fs.Name, RotateDeg = labAng, Anchor = "middle" });
+            }
+        }
 
         // The plat pass may have reached past the town's outermost street, so the
         // built extent is measured again — the county roads have to clip around
