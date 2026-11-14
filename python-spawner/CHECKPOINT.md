@@ -1,12 +1,13 @@
 # Checkpoint
 
 ## Status
-Milestones 1-2 complete. 130 schema entries, numeric stage packs, no parks,
-1990 default, explicit parity. Five PNG pairs identical in parity mode.
-Typed JSON preset save/load/diff; six stackable presets and dotted --param overrides;
-recursive finite-value validation and clamping. 68 tests pass.
-Raw-default parity exclusions and absent source prompt documented in docs/SETTINGS-AND-PARITY.md.
+Milestones 1-3 complete. 130 settings entries, no parks, 1990 default and parity.
+Five parity PNG pairs identical. Typed JSON presets/save/load/diff and dotted overrides.
+Sweep CLI writes reproducible CSV with requested/effective values, seeds, built and
+planned houses, towns, trailer share, vacancy, businesses, roads, rail, farms, acreages.
+69 tests pass. Parity exclusions/source prompt gap documented in docs/SETTINGS-AND-PARITY.md.
 
 ## Exact next step
-Milestone 3: --sweep param lo hi steps --seeds N CSV statistics. Then control page,
-endless world, and --verify in order. Commit/push and update this file at each milestone.
+Milestone 4: standard-library local HTTP control page, schema-driven sliders/ranges/
+switches, seed random/lock, preset save/load, changed/reset view, 300 ms debounce.
+Then endless world and --verify, committing/pushing each milestone.

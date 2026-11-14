@@ -2551,3 +2551,6 @@ PRESET_VALUES = {
 }
 for _spec in CATALOG.values():
     _spec['note'] += ' Named preset strengths (tiny/big/rail/sparse/trailer) are PLACEHOLDER exploratory overrides.'
+for _key,_value in DEFAULTS.items():
+    if 'pct' in _key and type(_value) in (int,float):
+        CATALOG[_key].update(min=0,max=100,units='percent')
