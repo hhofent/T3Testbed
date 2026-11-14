@@ -5,6 +5,6 @@ async function benchmarkWorld(seed) {
  clearTimeout(timer);document.getElementById('seed').value=seed;viewport=[0,0,10*mile,10*mile];
  let t=performance.now();queue();await ready();const cold10miMs=performance.now()-t;
  pan(1,0);await ready();pan(-1,0);await ready();t=performance.now();pan(1,0);await Promise.all([...document.querySelectorAll('#tiles img[src]')].map(i=>i.decode()));const cachedPanMs=performance.now()-t;await ready();
- viewport=[0,0,20*mile,20*mile];queue();await ready();viewport=[5*mile,5*mile,10*mile,10*mile];queue();await ready();t=performance.now();zoom(-1);await Promise.all([...document.querySelectorAll('#tiles img[src]')].map(i=>i.decode()));const cachedZoom20miMs=performance.now()-t;await ready();
- return {seed,cold10miMs,cachedPanMs,cachedZoom20miMs};
+ viewport=[0,0,20*mile,20*mile];t=performance.now();queue();await ready();const firstZoom20miMs=performance.now()-t;viewport=[5*mile,5*mile,10*mile,10*mile];queue();await ready();t=performance.now();zoom(-1);await Promise.all([...document.querySelectorAll('#tiles img[src]')].map(i=>i.decode()));const cachedZoom20miMs=performance.now()-t;await ready();
+ return {seed,cold10miMs,cachedPanMs,firstZoom20miMs,cachedZoom20miMs};
 }

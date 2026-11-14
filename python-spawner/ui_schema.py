@@ -39,6 +39,85 @@ LABELS={
  'world.pan_fraction':'Distance moved by pan buttons','world.zoom_factor':'Zoom step multiplier',
  'generation.parity':'Reference image parity mode',
 }
+LABELS.update({
+ 'region.paved_pct':'Share of reference roads that are paved',
+ 'region.town_pct':'Chance of a town at a paved-road crossing',
+ 'region.rail_pct':'Chance of rail in a reference region',
+ 'region.ragged_pct':'Share of towns with irregular street edges',
+ 'region.ribbon_decay':'Drop in growth along ribbon streets',
+ 'region.edge_half_pct':'Share of partially built town edges',
+ 'region.fringe_pct':'Share of lots on the town fringe',
+ 'region.trailer_run_pct':'Chance of a manufactured-home cluster',
+ 'region.trailer_run':'Homes per manufactured-home cluster',
+ 'region.industry':'Industrial parcel dimensions',
+ 'region.rail_gap':'Distance between parallel road and rail corridors',
+ 'region.rail_parallel':'Length of rail beside a road',
+ 'region.rail_angle':'Rail crossing angle range',
+ 'region.town_size':'Town size selection weights',
+ 'region.grids':'Block layouts by town size',
+ 'region.people_per_house':'Residents per house',
+ 'region.vacant_pct':'Share of vacant commercial buildings',
+ 'region.fading':'Commercial decline settings',
+ 'region.storefront':'Downtown storefront dimensions',
+ 'region.edge':'Highway business placement',
+ 'region.years':'Development years',
+ 'region.base_year':'Starting development year',
+ 'region.fading_types':'Business types affected by decline',
+ 'region.branch_pct':'Chance of branching town streets',
+ 'spawner.trailer_roof':'Manufactured-home roof choices',
+ 'spawner.trailer_siding':'Manufactured-home siding choices',
+ 'spawner.trailer_w':'Manufactured-home widths',
+ 'spawner.trailer_l':'Manufactured-home length range',
+ 'spawner.side_pct':'Side yard setback as share of lot width',
+ 'spawner.side_min_pct':'Minimum side yard share of lot width',
+ 'spawner.front_pct':'Front yard setback as share of lot depth',
+ 'spawner.front_min_pct':'Minimum front yard share of lot depth',
+ 'spawner.rear_pct':'Rear yard setback as share of lot depth',
+ 'spawner.rear_min_pct':'Minimum rear yard share of lot depth',
+ 'validate.approved':'Approved house validation rules',
+ 'validate.warn_only':'House rules reported as warnings',
+ 'validate.all':'All house validation rules',
+ 'generation.snapshot_year':'Year shown on the map',
+ 'generation.max_feature_attempts':'Placement attempts per map feature',
+ 'commercial.downtown_share':'Share of businesses placed downtown',
+ 'stages.rail':'Show rail corridors', 'stages.creeks':'Reserve local creek floodplains',
+ 'stages.towns':'Generate towns', 'stages.businesses':'Generate businesses',
+ 'stages.trailers':'Generate manufactured homes', 'stages.houses':'Generate house plans',
+ 'stages.trees':'Show tree trunk markers',
+ 'controls.seed':'World generation seed', 'trees.spacing_ft':'Distance between tree markers',
+ 'world.main_spacing_miles':'Distance between paved main roads',
+ 'world.level_b_pct':'Share of section roads with dirt surfaces',
+ 'world.missing_pct':'Share of road segments omitted',
+ 'world.rail_spacing_miles':'Distance between rail corridors',
+ 'world.rail_enabled_pct':'Share of rail corridors in use',
+ 'world.river_spacing_miles':'Distance between river valleys',
+ 'world.tributary_spacing_miles':'Distance between tributary junctions',
+ 'world.river_width_ft':'Width of main rivers',
+ 'world.relief_ft':'Height of watershed ridges above valleys',
+ 'world.contour_interval_ft':'Elevation between contour lines',
+ 'world.contour_cell_ft':'Ground spacing of terrain samples',
+ 'world.halo_tiles':'Settlement tiles examined outside a detailed view',
+ 'world.tree_radius_ft':'Radius of tree trunk markers',
+ 'world.hill_wavelength_miles':'Reference hill wavelength',
+ 'world.river_wander_miles':'Sideways meander distance of rivers',
+ 'world.river_wave_steps':'Tributary intervals per river meander',
+ 'world.tile_cache_size':'Settlement tiles retained in memory',
+ 'world.rail_draw_ft':'Width of rail strokes on the map',
+ 'world.south_drop_ft':'Terrain elevation drop toward the south',
+ 'verify.minimum_angle_deg':'Smallest permitted rail crossing angle',
+ 'verify.square_deviation_deg':'Allowed deviation from a square crossing',
+ 'verify.square_share':'Required share of near-square rail crossings',
+ 'verify.bin_ft':'Ground spacing of collision index cells',
+ 'rural.outbuildings_min':'Minimum rural outbuilding count',
+ 'rural.outbuildings_max':'Maximum rural outbuilding count',
+ 'rural.building_gap_ft':'Space between rural outbuildings',
+ 'rural.lane_width_ft':'Width of farm and acreage lanes',
+ 'rural.bent_lanes_pct':'Share of rural lanes with bends',
+ 'rural.grove_density':'Share of shelterbelt positions with trees',
+ 'rural.lot_corner_fraction':'Maximum rural lot corner cut',
+ 'world.rail_diagonal_pct':'Share of rural rail sections with diagonal bends',
+ 'world.rail_bend_miles':'Sideways distance of rail bends',
+})
 WORDS={'pct':'probability','mi':'miles','w':'width','d':'depth','ac':'acres','sb':'setbacks','biz':'business','fp':'footprints','n':'count','ms':'milliseconds','ft':'feet','min':'minimum','max':'maximum','clr':'clearance','gw':'garage widths','found':'foundation','sf':'square feet','na':'exceptions'}
 TICK_LENGTHS=set('spawner.clr spawner.head spawner.grid spawner.module spawner.gw spawner.porch_project_max_w spawner.porch_project region.row region.grove_w region.base_lot region.industry region.rail_gap region.rail_row region.cem region.fuel region.coop_office'.split())
 FEET=set('spawner.trailer_w spawner.trailer_l region.surf region.clear region.farm_back region.acre_back region.rail_parallel region.town_sb region.creek_w region.creek_buf'.split())
@@ -60,13 +139,18 @@ def presentation(key,spec):
  elif any(t in key for t in ('rail','creek')): group='Rail and waterways'
  else: group='Towns, roads and countryside'
  units=spec['units']; scale=1
+ if isinstance(spec['default'],bool): units='on/off'
+ if key.endswith('_pct'): units='%'
  if key in TICK_LENGTHS: units='ft';scale=192
  elif key in FEET: units='ft'
  elif key.endswith('_ac'): units='acres'
  elif 'weights' in LABELS.get(key,''): units='relative weights'
+ elif key in ('region.farm_ac','region.acre_ac','region.elev_ac','region.church_ac'): units='acres'
+ elif key in ('region.paved_pct',): units='%'
  elif units.startswith('reference units'): units='reference values; see help'
  label=LABELS.get(key,words(name))
  note=spec['note'].split(' Range and step')[0].split(' Control bounds')[0]
  if key=='world.window_miles': note='Initial visible width. Pan anywhere; zoom buttons and wheel change the current view.'
+ tooltip=f'{label} ({units}): '+note.split('. ')[0]
  help=f'{label}. {note} Units: {units}. Source: {spec["source"]}. Preset key: {key}.'
- return dict(label=label,group=group,display_units=units,display_scale=scale,help=help)
+ return dict(label=label,group=group,display_units=units,display_scale=scale,tooltip=tooltip,help=help)

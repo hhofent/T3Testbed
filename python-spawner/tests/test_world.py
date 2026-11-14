@@ -79,3 +79,15 @@ def test_missing_roads_both_axes_one_percent_and_cycle_detours():
     bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
     cycle=[('h',2*by,2*bx),('h',2*by+1,2*bx),('v',2*bx,2*by),('v',2*bx+1,2*by)]
     assert sum(road_type(31,*edge) is None for edge in cycle)==1
+
+
+def test_world_has_no_independent_legacy_creek_segments():
+ scene=window(31,[0,0,3*MILE,3*MILE],Settings(),detail=False)
+ assert not any(f['kind']=='creeks' for f in scene['features'])
+
+
+def test_empty_water_blocked_town_does_not_poison_prefetch():
+ # Found through the real 20-mile browser flow: an entirely rejected town plat
+ # in a halo tile must become countryside, rather than failing every request.
+ scene=window(896138,[21*MILE,-3*MILE,3*MILE,3*MILE],Settings(),detail=False)
+ assert scene['features']

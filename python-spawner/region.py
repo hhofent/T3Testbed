@@ -401,6 +401,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                                "canopy": None, "pumps": [], "storefront": False, "vacant": False, "house_lot": L["id"]})
         else: unplaced.append("funeral home")
     edge_want = [t for t in prog if t in EDGE or t == "grocery (highway)"]
+    if not blocks: return None  # Every proposed block may be rejected by waterways.
     bx = [b["rect"] for b in blocks]
     box = (min(r[number('region.make_town_numbers', 'make_town_401_17')] for r in bx) - sw, min(r[number('region.make_town_numbers', 'make_town_401_45')] for r in bx) - sw, number('region.make_town_numbers', 'make_town_401_67'), number('region.make_town_numbers', 'make_town_401_70'))
     box = (box[number('region.make_town_numbers', 'make_town_402_15')], box[number('region.make_town_numbers', 'make_town_402_23')], max(r[number('region.make_town_numbers', 'make_town_402_33')] + r[number('region.make_town_numbers', 'make_town_402_40')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_67')], max(r[number('region.make_town_numbers', 'make_town_402_77')] + r[number('region.make_town_numbers', 'make_town_402_84')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_111')])

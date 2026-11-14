@@ -30,23 +30,46 @@ Browser measurements, loopback HTTP + actual control.html JS, 1280x800:
   chunk with the new larger overview chunk. House plans and redundant tile halos
   were the main CPU cost; resending SVG and replacing nodes added browser work.
 
+Fix 8 done: CLI region exports use explicit axes placement, so off-map parcel
+labels cannot shrink the drawing through tight_layout. --world --png writes a
+framed raster of the requested rectangle, with automatic overview LOD. The old
+reference PNG renderer stays available for byte-identical parity comparisons.
+Both exports visually inspected; CLI tests check framing and rectangular size.
+Legacy independent creek lines removed from world output: only the verified
+watershed network is drawn. River meander period is now in full wavelength units.
+Final profile found water/lot collision scanning as the new bottleneck: candidate
+streams are bounded to each settlement tile and each parcel before segment tests.
+Fix 2 clarified further: map effects in labels, explicit percent units, one-line
+tooltips, extended reference notes behind About this setting, leaf labels include
+parent setting names. Wheel zoom is continuous and anchored at the cursor.
+Final browser seed 896137, before the last water broad-phase optimization:
+10x10 mi cold 2272.5 ms; cached pan 0.9 ms, cached 20 mi zoom 2.3 ms (decode).
+Two-frame browser checks: cached pan 4.8 ms, cached zoom 46.3 ms.
+
+Final validation:
+- 89 tests passed (including real CLI PNG export framing).
+- Geometric verifier passed seeds 13,14,30,31,46 over 3x3 mi windows.
+- Final optimized 3x3 mi overview cProfile: 0.464 s, 1.60M calls,
+  versus 1.440 s / 5.81M before broad-phase water rejection. No house plans.
+- Final browser fresh seed 896139: cold 10x10 mi 907.7 ms; cached pan
+  1.1 ms, cached 20 mi zoom 2.8 ms (HTTP/page logic + image decoding).
+- A second browser run found an all-water-blocked town in prefetched tile
+  (7,-1), seed 896138. Empty block lists now mean no town instead of raising
+  min(empty) and poisoning subsequent requests. Regression test added; the same
+  browser flow now completes (552.4 ms with its existing disk cache).
+- Main PNG export and world PNG export visually checked; legacy creek strokes
+  that crossed the canonical drainage network are no longer drawn in the world.
+
+- Latest complete browser flow, fresh seed 896140: cold 10x10 mi 830.4 ms;
+  cached pan 1.1 ms; first zoom out to 20 mi (new visible chunks) 749.9 ms;
+  cached zoom to 20 mi 2.0 ms. All include image decode; first views include HTTP
+  polling and debounce. Reproduce using tools/browser_flow.js in the real page.
+- Final five parity before/after pairs are byte-identical after the empty-town fix.
+- Find town reaches full detail, next/previous enable after selection, and small
+  wheel deltas zoom continuously (0.5 mi -> 0.4950 mi for a -5 wheel delta).
+
 ## Exact next step
-Fix 3 done: real navigation labels, accessible names and tooltips; all buttons act.
-Fix 4 done: coordinate-owned continuous south-draining trunk streams, explicit
-source tributaries joining shared vertices, watershed-aligned downhill terrain.
-Verifier checks continuity, downhill elevations and crossings over overlapping views.
-83 tests pass, including three 40x40 mi drainage checks.
-Fix 5 done: world rural lots have seeded chamfered outlines, shifted houses,
-seven outbuilding types, varying counts and sizes, connected bent lanes and
-irregular shelterbelts on different sides. Seven variety controls added. Reference
-parity site plans unchanged. Fix 6 done: seeded diagonal rural rail bends, road-parallel reaches and square
-crossing approaches; configurable bend size and frequency. Minimum/near-square
-checks cover the rendered polylines. Fix 7 done: about 1% omissions in both orientations; each removed segment
-has a three-edge detour on an otherwise intact, edge-disjoint cycle, guaranteeing
-unbounded network connectivity. Sampled 80,000 segments and checked every detour.
-Next: fix 8 PNG framing and world export. Completed fix 4 rivers (continuous downhill,
-merging, no crossings/dead ends, verification); 5 rural variety and settings;
-6 diagonal/road-parallel rail, crossings >=45 degrees and >=80% within 15 of square;
-7 random missing road segments in both directions (~1%), connected network;
-8 framed PNG exports including --world. Commit/push each on python-test/spawner.
-Only this branch; no merge, force push or PR. Preserve five default parity pairs.
+All requested fixes 1-8 complete. User can test the pushed python-test/spawner
+head with `py -3.11 python-spawner/cli.py --serve`. No merge, force push or PR.
+Unrelated untracked root folders were left untouched. Profiles and manual PNG
+exports are under ignored out/. Do not claim new user acceptance until tested.

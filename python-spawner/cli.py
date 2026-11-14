@@ -50,9 +50,13 @@ def main(argv=None):
  if args.world:
   from world import window,svg,MILE
   from settings import applied
-  scene=window(args.seed,[v*MILE for v in args.window],settings)
+  scene=window(args.seed,[v*MILE for v in args.window],settings,detail=max(args.window[2:])<=2)
   path=Path(args.output); path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(scene,sort_keys=True)+'\n')
   with applied(settings): path.with_suffix('.svg').write_bytes(svg(scene))
+  if args.png:
+   from map_render import world_png
+   png_path=Path(args.png); png_path.parent.mkdir(parents=True,exist_ok=True)
+   with applied(settings): png_path.write_bytes(world_png(scene))
   print(path); return
  region=make_region(args.seed,settings=settings)
  path=Path(args.output); path.parent.mkdir(parents=True,exist_ok=True)
@@ -61,6 +65,6 @@ def main(argv=None):
   from map_render import png
   path=Path(args.png); path.parent.mkdir(parents=True,exist_ok=True)
   from settings import applied
-  with applied(settings): path.write_bytes(png(region,spawn_region(region,settings=settings)))
+  with applied(settings): path.write_bytes(png(region,spawn_region(region,settings=settings),framed=True))
  print(args.output)
 if __name__=='__main__': main()

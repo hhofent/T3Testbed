@@ -70,10 +70,10 @@ def _tile(seed,tx,ty,serialized,detail=True):
     x-=ox
     return dict(pts=[(x,0),(x,extent)],w=option('region.rail_row'),along=f'v{local//MILE}',along_c=local,x=x,side=1,parallel=(0,extent),crossings=[],site=(local,ew['c']))
    return None
-  water=list(rivers(seed,(ox,oy,extent,extent)))
+  water=[f for f in rivers(seed,(ox,oy,extent,extent)) if intersects(f['bounds'],(ox,oy,extent,extent))]
   def water_hits(local):
    absolute=(local[0]+ox,local[1]+oy,local[2],local[3])
-   return any(_seg_rect(a,b,(absolute[0]-stream['width']/2,absolute[1]-stream['width']/2,absolute[2]+stream['width'],absolute[3]+stream['width'])) for stream in water for a,b in zip(stream['points'],stream['points'][1:]))
+   return any(_seg_rect(a,b,(absolute[0]-stream['width']/2,absolute[1]-stream['width']/2,absolute[2]+stream['width'],absolute[3]+stream['width'])) for stream in water if intersects(stream['bounds'],absolute) for a,b in zip(stream['points'],stream['points'][1:]))
   tile_seed=H(seed,'settlement',tx,ty)
   reg=make_region(tile_seed,road_factory=roads,rail_factory=rail)
   # Keep ownership disjoint: reject towns whose envelope would invade another tile.
@@ -90,9 +90,6 @@ def _tile(seed,tx,ty,serialized,detail=True):
   for r in reg['roads']:
    if r in reg['grid_roads']: continue
    add('roads','street:'+r['id'],road_rect(r),surface='paved',axis=r['axis'],history=['town plat','paved'])
-  for creek in reg['creeks']:
-   pts=[(x+ox,y+oy) for x,y in creek['pts']]
-   out.append(feature('creeks',prefix+creek['id'],points=pts,width=creek['chan_w']))
   for lot in reg['lots']:
    spec=lot['spec']; id=spec['id']; pl=lot['place']
    if water_hits(world_rect(pl,spec['width'],spec['depth'])): continue
@@ -137,7 +134,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
 def drainage_x(seed,y):
  step=option('world.tributary_spacing_miles')*MILE
  phase=H(seed,'river-watershed')%10000/10000*2*math.pi
- return math.sin(y/(step*option('world.river_wave_steps'))+phase)*MILE*option('world.river_wander_miles')
+ return math.sin(y/(step*option('world.river_wave_steps'))*2*math.pi+phase)*MILE*option('world.river_wander_miles')
 
 def elevation(seed,x,y):
  # A south-sloping datum plus watershed ridges. The same valley centers own rivers.

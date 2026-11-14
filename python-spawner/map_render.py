@@ -67,7 +67,7 @@ def draw_lot(ax, L, labels, fs):
     if p: draw_house(ax, p, xf_for(L), fs=fs, labels=labels)
     elif s["id"] in res: ax.add_patch(Rectangle((f(x), f(y)), f(w), f(h), fill=False, hatch="xx", ec="r", lw=0.3))
 
-def png(region,results,town_only=True):
+def png(region,results,town_only=True,framed=False):
     global reg,res,t
     reg,res,t=region,results,region['town']
     extent=max(r['hi'] for r in reg['grid_roads']); b=t['box'] if t and town_only else (0,0,extent,extent)
@@ -81,6 +81,40 @@ def png(region,results,town_only=True):
         for lot in reg['lots']:
             if not town_only or lot['spec']['kind']=='town': draw_lot(ax,lot,False,2.6)
         ax.set_xlim(f(b[0]-margin),f(b[0]+b[2]+margin)); ax.set_ylim(f(b[1]-margin),f(b[1]+b[3]+margin)); ax.set_aspect('equal')
-        ax.set_axis_off(); fig.tight_layout()
+        ax.set_axis_off()
+        if framed: ax.set_position([.01,.01,.98,.98])
+        else: fig.tight_layout()
         buf=io.BytesIO(); fig.savefig(buf,format='png',dpi=110,metadata={'Software':'Python spawner'}); return buf.getvalue()
+    finally: plt.close(fig)
+
+
+def world_png(scene,width=1440):
+    """Render the requested world rectangle directly, without off-map layout artists."""
+    from world import COLORS
+    from matplotlib.collections import LineCollection,PatchCollection
+    x,y,w,h=scene['window']; height=max(1,round(width*h/w))
+    fig=plt.figure(figsize=(width/100,height/100),dpi=100,facecolor='#f2f1e6')
+    ax=fig.add_axes([0,0,1,1]); ax.set_facecolor('#f2f1e6')
+    try:
+        for kind in ('contours','rivers','creeks','towns','lots','roads','rail','driveways','buildings','trees','farms'):
+            patches=[];colors=[];lines=[];widths=[]
+            for ftr in scene['features']:
+                if ftr['kind']!=kind: continue
+                color=COLORS[kind]
+                if kind=='roads': color=ROADC[ftr['surface']]
+                if 'shape' in ftr:
+                    patches.append(Polygon(ftr['shape'],closed=True));colors.append('none')
+                elif 'rect' in ftr:
+                    a,b,c,d=ftr['rect']
+                    if kind in ('trees','farms'):
+                        from matplotlib.patches import Circle
+                        patches.append(Circle((a+c/2,b+d/2),FT(45 if kind=='farms' else 1.5)))
+                    else: patches.append(Rectangle((a,b),c,d))
+                    colors.append(color)
+                else:
+                    lines.append(ftr['points']);widths.append(max(.35,ftr.get('width',FT(1))/w*width*.72))
+            if patches: ax.add_collection(PatchCollection(patches,facecolors=colors,edgecolors='#687060',linewidths=.25))
+            if lines: ax.add_collection(LineCollection(lines,colors=COLORS[kind],linewidths=widths))
+        ax.set_xlim(x,x+w); ax.set_ylim(y+h,y); ax.set_aspect('equal',adjustable='box');ax.set_axis_off()
+        buf=io.BytesIO();fig.savefig(buf,format='png',dpi=100,facecolor=fig.get_facecolor(),metadata={'Software':'Python spawner'});return buf.getvalue()
     finally: plt.close(fig)
