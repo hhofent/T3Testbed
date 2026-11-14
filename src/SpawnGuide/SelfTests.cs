@@ -20,6 +20,38 @@ namespace SpawnGuide
                 catch (ArgumentException) { return; }
                 throw new Exception("Accepted invalid override: " + expression);
             }
+            Test("commercial wiring preserves four default town hashes", () => {
+                string[] sizes = { "crossroads", "hamlet", "village", "town" };
+                string[] hashes = { "10eb5b9b71e579c0a69023ac85a8401d6f01296c98ced6b9337ad5ef0cf09f42", "e6564d50c0520507b486cfc7e1de483bea3a6ead0451987089eebe08eb8012ad", "0f751409af8d231834601b56097405311812d15a8fabe5f8c37569f5d3ea0353", "cd041218749b9bce2e8d70f505a6e59fed44bbdec6dc84259e1f77023d9b7abc" };
+                for (int i = 0; i < sizes.Length; i++) {
+                    var c = SpawnConfig.Default;
+                    string svg = SvgMapRenderer.Render(SmallTownGenerator.Generate(1993, sizes[i], config: c.SmallTown, townTiers: c.TownTiers, commercial: c.Commercial));
+                    using var sha = System.Security.Cryptography.SHA256.Create();
+                    string hash = BitConverter.ToString(sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(svg))).Replace("-", "").ToLowerInvariant();
+                    Equal(hashes[i], hash);
+                }
+            });
+            Test("commercial controls affect towns across seeds", () => {
+                foreach (string expression in new[] { "Commercial.ElevatorWidthFt=60", "Commercial.ElevatorDepthFt=100", "Commercial.ElevatorRightChance=0", "Commercial.BinSpacingFt=40", "Commercial.CrossStreetShopMax=0" }) {
+                    bool changed = false;
+                    foreach (uint seed in new uint[] { 13, 14, 31, 1993 }) {
+                        var c = SpawnConfig.Default;
+                        string before = SvgMapRenderer.Render(SmallTownGenerator.Generate(seed, "town", config: c.SmallTown, commercial: c.Commercial));
+                        ConfigOverrides.Apply(c, expression);
+                        string after = SvgMapRenderer.Render(SmallTownGenerator.Generate(seed, "town", config: c.SmallTown, commercial: c.Commercial));
+                        changed |= before != after;
+                    }
+                    if (!changed) throw new Exception("No effect: " + expression);
+                }
+            });
+            Test("commercial alias precedence preserves legacy profiles", () => {
+                var c = SpawnConfig.Default;
+                c.SmallTown.ElevatorWidth = 72;
+                string Render(CommercialConfig? commercial) => SvgMapRenderer.Render(SmallTownGenerator.Generate(1993, "hamlet", config: c.SmallTown, commercial: commercial));
+                Equal(Render(null), Render(c.Commercial));
+                c.Commercial.ElevatorWidthFt = 80;
+                if (Render(null) == Render(c.Commercial)) throw new Exception("Explicit Commercial value ignored");
+            });
             Test("repeatable overrides and last value wins", () => {
                 var c = SpawnConfig.Default;
                 ConfigOverrides.ApplyArguments(c, new[] { "--param", "SmallTown.StreetRow=40", "--param", "smalltown.streetrow=42", "--param", "Rural.ShopChance=0.25" });

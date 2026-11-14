@@ -24,10 +24,15 @@ namespace SpawnGuide
         /// <param name="detail">false = quiet annotations, true = all captions on.</param>
         /// <param name="ctx">World context (rail spur info).</param>
         /// <param name="config">Small town configuration (uses new ResidentialConfig, StreetConfig, etc.).</param>
-        public static MapPlan Generate(uint seed, string sizeName, bool detail = false, TownContext? ctx = null, SmallTownConfig? config = null, TownTierSystem? townTiers = null)
+        public static MapPlan Generate(uint seed, string sizeName, bool detail = false, TownContext? ctx = null, SmallTownConfig? config = null, TownTierSystem? townTiers = null, CommercialConfig? commercial = null)
         {
             ctx ??= TownContext.None;
             var cfg = config ?? new SmallTownConfig();
+            // Non-default Commercial values override the legacy SmallTown aliases.
+            // Otherwise preserve saved SmallTown profiles and byte-identical defaults.
+            var commercialDefaults = new CommercialConfig();
+            float CommercialValue(float? value, float defaultValue, float legacyValue) =>
+                value.HasValue && value.Value != defaultValue ? value.Value : legacyValue;
 
             var rng = new Rng(seed);
             float lotDepth = cfg.BlockLotDepth + rng.Range(-cfg.LotDepthJitter, cfg.LotDepthJitter);
@@ -222,8 +227,9 @@ namespace SpawnGuide
             }
 
             // Grain elevator
-            float evW = cfg.ElevatorWidth, evD = cfg.ElevatorDepth;
-            bool elevatorRight = rng.Chance(cfg.ElevatorRightChance);
+            float evW = CommercialValue(commercial?.ElevatorWidthFt, commercialDefaults.ElevatorWidthFt, cfg.ElevatorWidth);
+            float evD = CommercialValue(commercial?.ElevatorDepthFt, commercialDefaults.ElevatorDepthFt, cfg.ElevatorDepth);
+            bool elevatorRight = rng.Chance(CommercialValue(commercial?.ElevatorRightChance, commercialDefaults.ElevatorRightChance, cfg.ElevatorRightChance));
             float evX0 = elevatorRight ? mainX + cfg.StreetRow + cfg.ElevatorOffsetFromMain.Sample(rng) : mainX - cfg.StreetRow - cfg.ElevatorOffsetFromMain.Sample(rng) - evW;
             if (spurIdx >= 0) { spurTrackX = Math.Clamp(spurTrackX, 60f, MathF.Max(60f, totalWidth - 60f)); evX0 = spurTrackX - evW / 2f; }
             else evX0 = Math.Clamp(evX0, 40f, MathF.Max(40f, totalWidth - evW - 40f));
@@ -232,7 +238,7 @@ namespace SpawnGuide
             bandOcc.Add((evX0 - 12f, evX0 + evW + 12f));
 
             int bins = cfg.ElevatorBinCount.Sample(rng);
-            float binD = cfg.BinDiameter.Sample(rng), spacing = cfg.BinSpacing;
+            float binD = cfg.BinDiameter.Sample(rng), spacing = CommercialValue(commercial?.BinSpacingFt, commercialDefaults.BinSpacingFt, cfg.BinSpacing);
             float binRowW = bins * spacing - 8f;
             float binX = evX0 + (evW - binRowW) / 2f;
             if (binX + binRowW > totalWidth - 8f) binX = totalWidth - 8f - binRowW;
@@ -263,8 +269,7 @@ namespace SpawnGuide
                 }
             }
 
-            // Highway commercial strip (using CommercialConfig if available)
-            var commercialCfg = new CommercialConfig(); // Would be from SpawnConfig
+            // Highway commercial strip
             var eligible = BusinessCatalogue.Shops.Where(b => b.MinTier <= tier).ToList();
             var chosen = new List<BusinessCatalogue.Business>();
             var gas = eligible.First(b => b.Descriptor == "GAS STATION"); chosen.Add(gas);
@@ -305,7 +310,8 @@ namespace SpawnGuide
                 foreach (var p in placed) { RecordContent(-1, 0, p.x, p.x + p.w, zBand, zBand + 80f); map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(p.x + p.w / 2f, zBand + p.d / 2f + 8f), WidthFeet = p.w, DepthFeet = p.d, Label = p.label }); }
                 foreach (var biz in industrial) { float iw = rng.Range(biz.MinWidth, biz.MaxWidth), id = rng.Range(biz.MinDepth, biz.MaxDepth); float ix = rng.Range(45f, MathF.Max(46f, totalWidth - iw - 45f)); bool straddles = ix < mainX + cfg.StreetRow + 20f && ix + iw > mainX - 20f; bool collides = bandOcc.Any(b => ix < b.x1 && ix + iw > b.x0); if (straddles || collides) continue; map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(ix + iw / 2f, zBand + id / 2f + 8f), WidthFeet = iw, DepthFeet = id, Label = BusinessCatalogue.LabelFor(rng, biz) }); bandOcc.Add((ix - 10f, ix + iw + 10f)); }
 
-                int crossShops = rng.RangeInt(0, cfg.CrossStreetShopMax);
+                int crossShopMax = commercial != null && commercial.CrossStreetShopMax != commercialDefaults.CrossStreetShopMax ? commercial.CrossStreetShopMax : cfg.CrossStreetShopMax;
+                int crossShops = crossShopMax <= 0 ? 0 : rng.RangeInt(0, crossShopMax);
                 for (int i = 0; i < crossShops; i++)
                 {
                     var biz = eligible.Count > 0 ? eligible[rng.RangeInt(0, eligible.Count)] : null;

@@ -42,7 +42,7 @@ namespace SpawnGuide
             foreach (string arch in new[] { "ranch", "farmhouse", "split-level" }) results.Add(SvgRenderer.Render(HouseGenerator.Generate(arch, seed, config: c.Houses)));
             results.Add(SvgMapRenderer.Render(MapGenerator.RuralLot(seed, c.Rural)));
             results.Add(SvgMapRenderer.Render(MapGenerator.TownBlock(seed, c.TownBlock)));
-            foreach (string size in new[] { "crossroads", "hamlet", "village", "town" }) results.Add(SvgMapRenderer.Render(SmallTownGenerator.Generate(seed, size, config: c.SmallTown, townTiers: c.TownTiers)));
+            foreach (string size in new[] { "crossroads", "hamlet", "village", "town" }) results.Add(SvgMapRenderer.Render(SmallTownGenerator.Generate(seed, size, config: c.SmallTown, townTiers: c.TownTiers, commercial: c.Commercial)));
             results.Add(SvgMapRenderer.Render(CountrysideMap.Generate(seed, "hamlet", config: c.Countryside)));
             results.Add(SvgMapRenderer.Render(WorldMap.Generate(seed, 0, 0, config: c.World, noiseConfig: c.Noise).Map));
             return string.Join("\n", results);

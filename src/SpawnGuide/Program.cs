@@ -486,7 +486,7 @@ static class Program
                             ctx.Response.Close();
                             continue;
                         }
-                        var map = SmallTownGenerator.Generate(s, sz, false, null, config.SmallTown, config.TownTiers);
+                        var map = SmallTownGenerator.Generate(s, sz, false, null, config.SmallTown, config.TownTiers, config.Commercial);
                         var svg = SvgMapRenderer.Render(map);
                         ctx.Response.ContentType = "image/svg+xml";
                         var bytes = System.Text.Encoding.UTF8.GetBytes(svg);
@@ -584,7 +584,7 @@ static class Program
         {
             foreach (var s in smalltownSeeds)
             {
-                var m = SmallTownGenerator.Generate(s, townSize, detail: false, ctx: null, config: config.SmallTown, townTiers: config.TownTiers);
+                var m = SmallTownGenerator.Generate(s, townSize, detail: false, ctx: null, config: config.SmallTown, townTiers: config.TownTiers, commercial: config.Commercial);
                 sections.Add(MapSection(m, $"smalltown-{s}.svg"));
                 if (smalltown == null) smalltown = m;
             }
