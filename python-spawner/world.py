@@ -554,32 +554,69 @@ def _point_in_polygon(p,poly):
  return inside
 
 def _angle_reaches(seed,features):
+ """Pin a confluence approach over the measured quarter mile, not one vertex."""
  by_id={f['id']:f for f in features}; incoming={}
  for f in features:
-  if f.get('downstream') in by_id:
-   key=(f['downstream'],tuple(f['points'][-1])); incoming.setdefault(key,[]).append(f)
- for f in features:
-  if f['id'].startswith('river:outlet:') or len(f['points'])<3: continue
+  incoming.setdefault((f.get('downstream'),tuple(f['points'][-1])),[]).append(f)
+ for (rid,point),group in sorted(incoming.items(),key=lambda item:str(item[0])):
+  receiver=by_id.get(rid)
+  if receiver is None or len(group)<2 or math.dist(receiver['points'][0],point)>.01: continue
+  end=receiver['points'][-1]; dx,dy=end[0]-point[0],end[1]-point[1]; length=math.hypot(dx,dy)
+  if length<=1: continue
+  tangent=(dx/length,dy/length)
+  receiver['_confluence_inflows']=len(group)
+  receiver['_junction_start']=tangent
+  _aim_end(receiver,tangent,False,.3*MILE)
+ ordered=[]; done=set()
+ for first in sorted(features,key=lambda f:f['id']):
+  path=[]; current=first; seen=set()
+  while current is not None and current['id'] not in done and current['id'] not in seen:
+   path.append(current); seen.add(current['id']); current=by_id.get(current.get('downstream'))
+  for reach in reversed(path): ordered.append(reach); done.add(reach['id'])
+ for f in ordered:
   receiver=by_id.get(f.get('downstream'))
-  if receiver is None: continue
+  if receiver is None or len(f['points'])<3: continue
   join=f['points'][-1]
   group=incoming.get((receiver['id'],tuple(join)),())
-  if len(group)<2 and f.get('stream_order',3)>=receiver.get('stream_order',3): continue
+  if len(group)==1 and math.dist(receiver['points'][0],join)<.01: continue
   idx=min(range(len(receiver['points'])),key=lambda i:math.dist(receiver['points'][i],join))
-  if math.dist(receiver['points'][idx],join)>.01: continue
-  if idx+1<len(receiver['points']): a,b=join,receiver['points'][idx+1]
-  else: continue
-  vx,vy=b[0]-a[0],b[1]-a[1]; length=min(math.dist(join,f['points'][-2]),FT(30))
-  if not length or not math.hypot(vx,vy): continue
+  tail=[join]+receiver['points'][idx+1:]
+  seen={receiver['id']}; nxt=receiver
+  while sum(math.dist(a,b) for a,b in zip(tail,tail[1:]))<.25*MILE:
+   nxt=by_id.get(nxt.get('downstream'))
+   if nxt is None or nxt['id'] in seen: break
+   seen.add(nxt['id']); tail+=nxt['points'][1:]
+  if len(tail)<2: continue
+  _,ahead=_cut_from_start(tail,.25*MILE)
+  vx,vy=ahead[0]-join[0],ahead[1]-join[1]
+  if not math.hypot(vx,vy): continue
   uneven=f.get('stream_order')!=receiver.get('stream_order')
   normal=sum((H(seed,'junction-normal',f['id'],receiver['id'],i)%100000)/100000 for i in range(12))-6
-  angle_deg=65+30*normal
+  angle_deg=65+35*normal
   angle_deg+=.25*((90 if uneven else 58)-angle_deg)
-  angle=math.radians(max(25,min(110,angle_deg)))
-  old=(join[0]-f['points'][-2][0],join[1]-f['points'][-2][1])
+  old=(join[0]-f['points'][0][0],join[1]-f['points'][0][1])
+  raw=math.degrees(math.acos(max(-1,min(1,(vx*old[0]+vy*old[1])/(math.hypot(vx,vy)*math.hypot(*old))))))
+  _,near=_cut_from_start(tail,.1*MILE)
+  near_heading=math.atan2(near[1]-join[1],near[0]-join[0])
+  base_heading=math.atan2(vy,vx); chord_heading=math.atan2(old[1],old[0])
   side=1 if vx*old[1]-vy*old[0]>=0 else -1
-  direction=math.atan2(vy,vx)+side*angle
-  f['points'][-2]=(join[0]-length*math.cos(direction),join[1]-length*math.sin(direction))
+  choices=[]
+  wrap=lambda x:(x+math.pi)%(2*math.pi)-math.pi
+  for bank in (side,-side):
+   for deg in range(35,111):
+    heading=base_heading+bank*math.radians(deg)
+    if abs(wrap(heading-chord_heading))>math.radians(82): continue
+    if abs(wrap(heading-near_heading))<math.radians(25): continue
+    choices.append((0 if bank==side else 1,abs(deg-angle_deg),deg,heading))
+  if choices:
+   _,_,deg,direction=min(choices); angle=math.radians(deg)
+  else:
+   angle=math.radians(max(35,raw-82,min(110,raw+82,angle_deg)))
+   direction=base_heading+side*angle
+  tangent=(math.cos(direction),math.sin(direction))
+  f['_junction_sample']=math.degrees(angle)
+  f['_junction_direction']=tangent
+  _aim_end(f,tangent,True,.3*MILE)
 
 def _curve_collision(a,b,allowed=()):
  allowed=tuple(allowed); cell=FT(200); buckets={}; segments=list(zip(b,b[1:]))
@@ -658,6 +695,8 @@ def _untangle_reaches(seed,features):
    f['points']=pts
    f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
    f['bounds']=box(pts,max(f['widths'])/2)
+   if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
+   if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
   if collides: collides=collision(f,buckets,segments)
   if collides:
    # A straight chord fixes the crossing and then fails the valley check.
@@ -669,12 +708,16 @@ def _untangle_reaches(seed,features):
     f['points']=pts
     f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
     f['bounds']=box(pts,max(f['widths'])/2)
+    if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
+    if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
     if not collision(f,buckets,segments): found=True; break
    if not found:
     n=max(2,math.ceil(math.dist(start,end)/FT(200)))
     f['points']=[(start[0]+(end[0]-start[0])*i/n,start[1]+(end[1]-start[1])*i/n) for i in range(n+1)]
     f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(f['points'])-1)*(len(original_widths)-1)))] for i in range(len(f['points']))]
     f['bounds']=box(f['points'],max(f['widths'])/2)
+    if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
+    if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
   add_segments(f)
 
 def _hermite(p0,m0,p1,m1,n):
@@ -716,12 +759,61 @@ def _resample_widths(feature,points):
  feature['width']=max(feature['widths'])
  feature['bounds']=box(points,max(feature['widths'])/2)
 
-def _aim_end(feature,tangent,at_end):
+def _pin_approach_graph(feature,tangent,at_end,run):
+ """A monotone chord graph preserves the no-fold guarantee during pinning."""
+ pts=list(feature['points']) if at_end else list(reversed(feature['points']))
+ if not at_end: tangent=(-tangent[0],-tangent[1])
+ a,b=pts[0],pts[-1]; chord=math.dist(a,b)
+ if chord<=1: return
+ ux,uy=(b[0]-a[0])/chord,(b[1]-a[1])/chord; nx,ny=-uy,ux
+ tx=tangent[0]*ux+tangent[1]*uy; ty=tangent[0]*nx+tangent[1]*ny
+ if tx<=.05: return
+ run=min(run,chord*.45)
+ ax=chord-run*tx; ay=-run*ty
+ blend=.12*MILE if feature.get('stream_order',1)>=3 else feature.get('_approach_blend',.5)*MILE
+ cx=max(0,ax-min(blend,chord*(.5 if feature.get('stream_order',1)>=3 else .8))); cut=None
+ for i,(p,q) in enumerate(zip(pts,pts[1:])):
+  px=(p[0]-a[0])*ux+(p[1]-a[1])*uy; qx=(q[0]-a[0])*ux+(q[1]-a[1])*uy
+  if px<=cx<=qx and qx>px:
+   py=(p[0]-a[0])*nx+(p[1]-a[1])*ny; qy=(q[0]-a[0])*nx+(q[1]-a[1])*ny
+   y=py+(qy-py)*(cx-px)/(qx-px); slope=max(-1.5,min(1.5,(qy-py)/(qx-px)))
+   cut=(i,y,slope); break
+ if cut is None: return
+ i,cy,slope=cut; span=ax-cx; n=max(2,math.ceil(span/FT(40)))
+ def point(x,y): return (a[0]+ux*x+nx*y,a[1]+uy*x+ny*y)
+ new=pts[:i+1]
+ for j in range(n+1):
+  t=j/n; h00=2*t**3-3*t*t+1; h10=t**3-2*t*t+t; h01=-2*t**3+3*t*t; h11=t**3-t*t
+  y=h00*cy+h10*span*slope+h01*ay+h11*span*ty/tx
+  new.append(point(cx+span*t,y))
+ n=max(2,math.ceil(run/FT(40)))
+ for j in range(1,n+1): new.append(point(ax+(chord-ax)*j/n,ay*(1-j/n)))
+ new[0]=a; new[-1]=b
+ if not at_end: new.reverse()
+ # Keep the existing width-scaled amplitude constraint when a thin creek's
+ # valley bow meets its pinned tangent. A longer blend lowers curvature.
+ if feature.get('stream_order')==1 and feature.get('_approach_blend',.5)<.9:
+  total=sum(math.dist(p,q) for p,q in zip(new,new[1:])); count=max(2,int(total/(.02*MILE)))
+  samples=[_cut_from_start(new,total*i/count)[1] for i in range(count+1)]
+  lat=[(q[0]-a[0])*nx+(q[1]-a[1])*ny for q in samples]
+  radius=max(1,round(.11*MILE/(total/count)))
+  width=sum(feature['widths'])/len(feature['widths'])
+  peak=max((abs(lat[i]-sum(lat[max(0,i-radius):min(len(lat),i+radius+1)])/len(lat[max(0,i-radius):min(len(lat),i+radius+1)])) for i in range(int(len(lat)*.3),max(int(len(lat)*.3)+1,int(len(lat)*.7)))),default=0)
+  if peak>19*width:
+   feature['_approach_blend']=feature.get('_approach_blend',.5)+.2
+   _pin_approach_graph(feature,tangent if at_end else (-tangent[0],-tangent[1]),at_end,run)
+   return
+ _resample_widths(feature,new)
+
+def _aim_end(feature,tangent,at_end,approach=None):
  """Replace one end so the last 0.14 mi runs straight along `tangent`."""
+ if approach is not None:
+  _pin_approach_graph(feature,tangent,at_end,approach); return
  pts=feature['points']
  if len(pts)<3: return
  length=sum(math.dist(p,q) for p,q in zip(pts,pts[1:]))
- run=min(.14*MILE,length*.24); fillet=min(.12*MILE,length*.2)
+ run=min(.14*MILE,length*.24) if approach is None else min(approach,length*.49)
+ fillet=min(.12*MILE,length*.2) if approach is None else min(.22*MILE,length*.25)
  if run<FT(60) or fillet<FT(40): return
  if at_end:
   end=pts[-1]; idx,cut=_cut_from_end(pts,run+fillet)
@@ -996,7 +1088,7 @@ def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1):
  width=max(width,FT(8))
  phase=H(seed,'a2-wave',key)%len(_WAVE_FACTORS)
  if trunk:
-  base=11.6*width
+  base=(11.6 if outlet else 10.5)*width
   amp_frac=.060+.042*((H(seed,'a2-amp',key)%10001)/10000)
   # Outlet relief is the distance to this centreline. A mile-scale bow
   # lifts the downstream node above the upstream one.
@@ -1262,6 +1354,7 @@ def basin(seed,cx,cy,options):
   route_order[route['id']]=order; route['stream_order']=order
  _angle_reaches(seed,out)
  _untangle_reaches(seed,out)
+ _angle_reaches(seed,out)
  _round_continuations(out)
  return out
 

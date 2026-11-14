@@ -14,6 +14,9 @@ import river_lattice
 import river_metrics
 import river_meander
 import river_valley
+import river_junctions
+import river_spacing
+import river_copies
 
 
 def main(argv=None):
@@ -40,6 +43,12 @@ def main(argv=None):
         checks.append(('valley geometry', lambda: river_valley.run(valley_seeds, False, progress)))
         meander_seeds = seeds if args.seeds else (14, 30, 31)
         checks.append(('meander geometry', lambda: river_meander.run(meander_seeds, False, progress)))
+        a2_seeds = seeds if args.seeds else (14, 30, 31, 7, 52)
+        checks.extend([
+            ('junction angles', lambda: river_junctions.run(a2_seeds, False, progress)),
+            ('channel spacing', lambda: river_spacing.run(a2_seeds, False, progress)),
+            ('real copies', lambda: river_copies.run(a2_seeds, False, progress)),
+        ])
     for i, (label, run) in enumerate(checks, 1):
         print(f"\n=== {i}/{len(checks)}: {label} ===", flush=True)
         try:

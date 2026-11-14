@@ -1,5 +1,140 @@
 # Item A2: river geometry, 2026-11-14
 
+## Parts 4-6: baseline investigation in progress
+
+Starting head reconfirmed with `git log -1`: `db78343c672c65c0c2e928c4d6124d822253060f`,
+`river A2 part 3: varied meanders`, branch `python-test/spawner`.
+Parts 4-6 are NOT complete; part 4 validated below; parts 5-6 remain pending.
+Unrelated root untracked files remain untouched.
+
+New checks are wired into the full runner. They use (-20,-20,40,40) mi and seeds
+14/30/31/7/52. Junction JSON retains every connection's angle at 0.1 and 0.25 mi,
+raw endpoint chord angle and the candidate sampled angle (the sample is NOT
+actually applied by the old generator to continuations/split pieces). The seed-14
+20-lowest list is printed before its summary. Baseline JSON paths:
+`checks/a2-baseline-junctions.json`, `checks/a2-baseline-spacing-v2.json`,
+`checks/a2-baseline-copies.json`. Spacing's initial scan was preliminary: the final
+version clips to the window and excludes shared-junction pockets, including
+sibling tributaries. `check-results/a2-baseline-*.log` retains command output.
+
+Unchanged-generator pytest: **114 passed in 98.53 s**.
+
+Two interpretation issues were raised before generator edits:
+
+- Literal EVERY downstream connection includes artificial splits and one-in/one-out
+  continuations. Part 3 deliberately pins these near 8 degrees and requires the
+  0.1-mi continuation kink <=35 degrees. Seed 14 unfiltered means are 18.549 degrees
+  at 0.1 mi and 32.592 degrees at 0.25 mi, with 78.891% / 46.333% under 25 degrees.
+  The user was asked whether the angle targets apply to actual confluences while
+  still reporting continuations separately, or literally to every connection.
+- The specified literal curvature/Pearson detector with an L2 epsilon calibrated
+  from noisy synthetic copies catches 190/190 synthetic pairs but **0/240** old
+  `b2ee52f` within-basin pairs. Pooling historical basins also catches 0/12,720.
+  Epsilon = 0.0015378363921072784 (synthetic turning-distance p95).
+  Historical turning-L2 p1/p5/median = 0.756259/0.988164/1.507428;
+  historical correlation p95 = 0.186357. Current seed-14 turning-L2
+  p1/p5/median = 0.597129/0.694514/1.015435 and copy fraction = 263/237688
+  (0.11065%). Increasing epsilon to historical p5 would reject >5% of the current
+  network too. The old negative control therefore FAILS validation; it must not
+  be described as passing or as the expected 87% copies. The user was asked about
+  investigating phase-aligned/template-family detection versus retaining the
+  literal detector and reporting this acceptance conflict.
+
+No acceptance threshold has been relaxed. No item is marked done.
+
+Clarifications accepted during this run:
+- Angle acceptance applies to true confluences; report continuations/splits and
+  literal unfiltered angles separately. A receiving channel with only one local
+  tributary is still a confluence when contact is inside the receiver.
+- Investigate phase-aligned/template-family copies in addition to the literal test.
+  A 13-station curvature smoothing window, phase registration and mirrored-bank
+  matching catches 16/240 old pairs (6.667%) and 190/190 noisy synthetic pairs
+  (100%); current db78343 rates remain below 5%. Literal results are retained.
+- DO NOT tune topology or density in this pass. Keep the existing Rb and density
+  failures failing in the full runner, labeled BASELINE, and report changes.
+  The receiver-choice experiment was reverted. Current basin topology matches
+  db78343. Do not claim that the full runner is entirely green.
+
+Completed first failing runs (before generator edits):
+- `py checks/river_junctions.py --output checks/a2-baseline-junctions.json`: exit 1,
+  five seeds, 5,531 unfiltered connections. Pooled mean/SD/min/under25 at 0.1 mi:
+  19.212/23.141/0.06536/77.924%; at 0.25 mi:
+  33.275/26.989/0.002055/43.663%. Each connection's raw/sample/final values retained.
+- Clarified confluence-only check on saved db78343 seed 14: exit 1, 402 joins,
+  mean 37.243/41.449 degrees at 0.1/0.25 mi. See
+  `checks/a2-baseline-confluences.json` (all five seeds).
+- Literal copy check: exit 1 on five seeds because the historical control was not
+  detected, despite current-network copy fractions below 5%. Before family matching:
+  `checks/a2-baseline-copies.json`; after detector investigation on unchanged
+  geometry: `checks/a2-baseline-copy-families.json`.
+- Corrected spacing scan on saved db78343 geometry: FAIL, five seeds, exact segment
+  distances, clipped window, actual local curvature half-waves and junction pockets.
+  `checks/a2-baseline-spacing-v2.json` supersedes the preliminary spacing JSONs.
+  Violating reach-pair counts (14/30/31/7/52): 93/108/102/94/87.
+
+Full db78343 run: `check-results/20261114-230400-882896/summary.md` (exit 1).
+Quick db78343 run: `check-results/20261114-225615-136031/summary.md` (exit 0).
+Meander and valley checks pass on 14/30/31 in that full baseline. Shuffled 3-mi
+chunks match under PYTHONHASHSEED 1 and 2 (20 features).
+
+### Known baseline failures: topology and density (not part of fixes 4-6)
+
+Per-basin N3/N4 mean 5.596; range 2.80-10.375. Values outside [3,5] remain known
+failures. Full values and higher-order ratios are in `checks/a2-baseline-item-a.json`.
+
+| Seed | db78343 density (mi/sq mi) | db78343 N3/N4 by basin | Known N3/N4 outliers |
+|---|---:|---|---|
+| 13 | 1.574229516 | -1:-1: 3.53333; 0:-1: 3; 0:0: 7.9 | 0:0: 7.9 |
+| 14 | 1.395387381 | -1:-1: 10.375; 0:-1: 2.8; 0:0: 4.5 | -1:-1: 10.375; 0:-1: 2.8 |
+| 30 | 1.435789956 | -1:-1: 3.31579; 0:0: 9.16667 | 0:0: 9.16667 |
+| 31 | 0.887656340 | 0:0: 4.55556; 1:-1: 9; 1:0: 4.21429 | 1:-1: 9 |
+| 46 | 1.488796695 | -1:-1: 5.11765; 0:0: 5.26667 | -1:-1: 5.11765; 0:0: 5.26667 |
+
+Seed 13 density 1.574229516 is the known per-seed density failure (target 0.8-1.5).
+
+
+## Part 4: junction angles ? complete
+
+No drainage topology changes. The receiver-choice experiment was reverted.
+The old 30-ft pin was lost upstream, and collision fallbacks discarded even that
+approach. The 20 lowest *confluences* on db78343 seed 14 average raw chord angle
+5.867 degrees, candidate sample 62.585 degrees, finished 0.25-mi angle 1.672 degrees.
+The literal 20-lowest downstream connections, including splits, average
+1.508/69.276/0.167 degrees. Thus both shallow raw chords and the short-lived pin
+contribute; geometry now holds an approach instead of rerouting the tree.
+
+Pin the receiving start and incoming end over 0.3 mi, with a monotone chord-graph
+blend so repair cannot fold the reach. Follow short receivers through their actual
+continuations when calculating 0.1/0.25-mi directions. Apply pins downstream first,
+retain them in every collision candidate, then refresh finished receiver directions.
+Thin creek blends lengthen when needed to preserve the width-scaled amplitude cap.
+Non-outlet trunk wavelength base is 10.5 widths to retain the 10-14 width measured
+range after the longer approach windows. Outlet relief geometry is unchanged.
+Canonical confluence inflow metadata prevents the meander check from misclassifying
+an actual confluence as a continuation when another inflow is outside the window;
+its 35-degree true-continuation limit is unchanged. Finished-map verification now
+shares the arc-length metric instead of reading the last stub back.
+
+A pytest failure exposed parallel/zero-delta segments falling through the rectangle
+clipper into division by zero. That failed run is retained in
+`check-results/a2-part4-approved-pytest.log`; the clipper now continues past those
+planes. Final `py -m pytest -q`: **114 passed in 97.86 s**.
+All five fresh-generation junction audits pass. Meander and valley audits pass on
+14/30/31, including zero self-intersections/reversals/kinks and width-cap violations.
+After metrics with every connection: `checks/a2-part4-metrics.json`.
+
+Cells below are mean / SD / percent under 25 / minimum, in degrees except percent.
+
+| Seed | 0.1 mi before | 0.1 mi after | 0.25 mi before | 0.25 mi after |
+|---|---|---|---|---|
+| 14 | 37.243 / 29.673 / 41.542% / 0.110 | 67.499 / 21.456 / 0.000% / 25.069 | 41.449 / 30.882 / 39.552% / 0.212 | 68.353 / 21.089 / 0.000% / 35.000 |
+| 30 | 39.186 / 29.764 / 38.824% / 0.184 | 68.830 / 20.972 / 0.000% / 25.761 | 43.621 / 33.287 / 34.353% / 0.144 | 69.712 / 20.403 / 0.000% / 35.000 |
+| 31 | 37.821 / 28.907 / 39.518% / 0.516 | 68.609 / 21.375 / 0.000% / 25.152 | 42.180 / 31.858 / 35.904% / 0.040 | 69.329 / 21.138 / 0.000% / 35.000 |
+| 7 | 39.116 / 28.609 / 40.519% / 0.065 | 67.687 / 23.310 / 0.000% / 25.258 | 41.608 / 31.317 / 37.143% / 0.270 | 68.943 / 22.204 / 0.000% / 35.000 |
+| 52 | 39.951 / 30.211 / 37.852% / 0.075 | 66.873 / 22.260 / 0.000% / 25.296 | 42.126 / 31.163 / 35.038% / 0.006 | 67.533 / 21.634 / 0.000% / 35.000 |
+
+Pooled after: 0.1 mi: 67.923 / 21.873 / 0.000% / 25.069; max 10-degree bin 18.24%; 0.25 mi: 68.794 / 21.294 / 0.000% / 35.000; max 10-degree bin 18.54%.
+
 Start: `6725de2` (v0.10) on `python-test/spawner`. Push only that branch.
 Baseline before any A2 edit: `py -m pytest -q` 112 passed in 59.94s.
 `py checks/run_all.py --quick` passed in 44.68s (seed 13, 9 mi: entropy 0.884,

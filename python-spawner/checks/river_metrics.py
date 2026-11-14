@@ -1,5 +1,6 @@
 """Five-seed finished-map river measurements."""
 from collections import Counter
+import json
 import math
 import statistics
 import sys
@@ -171,6 +172,37 @@ def run(seeds=(13, 14, 30, 31, 46), quick=False, progress=print):
                                          f"order-1 width {min(sample['order1_width_ft'] or [0]):.2f}-{max(sample['order1_width_ft'] or [0]):.2f} ft; "
                                          f"largest trunk {max(sample['trunk_width_ft'] or [0]):.2f} ft; width violations {len(sample['width_rule_violations'])}"),
                             'target': 'entropy >=0.8; E-W <=30%; order-1 width 8-15 ft; largest trunk 100-150 ft; confluence width rule'})
+    if not quick:
+        baseline = json.loads((ROOT/'checks'/'a2-baseline-item-a.json').read_text(encoding='utf-8'))['per_seed']
+        outside = lambda value: max(.8-value, value-1.5, 0)
+        density_comparison = {}
+        for sample in per_seed:
+            seed = sample['seed']; value = sample['density']; before = baseline.get(str(seed), {}).get('density')
+            known = before is not None and outside(before)>0 and outside(value)<=outside(before)+1e-9
+            name = ('BASELINE: ' if known else '') + f'stream density seed {seed} 0.8-1.5 mi/mi2'
+            passed = .8<=value<=1.5
+            measured = f'db78343 {before}; current {value:.9f}'
+            results.append(dict(name=name,passed=passed,measured=measured,target='per-seed density 0.8-1.5; known baseline failures remain failures'))
+            density_comparison[str(seed)] = dict(before=before,after=value,known_baseline=known)
+            if not passed:
+                failures.append(dict(check=name,seed=seed,coordinates=[0,0],feature_ids=[],message=measured))
+        before_rb = {f'{seed}:{key[:-6]}':value for seed,data in baseline.items()
+                     for key,value in data['rb'].items() if key.endswith(':N3/N4')}
+        rb_not_worse = all(key in before_rb and max(3-value,value-5,0)<=max(3-before_rb[key],before_rb[key]-5,0)+1e-9
+                           for key,value in order34_by_basin.items())
+        for result in results:
+            if result['name']=='mean per-basin N3/N4 Rb 3-5' and not result['passed'] and rb_not_worse:
+                result['name']='BASELINE: '+result['name']
+                result['measured']+='; db78343 mean 5.596; known failure'
+        for failure in failures:
+            if failure['check']=='mean per-basin N3/N4 Rb 3-5' and rb_not_worse:
+                failure['check']='BASELINE: '+failure['check']
+        summary['density_before_after']=density_comparison
+        summary['rb_before_after']={key:dict(before=before_rb.get(key),after=value) for key,value in order34_by_basin.items()}
+        results.append(dict(name='Rb outliers no worse than db78343',passed=rb_not_worse,
+                            measured=str(summary['rb_before_after']),target='do not increase any measured N3/N4 outlier'))
+        if not rb_not_worse:
+            failures.append(dict(check='Rb regression',seed=list(seeds),coordinates=[0,0],feature_ids=[],message=str(summary['rb_before_after'])))
     return results, {'river_metrics': summary}, failures
 
 

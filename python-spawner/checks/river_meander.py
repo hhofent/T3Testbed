@@ -196,6 +196,9 @@ def _continuation_kinks(features, step):
         if len(incoming) != 1 or len(outgoing) != 1:
             continue
         before, after = incoming[0], outgoing[0]
+        # A window can omit another inflow at a confluence outside its border.
+        if after.get('_confluence_inflows', 1) > 1:
+            continue
         if before is after or after.get('id') != before.get('downstream'):
             continue
         left = _resample(before['points'], step)

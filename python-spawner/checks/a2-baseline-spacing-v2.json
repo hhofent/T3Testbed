@@ -1,0 +1,126 @@
+{
+  "source_revision": "db78343",
+  "window_mi": [
+    -20,
+    -20,
+    40,
+    40
+  ],
+  "per_seed": {
+    "14": {
+      "violations": 93,
+      "different_channel_pairs": 93,
+      "same_reach_segment_pairs": 0,
+      "worst_pair": {
+        "ids": [
+          "river:0:-1:edge:8:-10",
+          "river:0:-1:edge:8:-11:part:1"
+        ],
+        "coordinates_mi": [
+          [
+            16.077418023163755,
+            -7.9131395030571525
+          ],
+          [
+            16.079263277437146,
+            -7.914887834412767
+          ]
+        ],
+        "distance_mi": 0.002541972828825379,
+        "required_mi": 0.4
+      }
+    },
+    "30": {
+      "violations": 108,
+      "different_channel_pairs": 108,
+      "same_reach_segment_pairs": 0,
+      "worst_pair": {
+        "ids": [
+          "river:0:1:edge:1:15:part:1",
+          "river:0:1:edge:2:15"
+        ],
+        "coordinates_mi": [
+          [
+            -9.678965933553124,
+            19.596032852962395
+          ],
+          [
+            -9.678965933553124,
+            19.596032852962395
+          ]
+        ],
+        "distance_mi": 0.0,
+        "required_mi": 0.4
+      }
+    },
+    "31": {
+      "violations": 102,
+      "different_channel_pairs": 102,
+      "same_reach_segment_pairs": 0,
+      "worst_pair": {
+        "ids": [
+          "river:0:0:edge:-1:0:part:1",
+          "river:0:0:edge:-2:0"
+        ],
+        "coordinates_mi": [
+          [
+            -2.3006738824435717,
+            -0.44493675498765284
+          ],
+          [
+            -2.3006448265663253,
+            -0.4451591610807764
+          ]
+        ],
+        "distance_mi": 0.00022429604156346398,
+        "required_mi": 0.4
+      }
+    },
+    "7": {
+      "violations": 94,
+      "different_channel_pairs": 94,
+      "same_reach_segment_pairs": 0,
+      "worst_pair": {
+        "ids": [
+          "river:0:0:edge:-2:-2",
+          "river:0:0:edge:-3:-2"
+        ],
+        "coordinates_mi": [
+          [
+            -2.3774990663992592,
+            -3.1417681878251567
+          ],
+          [
+            -2.37926475900011,
+            -3.1429779285124413
+          ]
+        ],
+        "distance_mi": 0.0021403604582337847,
+        "required_mi": 0.4
+      }
+    },
+    "52": {
+      "violations": 87,
+      "different_channel_pairs": 87,
+      "same_reach_segment_pairs": 0,
+      "worst_pair": {
+        "ids": [
+          "river:-1:0:edge:-12:11",
+          "river:outlet:-1:0"
+        ],
+        "coordinates_mi": [
+          [
+            -19.402996407665952,
+            10.890498785988967
+          ],
+          [
+            -19.400704647812802,
+            10.889389710227537
+          ]
+        ],
+        "distance_mi": 0.0025460189058808228,
+        "required_mi": 0.4
+      }
+    }
+  }
+}

@@ -186,6 +186,7 @@ def river_length_in_rect(streams,rect):
    for p,q in ((-dx,a[0]-x),(dx,x+w-a[0]),(-dy,a[1]-y),(dy,y+h-a[1])):
     if p==0:
      if q<0: lo,hi=1,0; break
+     continue
     t=q/p
     if p<0: lo=max(lo,t)
     else: hi=min(hi,t)
@@ -232,19 +233,12 @@ def river_geometry_metrics(seed,rect):
   if len(upstream)>=2:
    low=max(upstream); high=1.05*math.sqrt(upstream[0]**2+upstream[1]**2)
    if not low-1e-6<=receiver_width<=high+1e-6: width_violations.append((rid,low,receiver_width,high))
-  if len(group)<2 and not any(f.get('stream_order',3)<receiver.get('stream_order',3) for f in group): continue
-  if math.dist(receiver['points'][idx],point)>.01: continue
-  if idx+1<len(receiver['points']): a,b=point,receiver['points'][idx+1]
-  else:
-   nxt=by_id.get(receiver.get('downstream'))
-   if nxt is None: continue
-   a,b=point,nxt['points'][1]
-  for f in group:
-   u=(point[0]-f['points'][-2][0],point[1]-f['points'][-2][1]); v=(b[0]-a[0],b[1]-a[1])
-   den=math.hypot(*u)*math.hypot(*v)
-   if not den: continue
-   angle=math.degrees(math.acos(max(-1,min(1,(u[0]*v[0]+u[1]*v[1])/den))))
-   joins.append(angle); angle_bins[min(9,int(angle//10))]+=1; below+=angle<25
+ # Measure the finished paths over real arc length, including interior contacts.
+ from river_geometry import junction_metrics
+ junctions=junction_metrics(streams,seed,rect)
+ joins=[r['0.25'] for r in junctions['joins'] if r['connection']=='confluence']
+ angle_bins=[sum(i<=angle<i+10 for angle in joins) for i in range(0,181,10)]
+ below=sum(angle<25 for angle in joins)
  # Unit-normalized turning-function signatures; remove starting bearing and
  # compare source reaches at 32 equal arc-length stations.
  signatures=[]
@@ -279,6 +273,8 @@ def river_geometry_metrics(seed,rect):
   'sinuosity_median':statistics.median(lengths) if lengths else 0,'sinuosity_p10':p10,'sinuosity_p90':p90,'sinuosity_spread':p90-p10,'bearing_entropy':entropy,
   'ewest_fraction':ewest/bearing_total if bearing_total else 0,'order1_width_ft':[f['width']/FT(1) for f in streams if f.get('stream_order')==1],
   'trunk_width_ft':basin_trunks,'order_counts':order_counts,'width_rule_violations':width_violations,
+  'junction_01_metrics':junctions['0.1'],'junction_025_metrics':junctions['0.25'],
+  'junction_continuations':junctions['continuations'],'junction_unfiltered':junctions['unfiltered'],
   'junction_angles':joins,'junction_mean':statistics.mean(joins) if joins else 0,
   'junction_sd':statistics.pstdev(joins) if joins else 0,'junction_below25_fraction':below/len(joins) if joins else 0,
   'junction_bin_max_fraction':max(angle_bins)/len(joins) if joins else 0,'copy_fraction':close/pairs if pairs else 0,'copy_close':close,'copy_pairs':pairs,'copy_epsilon':eps,'copy_distances':copy_distances,
