@@ -32,7 +32,7 @@ def rail_lanes(seed,rect):
   yield lane,x,along
 
 @lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
-def _tile(seed,tx,ty,serialized):
+def _tile(seed,tx,ty,serialized,detail=True):
  settings=apply_document(Settings(),json.loads(serialized))
  settings.set('region.n_mi',settings.values['world.tile_miles'])
  with applied(settings):
@@ -67,7 +67,7 @@ def _tile(seed,tx,ty,serialized):
    if b[0]<0 or b[1]<0 or b[0]+b[2]>extent or b[1]+b[3]>extent or water_hits(b):
     off=Settings(settings.values).set('stages.towns',False)
     reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,settings=off)
-  results=spawn_region(reg) if option('stages.houses') else {}
+  results=spawn_region(reg) if detail and option('stages.houses') else {}
   out=[]; prefix=f'{tx}:{ty}:'
   def rect(r): return (r[0]+ox,r[1]+oy,r[2],r[3])
   def add(kind,id,r,**kw): out.append(feature(kind,prefix+id,rect=rect(r),**kw))
@@ -87,7 +87,8 @@ def _tile(seed,tx,ty,serialized):
     line=(ty if r['axis']=='h' else tx)*option('world.tile_miles')+r['c']//MILE
     segment=(tx if r['axis']=='h' else ty)*option('world.tile_miles')+along
     if road_type(seed,r['axis'],line,segment) is None: continue
-   add('lots',id,world_rect(pl,spec['width'],spec['depth']),use=spec['kind'])
+   if detail: add('lots',id,world_rect(pl,spec['width'],spec['depth']),use=spec['kind'])
+   elif spec['kind']!='town': add('farms',id,world_rect(pl,spec['width'],spec['depth']),use=spec['kind'])
    plan=results.get(id,{}).get('plan')
    if not plan: continue
    def transform(r):
@@ -101,7 +102,7 @@ def _tile(seed,tx,ty,serialized):
     for i,(x,y) in enumerate(local_markers(plan)):
      x,y=to_world(pl,spec['width'],spec['depth'],x,y)
      add('trees',id+':tree:'+str(i),(x,y,0,0))
-  if reg['town']:
+  if detail and reg['town']:
    for shop in reg['town']['commercial']:
     if shop.get('bldg') and not water_hits(shop['lot']):
      r=shop['bldg']
@@ -137,11 +138,11 @@ def rivers(seed,rect):
    for side in (-1,1):
     yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=[(lane*spacing+side*spacing/2,y),end],width=width/2,flow='south',downstream=f'river:{lane}:{row+1}')
 
-def window(seed,rect,settings=None):
+def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()
  if len(rect)!=4 or any(not math.isfinite(v) for v in rect) or rect[2]<=0 or rect[3]<=0: raise ValueError('Window requires finite x,y and positive width,height')
  with applied(settings):
-  out=list(terrain(seed,rect))+list(rivers(seed,rect))
+  out=(list(terrain(seed,rect)) if detail else [])+list(rivers(seed,rect))
   # Historical section roads are global edges, independent of query or settlement tiles.
   for axis in ('h','v'):
    c0,c1=(rect[1],rect[1]+rect[3]) if axis=='h' else (rect[0],rect[0]+rect[2])
@@ -157,9 +158,9 @@ def window(seed,rect,settings=None):
    for lane,x,_ in rail_lanes(seed,rect):
     for row in range(math.floor(rect[1]/MILE)-1,math.ceil((rect[1]+rect[3])/MILE)+1):
      out.append(feature('rail',f'rail:{lane}:{row}',points=[(x,row*MILE),(x,(row+1)*MILE)],width=option('region.rail_row'),history=['road corridor','rail']))
-  extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles'); serialized=json.dumps(document(settings),sort_keys=True)
+  extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles') if detail else 0; serialized=json.dumps(document(settings),sort_keys=True)
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
-   for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized))
+   for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized,detail))
   filtered={f['id']:f for f in out if intersects(f['bounds'],rect)}
   # A marker is rejected against geometry from every owner, including shared borders.
   blockers=[f for f in out if f['kind'] in ('roads','rail','buildings','driveways')]
@@ -176,12 +177,12 @@ def window(seed,rect,settings=None):
     if any(intersects(r,b['bounds']) for b in candidates.values()): del filtered[id]
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
-COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none'}
+COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655'}
 def svg(scene):
  from html import escape
  x,y,w,h=scene['window']
  out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#f2f1e6"/>']
- order=['contours','rivers','creeks','towns','lots','roads','rail','driveways','buildings','trees']
+ order=['contours','rivers','creeks','towns','lots','roads','rail','driveways','buildings','trees','farms']
  for kind in order:
   for f in scene['features']:
    if f['kind']!=kind: continue
@@ -189,7 +190,9 @@ def svg(scene):
    if kind=='roads': color={'paved':'#525954','gravel':'#b9a17a','dirt':'#9a784c'}[f['surface']]
    title=escape(f['id']+' '+str(f.get('use','')))
    out.append('<g><title>'+title+'</title>')
-   if kind=='trees':
+   if kind=='farms':
+    a,b,c,d=f['rect']; out.append(f'<circle cx="{a+c/2}" cy="{b+d/2}" r="{FT(45)}" fill="{color}"/>')
+   elif kind=='trees':
     a,b,_,_=f['rect']; out.append(f'<circle cx="{a}" cy="{b}" r="{FT(option("world.tree_radius_ft"))}" fill="{color}"/>')
    elif 'rect' in f:
     a,b,c,d=f['rect']; stroke='#b5c0ab' if kind in ('towns','lots') else '#687060'

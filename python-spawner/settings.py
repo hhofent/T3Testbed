@@ -2611,7 +2611,7 @@ for _key,_default,_lo,_hi,_step,_units,_note in [
  ('world.relief_ft',120,20,130,10,'ft','PLACEHOLDER: low rolling hill relief.'),
  ('world.contour_interval_ft',20,5,40,5,'ft','PLACEHOLDER: contour spacing.'),
  ('world.contour_cell_ft',660,330,1320,110,'ft','PLACEHOLDER: globally anchored marching-squares sampling.'),
- ('world.window_miles',3,0.25,12,0.25,'mi','PLACEHOLDER: initial window size and zoom limits.'),
+ ('world.window_miles',10,0.01,96,0.25,'mi','PLACEHOLDER: initial window size and zoom limits.'),
  ('world.halo_tiles',1,1,1,1,'tiles','Fixed ownership halo around query; reference features fit within this halo.'),
 ]: define(_key,_default,_lo,_hi,_step,_units,_note)
 define('world.pan_fraction',0.25,0.1,0.5,0.05,'fraction','PLACEHOLDER: viewport pan distance per button press.')
@@ -2630,4 +2630,4 @@ define('world.river_wave_steps',2,1,6,1,'tributary steps','PLACEHOLDER: trunk me
 define('world.tile_cache_size',128,128,128,1,'tiles','PLACEHOLDER: fixed in-memory LRU capacity; viewport-independent.')
 define('world.rail_draw_ft',4,1,10,1,'ft','PLACEHOLDER: rail drawing stroke; contours use 1 ft and feature outlines 0.3 screen pixels.')
 
-define('world.chunk_miles',1,1,3,1,'mi','Size of independently cached display chunks.')
+define('world.chunk_miles',3,1,12,1,'mi','Size of independently cached display chunks.')
