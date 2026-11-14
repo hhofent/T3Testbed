@@ -28,8 +28,10 @@ Still open in A: individual basin N3/N4 values exceed the 3-5 range even though
 their mean passes; seed 13's 100-sq-mi density is 1.771. The 20/70/10 growth
 labels do not yet control branch topology. Channelized reaches, minimum spacing
 between neighboring river limbs, road/rail clearance and crossing bends, and
-zoom-based meander hiding remain unimplemented or unmeasured. Continue tuning
-and measuring these before calling A complete.
+zoom-based meander hiding remain unimplemented or unmeasured. Direct node-to-node
+edges in seed 13 basin (0,0) measured 464 edges, 1.181-mi minimum, 1.530-mi
+median and 2.644-mi maximum; the 0.6-1.5-mi edge target is not met. Continue
+tuning and measuring these before calling A complete.
 
 ---
 
