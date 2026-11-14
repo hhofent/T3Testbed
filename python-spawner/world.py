@@ -244,7 +244,16 @@ def window(seed,rect,settings=None,detail=True):
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
 COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655'}
-def svg(scene):
+def svg(scene,local=False):
+ if local:
+  # Chromium/Skia clips large absolute coordinates even with a distant viewBox.
+  # Rebase geometry itself, rather than applying a large cancelling transform.
+  x,y,w,h=scene["window"]; scene=copy.deepcopy(scene); scene["window"]=[0,0,w,h]
+  for f in scene["features"]:
+   if "rect" in f:
+    a,b,c,d=f["rect"]; f["rect"]=[a-x,b-y,c,d]
+   for key in ("points","shape"):
+    if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
  from html import escape
  x,y,w,h=scene['window']
  out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#f2f1e6"/>']

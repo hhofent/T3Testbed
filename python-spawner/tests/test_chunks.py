@@ -56,3 +56,16 @@ def test_twenty_miles_negative_coordinates_and_known_payload(tmp_path,monkeypatc
  reused=chunks.request(dict(data,known=known),settings)
  assert not reused['pending'] and all(c['svg'] is None and c['ready'] for c in reused['chunks'])
  assert reused['key'].endswith('-overview')
+
+def test_far_chunk_svg_uses_local_geometry():
+ import world,xml.etree.ElementTree as ET
+ settings=Settings()
+ for seed in (14,2113558218):
+  for distance in (-198,-90,40,90,198):
+   scene=world.window(seed,[distance*MILE,distance*MILE,3*MILE,3*MILE],settings,detail=False)
+   root=ET.fromstring(world.svg(scene,local=True))
+   assert root.attrib['viewBox']==f'0 0 {3*MILE} {3*MILE}'
+   assert len(root)>2
+   for rect in root.findall('.//{*}rect'):
+    assert abs(float(rect.attrib['x']))<10*MILE
+    assert abs(float(rect.attrib['y']))<10*MILE

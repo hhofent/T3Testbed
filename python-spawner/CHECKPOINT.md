@@ -1,5 +1,60 @@
 # Python spawner checkpoint
 
+## Current request, 2026-11-13: fix 1 complete; fixes 2-4 pending
+Started at 01b2368 on python-test/spawner. Read this section before historical
+status below, which describes earlier work and does NOT establish acceptance of
+the latest four reported issues.
+
+Fix 1 root cause: chunk SVG geometry used absolute internal coordinates
+(1 mile = 1,013,760 units). Chromium/Skia silently renders distant SVGs transparent
+even though image.decode() succeeds and HTTP returns full geometry. A 90-mile
+view reproduced Ready + blank decoded SVG. Rebase every chunk's actual geometry
+to a local origin before serialization (not a cancelling SVG transform). Chunk
+cache version is lod-v11-local. Browser town parsing restores absolute positions.
+No rural lot, town, tree, or legacy parity renderer behavior changed.
+
+Inspected real Windows Chromium page console/network: /chunks HTTP 200, no console
+errors; request bodies a few KB, far below controls.max_request_bytes=2 MB.
+Known IDs and image keys agree, visible images survive trimChunkImages, and server
+JOBS protects visible entries even beyond tile_cache_size=128. Those were not the
+cause of the distant transparent geometry. Cold 96 mi does take several minutes
+with the single worker; it eventually reached Ready with all 1024 visible images
+decoded and zero transparent chunks (pixel checks). This latency is not fixed.
+Real page regressionDistantChunks() passed seeds 14 and 2113558218 at (+60,0),
+(-60,0),(0,+60),(0,-60),(198,198) miles. Ready 3/30/48/96 mi views checked.
+Screenshots in artifacts/: fix1-3mi.png, fix1-30mi.png, fix1-48mi.png,
+fix1-96mi.png, fix1-90mi-away.png. These show fix 1, not final LOD/rail/river work.
+Full pytest: 96 passed in 33.17s. Added far SVG local-coordinate regression for
+both seeds at -198,-90,40,90,198 mi. tools/check_images.py regenerated all five
+parity pairs, all byte-identical; no parity artifact diff.
+
+## Exact next step for latest request
+Implement fix 2 (zoom-based line widths) BEFORE fix 3 (straight offset rail,
+square road crossings, remove sideways easing bulges) and fix 4 (nonrepeating
+continuous meanders, downhill joins, no fan seams). Those are NOT completed.
+Read only these files as needed on resume:
+- control.html: imageKey/lod/paintChunks/redrawChunks and encoded SVG image cache.
+- chunks.py: generate/request/identity and local SVG serialization.
+- world.py: svg(), rail_lanes/rail_points, drainage_* / rivers / elevation.
+- tests/test_chunks.py, tests/test_world.py, tests/test_control.py.
+- verification.py: crossing_angles and river_checks.
+- tools/browser_flow.js: browserFlow, regressionZoomPanCache, regressionDistantChunks.
+- tools/check_images.py: five parity regeneration command.
+- control.py and cli.py: loopback server and request limits.
+Run py -3.11 -m pytest python-spawner/tests -q and
+py -3.11 python-spawner/tools/check_images.py. Start a fresh server after Python
+changes: py -3.11 python-spawner/cli.py --serve --port 8001. A server from this
+session may still be listening on 8001; restart it to reload code.
+Potential fix 2 approach: SVG image intrinsic raster size vs CSS chunk size must
+match, otherwise even vector-effect strokes shrink after the SVG is rasterized.
+Consider screen-size-aware serialization/paint, with LOD-aware image identity.
+At 96 mi gravel should drop before paved roads/rail/rivers/towns. Add meaningful
+pixel-width tests and replace screenshots after final changes.
+Commit + push each completed fix only to python-test/spawner, update this file.
+No merge/force push/history rewrite/PR. Unrelated untracked root files untouched.
+
+## Historical checkpoint (superseded where noted above)
+
 ## Status
 Navigation fix: reproduced the zoom-out / pan / zoom-in blank map in the real
 control page. After a large overview/long session, FIFO browser-cache trimming
@@ -105,7 +160,7 @@ Final validation:
 - Find town reaches full detail, next/previous enable after selection, and small
   wheel deltas zoom continuously (0.5 mi -> 0.4950 mi for a -5 wheel delta).
 
-## Exact next step
+## Historical next step
 Latest requested river, road, rail and navigation fixes are complete. User can
 test the pushed python-test/spawner head with
 `py -3.11 python-spawner/cli.py --serve` (restart an older server to load changes).

@@ -29,3 +29,21 @@ async function regressionZoomPanCache() {
  $('zoomOut').click();await ready();$('east').click();await ready();$('zoomIn').click();await ready();
  return {pass:true,level:lod(),images:$('tiles').children.length,cache:chunkImages.size};
 }
+
+// Full browser acceptance, including decoded pixels (a decoded SVG can be blank).
+async function regressionDistantChunks(){
+ const results=[];
+ for(const seed of [14,2113558218])for(const [x,y] of [[60,0],[-60,0],[0,60],[0,-60],[198,198]]){
+  $('seed').value=seed;viewport=[x*mile,y*mile,3*mile,3*mile];queue();
+  const r=revision,start=performance.now();
+  while(settledRevision!==r){if(performance.now()-start>120000)throw Error($('status').textContent);await new Promise(resolve=>setTimeout(resolve,50))}
+  for(const img of $('tiles').children){
+   if(!img.src||img.style.visibility!=='visible')throw Error('Missing distant chunk');await img.decode();
+   const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d');ctx.drawImage(img,0,0,128,128);
+   const d=ctx.getImageData(0,0,128,128).data;
+   if(!d.some((v,i)=>i%4===3&&v))throw Error('Transparent distant SVG');
+  }
+  results.push({seed,x,y,images:$('tiles').children.length});
+ }
+ return results;
+}
