@@ -1,6 +1,25 @@
 # Python spawner checkpoint
 
 ## Status
+Navigation fix: reproduced the zoom-out / pan / zoom-in blank map in the real
+control page. After a large overview/long session, FIFO browser-cache trimming
+could evict the current detail SVG AFTER advertising it to /chunks as known.
+The server correctly omitted its SVG; the page incorrectly settled with a hidden
+tile. Visible image keys are now protected during trimming; stale revisions cannot
+start requests. The same populated-cache sequence failed before (Ready, hidden
+image, missing current cache key) and passes after, with actual HTTP and SVG decode.
+Regression: tools/browser_flow.js regressionZoomPanCache(), plus an automated Node
+check of the shipped cache routine in pytest. New-area negative-coordinate flow
+also passes. Full suite: 95 passed. Node is needed for the browser-script unit test.
+
+Find a town tested in the real page at defaults: found two nearby towns, visited
+at 0.50 mi detail, with next/previous enabled. Seed 31, 36x36 mi sample: five towns,
+nearest-neighbor distances 9.00,9.00,9.03,11.95,17.78 mi. Spacing regression added;
+town layouts and probabilities unchanged. All five regenerated parity PNG pairs
+(seeds 13,14,30,31,46) remain byte-identical. Geometric verifier passes all five
+seeds, including actual paved geometry, drainage, rail angles and overlaps.
+Rural layout code was left alone. No merge, force push or PR.
+
 River fix: canonical endless trunks now have four times as many bends and four
 times the samples. Smooth longitudinal compression produces tight oxbow-like
 hairpins while preserving strict downstream order (no closed/self-crossing loops).
@@ -87,7 +106,10 @@ Final validation:
   wheel deltas zoom continuously (0.5 mi -> 0.4950 mi for a -5 wheel delta).
 
 ## Exact next step
-All requested fixes 1-8 complete. User can test the pushed python-test/spawner
-head with `py -3.11 python-spawner/cli.py --serve`. No merge, force push or PR.
-Unrelated untracked root folders were left untouched. Profiles and manual PNG
-exports are under ignored out/. Do not claim new user acceptance until tested.
+Latest requested river, road, rail and navigation fixes are complete. User can
+test the pushed python-test/spawner head with
+`py -3.11 python-spawner/cli.py --serve` (restart an older server to load changes).
+Run `py -3.11 -m pytest python-spawner/tests -q` for all 95 tests. For the real-page
+cache regression, evaluate tools/browser_flow.js in the page then await
+regressionZoomPanCache(). No merge, force push or PR. Unrelated untracked root
+folders remain untouched. No new user acceptance is claimed.

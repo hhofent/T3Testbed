@@ -8,3 +8,24 @@ async function benchmarkWorld(seed) {
  viewport=[0,0,20*mile,20*mile];t=performance.now();queue();await ready();const firstZoom20miMs=performance.now()-t;viewport=[5*mile,5*mile,10*mile,10*mile];queue();await ready();t=performance.now();zoom(-1);await Promise.all([...document.querySelectorAll('#tiles img[src]')].map(i=>i.decode()));const cachedZoom20miMs=performance.now()-t;await ready();
  return {seed,cold10miMs,cachedPanMs,firstZoom20miMs,cachedZoom20miMs};
 }
+
+// Regression for the cache state left by a large overview or a long pan session.
+// Use the actual controls, HTTP /chunks, LOD switch and image decoding.
+async function regressionZoomPanCache() {
+ const ready=async()=>{const r=revision,start=performance.now();while(settledRevision!==r){if(performance.now()-start>30000)throw Error('Timed out: '+$('status').textContent);await new Promise(resolve=>setTimeout(resolve,30))}const imgs=[...$('tiles').children];if(imgs.some(i=>i.style.visibility!=='visible'||!i.src))throw Error('Ready view has hidden chunks');await Promise.all(imgs.map(i=>i.decode()))};
+ viewport=[0,0,1.8*mile,1.8*mile];queue();await ready();
+ $('zoomOut').click();await ready();$('east').click();await ready();
+ // Preserve the old visible detail chunk as the oldest cache entry. Entries
+ // beyond 256 reproduce what remains after viewing a large overview.
+ const key=viewSignature+':detail:0:0',old=chunkImages.get(key);
+ if(!old)throw Error('Missing regression precondition');
+ const rest=[...chunkImages].filter(([k])=>k!==key);chunkImages.clear();chunkImages.set(key,old);
+ for(const [k,v] of rest)chunkImages.set(k,v);
+ for(let i=0;i<300;i++)chunkImages.set('regression-offscreen:'+i,'unused');
+ $('zoomIn').click();await ready();
+ if(!chunkImages.has(key))throw Error('Evicted visible known detail chunk');
+ // A genuinely new area must also generate, across negative chunk boundaries.
+ viewport=[-13*mile,7*mile,1.8*mile,1.8*mile];queue();await ready();
+ $('zoomOut').click();await ready();$('east').click();await ready();$('zoomIn').click();await ready();
+ return {pass:true,level:lod(),images:$('tiles').children.length,cache:chunkImages.size};
+}

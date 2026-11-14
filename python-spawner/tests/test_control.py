@@ -29,3 +29,23 @@ def test_schema_initial_preset_retains_true_reset_defaults():
  data=schema(Settings({'region.rail_pct':0}))
  assert data['values']['region.rail_pct']==0
  assert data['defaults']['region.rail_pct']>0
+
+
+def test_visible_chunks_survive_cache_trim_in_real_page_script():
+ # Run the shipped browser cache routine, not a Python copy of its logic.
+ import re,subprocess
+ from pathlib import Path
+ page=Path(__file__).resolve().parents[1]/'control.html'
+ source=page.read_text()
+ trim=re.search(r'function trimChunkImages\(size\)\{.*?(?=\nasync function redrawChunks)',source).group()
+ script="""
+ const chunkImages=new Map();const viewport=[.9,0,1.8,1.8];
+ const imageKey=(x,y)=>'detail:'+x+':'+y;
+ chunkImages.set('detail:0:0','known visible SVG');
+ for(let i=0;i<500;i++)chunkImages.set('overview:'+i,'old SVG');
+ """+trim+"""
+ trimChunkImages(3);
+ if(chunkImages.get('detail:0:0')!=='known visible SVG')throw Error('visible detail evicted');
+ if(chunkImages.size!==256)throw Error('cache unbounded');
+ """
+ subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)

@@ -100,7 +100,7 @@ LABELS.update({
  'world.tree_radius_ft':'Radius of tree trunk markers',
  'world.hill_wavelength_miles':'Reference hill wavelength',
  'world.river_wander_miles':'Sideways meander distance of rivers',
- 'world.river_wave_steps':'Tributary intervals per river meander',
+ 'world.river_wave_steps':'Quarter-intervals per river meander',
  'world.tile_cache_size':'Settlement tiles retained in memory',
  'world.rail_draw_ft':'Width of rail strokes on the map',
  'world.south_drop_ft':'Terrain elevation drop toward the south',

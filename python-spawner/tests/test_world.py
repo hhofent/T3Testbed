@@ -132,3 +132,12 @@ def test_long_winding_tributaries_and_tight_trunks_across_chunks():
   by_id={f['id']:f for f in streams}
   for f in trunk:
    if f['downstream'] in by_id: assert f['points'][-1]==by_id[f['downstream']]['points'][0]
+
+
+def test_towns_remain_spaced_at_default_world_settings():
+ import math
+ scene=window(31,(-18*MILE,-18*MILE,36*MILE,36*MILE),Settings(),detail=False)
+ centers=[(f['rect'][0]+f['rect'][2]/2,f['rect'][1]+f['rect'][3]/2) for f in scene['features'] if f['kind']=='towns']
+ assert 3<=len(centers)<=12
+ nearest=[min(math.dist(a,b)/MILE for b in centers if b!=a) for a in centers]
+ assert min(nearest)>=3 and max(nearest)<=25
