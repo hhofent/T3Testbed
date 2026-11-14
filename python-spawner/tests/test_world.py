@@ -101,3 +101,15 @@ def test_paved_roads_never_missing_even_at_maximum_loss():
   for axis in ('h','v'):
    for line in range(-26,28,9):
     assert all(road_type(31,axis,line,segment)=='paved' for segment in range(-100,100))
+
+
+def test_rail_approaches_are_smooth_and_crossings_square():
+ import math
+ from world import rail_points
+ from settings import applied
+ with applied(Settings({'world.rail_diagonal_pct':100,'world.rail_bend_miles':.5})):
+  points=rail_points(31,0,0,5)
+  headings=[math.atan2(b[0]-a[0],b[1]-a[1]) for a,b in zip(points,points[1:])]
+  assert max(abs(b-a) for a,b in zip(headings,headings[1:]))<math.radians(15)
+  assert headings[0]==headings[-1]==0
+  assert points[-1]==rail_points(31,0,0,6)[0]

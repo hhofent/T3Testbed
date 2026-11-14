@@ -1,6 +1,10 @@
 # Python spawner checkpoint
 
 ## Status
+Rail fix: replaced five-point sawtooth deviations with sampled C2 eased curves,
+with straight square approaches at every section crossing. Regression checks
+heading changes, exact crossing tangents and shared endpoints; 10 world tests pass.
+
 Road fix: paved corridors are selected before missing-edge sampling. Only gravel
 and Level B roads can be missing. Overview road strokes have a 0.9 px minimum
 (previously 0.3 px), preserving true road width at detail. Added actual paved
