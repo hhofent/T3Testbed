@@ -103,7 +103,7 @@ def test_diagonal_and_parallel_rail_has_square_road_crossings():
  with applied(Settings({'world.rail_enabled_pct':100,'world.rail_diagonal_pct':100})):
   scene=window(31,(-MILE,-MILE,6*MILE,12*MILE),Settings({'world.rail_enabled_pct':100,'world.rail_diagonal_pct':100}),detail=False)
   rails=[f for f in scene['features'] if f['kind']=='rail']
-  assert all(a[0]==b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
+  assert {f['axis'] for f in rails}=={'h','v'}
   assert any(a[0]==b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
   angles=crossing_angles(scene['features'])
   assert angles and min(angles)>=45
@@ -179,8 +179,8 @@ def test_rail_approaches_are_smooth_and_crossings_square():
  with applied(Settings({'world.rail_diagonal_pct':100,'world.rail_bend_miles':.5})):
   points=rail_points(31,0,0,5)
   headings=[math.atan2(b[0]-a[0],b[1]-a[1]) for a,b in zip(points,points[1:])]
-  assert all(heading==0 for heading in headings)
-  assert headings[0]==headings[-1]==0
+  assert max(abs(h) for h in headings)<math.radians(30)
+  assert abs(headings[0])<.01 and abs(headings[-1])<.01
   assert points[-1]==rail_points(31,0,0,6)[0]
 
 
@@ -337,3 +337,29 @@ def test_bridges_cover_every_paved_rail_and_gravel_water_crossing():
   first=bridges(simple); second=bridges(list(reversed(simple)))
   assert sorted(first,key=lambda f:f['id'])==sorted(second,key=lambda f:f['id'])
   assert len(first)==2
+
+
+def test_rail_density_directions_curvature_and_corrected_crossing_angles():
+ import math
+ from world import rail_lanes,rail_points
+ from verification import crossing_angles
+ from settings import applied
+ with applied(Settings()):
+  rect=(-200*MILE,-200*MILE,400*MILE,400*MILE)
+  miles=0; counts={}
+  for axis in ('h','v'):
+   lanes=[(k,c) for k,c,_ in rail_lanes(31,rect,axis) if -200*MILE<=c<200*MILE]
+   counts[axis]=len(lanes)
+   miles+=sum(sum(math.dist(a,b) for a,b in zip(rail_points(31,k,c,0,axis),rail_points(31,k,c,0,axis)[1:]))/MILE*400 for k,c in lanes)
+  density=miles/(400*400)*400
+  assert all(counts.values()) and 23<=density<=35,density
+  for axis in ('h','v'):
+   points=rail_points(31,0,MILE*1.25,4,axis)
+   assert points[-1]==rail_points(31,0,MILE*1.25,5,axis)[0]
+   assert len({round(p[0] if axis=='v' else p[1]) for p in points})>4
+  for seed in (14,31,46):
+   settings=Settings({'world.rail_enabled_pct':100,'stages.houses':False})
+   scene=window(seed,(-3*MILE,22*MILE,8*MILE,5*MILE),settings,detail=False)
+   angles=crossing_angles(scene['features'])
+   assert angles and min(angles)>=45,(seed,min(angles))
+   assert sum(a>=75 for a in angles)/len(angles)>=.8

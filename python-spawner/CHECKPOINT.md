@@ -1,3 +1,25 @@
+# Item 5 complete, 2026-11-14
+
+Rail has N-S and E-W route owners with seeded activation and gentle C2 bends
+between straight crossing approaches. Horizontal rail approaches align with the
+corrected N-S road coordinates; vertical rail aligns with E-W section lines.
+Both share exact canonical section endpoints. Default spacing is 20 mi at 70%
+activation in both directions, targeting roughly 29 rail route-mi per 400 sq mi;
+a 400x400-mile regression checks the measured range. No diagonal is forced.
+Rail runs beside the road corridor, leaving room for paved correction curves.
+Industrial town siting follows in item 6. Bridge generation covers both axes.
+
+Fresh full run: 106 passed in 41.71s. Tests check both directions, density,
+curvature and shared endpoints, plus >=45-degree crossings and >=80% within
+15 degrees of square for three seeds around correction boundaries. Updated old
+straight-only expectations to the newly requested gentle curves. Cache v19.
+
+Completed: 1 e7f582d / edc4b44, 2 f0164fd, 3 b94b173, 4 f834d61; this commit 5.
+NEXT item 6 towns, then 7 farmsteads. Shared PNG/browser style and world parity
+rebaseline still due, as are final real-browser captures. Read only files named
+below. Push only python-test/spawner, no PR/merge/history rewrite.
+
+--- Prior checkpoint ---
 # Item 4 complete, 2026-11-14
 
 Bridge decks now belong to (carrier road/rail ID, canonical river segment ID).

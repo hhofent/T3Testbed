@@ -89,17 +89,27 @@ def road_type(seed,axis,line,segment):
   if H(seed,'missing-cycle',bx,by)%10000<option('world.missing_pct')*800 and H(seed,'missing-edge',bx,by)%4==candidate: return None
  return 'dirt' if H(seed,'surface',axis,line,segment)%10000 < option('world.level_b_pct')*100 else 'gravel'
 
-def rail_lanes(seed,rect):
+def rail_lanes(seed,rect,axis='v'):
  spacing=option('world.rail_spacing_miles')*MILE
- for lane in range(math.floor(rect[0]/spacing)-1,math.ceil((rect[0]+rect[2])/spacing)+1):
-  if H(seed,'rail-history',lane)%100>=option('world.rail_enabled_pct'): continue
+ c0,c1=(rect[0],rect[0]+rect[2]) if axis=='v' else (rect[1],rect[1]+rect[3])
+ for lane in range(math.floor(c0/spacing)-1,math.ceil(c1/spacing)+1):
+  history=H(seed,'rail-history',lane) if axis=='v' else H(seed,'rail-history',axis,lane)
+  if history%100>=option('world.rail_enabled_pct'): continue
   along=lane*spacing+MILE
-  x=along+option('region.row')//2+option('region.rail_gap')+option('region.rail_row')//2
-  yield lane,x,along
+  # Keep gentle curves clear of parallel roads and paved correction corners.
+  yield lane,along+.25*MILE,along
 
-def rail_points(seed,lane,x,row):
- # The corridor has one fixed offset: every section and chunk shares this line.
- return [(x,row*MILE),(x,(row+1)*MILE)]
+def rail_points(seed,lane,x,row,axis='v'):
+ shift=correction_shift(seed,math.floor(x/(24*MILE))) if axis=='h' else 0
+ amplitude=option('world.rail_bend_miles')*.1*MILE
+ sign=1 if H(seed,'rail-curve',axis,lane,row)%2 else -1
+ pts=[]
+ for i in range(17):
+  t=i/16; along=(row+t)*MILE+shift
+  bend=math.sin(math.pi*(t-.2)/.6)**4 if .2<t<.8 else 0
+  lateral=x+sign*amplitude*bend
+  pts.append((along,lateral) if axis=='h' else (lateral,along))
+ return pts
 
 @lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
 def _tile(seed,tx,ty,serialized,detail=True):
@@ -122,7 +132,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
    for lane,x,along in rail_lanes(seed,(ox,oy,extent,extent)):
     local=along-ox+correction_shift(seed,math.floor(oy/(24*MILE)))
     if not MILE//2<=local<=extent-MILE//2: continue
-    x-=ox
+    x=round(x-ox)
     return dict(pts=[(x,0),(x,extent)],w=option('region.rail_row'),along=f'v{local//MILE}',along_c=local,x=x,side=1,parallel=(0,extent),crossings=[],site=(local,ew['c']))
    return None
   buffer=FT(max(option('region.creek_buf')))
@@ -391,9 +401,11 @@ def window(seed,rect,settings=None,detail=True):
      r=(lo,c-option('region.row')/2,length,option('region.row')) if axis=='h' else (c-option('region.row')/2,lo,option('region.row'),length)
      out.append(feature('roads',f'road:{axis}:{line}:{segment}',rect=r,surface=surface,history=['wagon trail','upgraded','paved'] if surface=='paved' else ['survey grid','dirt',surface],axis=axis))
   if option('stages.rail'):
-   for lane,x,_ in rail_lanes(seed,rect):
-    for row in range(math.floor(rect[1]/MILE)-1,math.ceil((rect[1]+rect[3])/MILE)+1):
-     out.append(feature('rail',f'rail:{lane}:{row}',points=rail_points(seed,lane,x,row),width=option('region.rail_row'),history=['road corridor','rail']))
+   for axis in ('v','h'):
+    lo,hi=(rect[1],rect[1]+rect[3]) if axis=='v' else (rect[0],rect[0]+rect[2])
+    for lane,c,_ in rail_lanes(seed,rect,axis):
+     for row in range(math.floor(lo/MILE)-1,math.ceil(hi/MILE)+1):
+      out.append(feature('rail',f'rail:{axis}:{lane}:{row}',points=rail_points(seed,lane,c,row,axis),width=option('region.rail_row'),axis=axis,route_id=f'rail:{axis}:{lane}',history=['drainage','survey roads','rail']))
   extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles') if detail else 0; serialized=json.dumps(document(settings),sort_keys=True)
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
    for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized,detail))

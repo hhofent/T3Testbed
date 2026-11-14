@@ -16,7 +16,7 @@ CACHE=Path(__file__).parent/'out'/'cache'
 
 def identity(settings):
  values={k:v for k,v in settings.values.items() if not k.startswith(('controls.','verify.')) and k not in ('world.window_miles','world.pan_fraction','world.zoom_factor')}
- return hashlib.sha256(('lod-v18-owned-bridges'+json.dumps(plain(values),sort_keys=True)).encode()).hexdigest()[:24]
+ return hashlib.sha256(('lod-v19-bidirectional-rail'+json.dumps(plain(values),sort_keys=True)).encode()).hexdigest()[:24]
 
 def generate(seed,x,y,settings,path,detail=True):
  size=settings.values['world.chunk_miles']*MILE
