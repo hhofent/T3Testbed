@@ -60,11 +60,15 @@ static class Program
         }
 
         // Apply profile if specified
-        string profileName = GetString(args, "--profile", "");
-        if (!string.IsNullOrEmpty(profileName))
+        for (int i = 0; i < args.Length; i++)
         {
-            config = ConfigProfiles.ApplyProfile(profileName, config);
+            if (args[i] != "--profile" && args[i] != "--preset") continue;
+            if (++i >= args.Length || args[i].StartsWith("--", StringComparison.Ordinal))
+                throw new ArgumentException("--preset/--profile requires a name.");
+            foreach (string name in args[i].Split(',')) config = ConfigProfiles.ApplyProfile(name, config);
         }
+
+        ConfigOverrides.ApplyArguments(config, args);
 
         // Apply conditional rules
         config.ApplyConditionalRules();
@@ -257,6 +261,13 @@ static class Program
 
     static int Main(string[] args)
     {
+        try { return Run(args); }
+        catch (ArgumentException ex) { Console.Error.WriteLine(ex.Message); return 2; }
+    }
+
+    static int Run(string[] args)
+    {
+        if (args.Contains("--selftest")) return SelfTests.Run();
         var config = LoadConfig(args);
 
         if (args.Contains("--probe-rail"))

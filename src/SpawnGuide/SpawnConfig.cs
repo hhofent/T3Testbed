@@ -371,6 +371,7 @@ namespace SpawnGuide
         [JsonPropertyName("walkOffsetFromLaneFt")] public float WalkOffsetFromLane { get; set; } = 7f;
 
         // Shop / lean-to
+        [Range(0, 1)]
         [JsonPropertyName("shopChance")] public float ShopChance { get; set; } = 0.4f;
         [JsonPropertyName("shopWidthFt")] public FloatDistribution ShopWidth { get; set; } = FloatDistribution.Normal(22f, 3f, 16f, 30f);
         [JsonPropertyName("shopDepthFt")] public FloatDistribution ShopDepth { get; set; } = FloatDistribution.Normal(28f, 4f, 20f, 40f);
@@ -869,6 +870,7 @@ namespace SpawnGuide
         [JsonPropertyName("colorMedianEdge")] public string ColorMedianEdge { get; set; } = "#5f6b4c";
 
         // Viewer
+        [Range(1, 300)]
         [JsonPropertyName("viewerMaxZoom")] public int ViewerMaxZoom { get; set; } = 300;
         [JsonPropertyName("viewerNiceSpanLadderFt")] public int[] ViewerNiceSpanLadder { get; set; } = new[]
         { 150, 300, 600, 1200, 2400, 4800, 9600, 19200, 38400, 76800, 153600 };
