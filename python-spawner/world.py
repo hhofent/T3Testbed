@@ -94,12 +94,22 @@ def _tile(seed,tx,ty,serialized,detail=True):
    def transform(r):
     a=to_world(pl,spec['width'],spec['depth'],r[0],r[1]); b=to_world(pl,spec['width'],spec['depth'],r[0]+r[2],r[1]+r[3])
     return (min(a[0],b[0]),min(a[1],b[1]),abs(a[0]-b[0]),abs(a[1]-b[1]))
-   for i,room in enumerate(plan.rooms): add('buildings',id+':room:'+str(i),transform(room.rect()),use=room.kind)
-   for i,(_,r) in enumerate(plan.site.get('farm',[])): add('buildings',id+':farm:'+str(i),transform(r),use='farm')
-   for i,r in enumerate(plan.site.get('drive',[])): add('driveways',id+':drive:'+str(i),transform(r))
+   rural=None
+   if spec['kind']!='town':
+    from rural import layout
+    rural=layout(seed,spec,plan)
+    for f in out:
+     if f['id']==prefix+id and f['kind']=='lots': f['shape']=[to_world(pl,spec['width'],spec['depth'],a,b) for a,b in rural['shape']]; f['shape']=[(a+ox,b+oy) for a,b in f['shape']]
+   for i,room in enumerate(plan.rooms):
+    r=room.rect()
+    if rural: r=(r[0]+rural['offset'][0],r[1]+rural['offset'][1],r[2],r[3])
+    add('buildings',id+':room:'+str(i),transform(r),use=room.kind)
+   farms=rural['buildings'] if rural else plan.site.get('farm',[])
+   for i,(use,r) in enumerate(farms): add('buildings',id+':farm:'+str(i),transform(r),use=use)
+   for i,r in enumerate(rural['driveways'] if rural else plan.site.get('drive',[])): add('driveways',id+':drive:'+str(i),transform(r))
    if option('stages.trees'):
     from trees import local_markers
-    for i,(x,y) in enumerate(local_markers(plan)):
+    for i,(x,y) in enumerate(rural['trees'] if rural else local_markers(plan)):
      x,y=to_world(pl,spec['width'],spec['depth'],x,y)
      add('trees',id+':tree:'+str(i),(x,y,0,0))
   if detail and reg['town']:
@@ -209,6 +219,8 @@ def svg(scene):
     a,b,c,d=f['rect']; out.append(f'<circle cx="{a+c/2}" cy="{b+d/2}" r="{FT(45)}" fill="{color}"/>')
    elif kind=='trees':
     a,b,_,_=f['rect']; out.append(f'<circle cx="{a}" cy="{b}" r="{FT(option("world.tree_radius_ft"))}" fill="{color}"/>')
+   elif 'shape' in f:
+    points=' '.join(f'{a},{b}' for a,b in f['shape']); out.append(f'<polygon points="{points}" fill="none" stroke="#b5c0ab" stroke-width="0.3" vector-effect="non-scaling-stroke"/>')
    elif 'rect' in f:
     a,b,c,d=f['rect']; stroke='#b5c0ab' if kind in ('towns','lots') else '#687060'
     out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="0.3" vector-effect="non-scaling-stroke"/>')

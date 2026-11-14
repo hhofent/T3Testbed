@@ -31,3 +31,21 @@ def test_drainage_continuity_crossings_and_downhill():
   with applied(Settings()):
    checks=river_checks(seed,(-10*MILE,-10*MILE,40*MILE,40*MILE))
    assert all(c['pass'] for c in checks.values()),checks
+
+
+def test_rural_variety_reproducible_and_within_lots():
+ from rural import layout,TYPES
+ from region import make_region,spawn_region
+ from settings import applied
+ with applied(Settings()):
+  reg=make_region(31); plans=spawn_region(reg); layouts=[]
+  for lot in reg['lots']:
+   spec=lot['spec']; plan=plans.get(spec['id'],{}).get('plan')
+   if spec['kind']=='town' or not plan: continue
+   site=layout(31,spec,plan)
+   assert site==layout(31,spec,plan)
+   assert all(0<=x and 0<=y and x+w<=spec['width'] and y+h<=spec['depth'] for _,(x,y,w,h) in site['buildings'])
+   layouts.append(site)
+  assert len({tuple(n for n,_ in s['buildings']) for s in layouts})>3
+  assert len({s['offset'] for s in layouts})>3
+  assert len({tuple(s['trees']) for s in layouts})>3

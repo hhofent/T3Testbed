@@ -36,7 +36,10 @@ Fix 4 done: coordinate-owned continuous south-draining trunk streams, explicit
 source tributaries joining shared vertices, watershed-aligned downhill terrain.
 Verifier checks continuity, downhill elevations and crossings over overlapping views.
 83 tests pass, including three 40x40 mi drainage checks.
-Next: fix 5 rural variety; completed fix 4 rivers (continuous downhill,
+Fix 5 done: world rural lots have seeded chamfered outlines, shifted houses,
+seven outbuilding types, varying counts and sizes, connected bent lanes and
+irregular shelterbelts on different sides. Seven variety controls added. Reference
+parity site plans unchanged. Next: fix 6 rail. Completed fix 4 rivers (continuous downhill,
 merging, no crossings/dead ends, verification); 5 rural variety and settings;
 6 diagonal/road-parallel rail, crossings >=45 degrees and >=80% within 15 of square;
 7 random missing road segments in both directions (~1%), connected network;

@@ -55,6 +55,7 @@ def presentation(key,spec):
  elif key.startswith('controls.'): group='Page behavior'
  elif key.startswith('verify.') or key.startswith('validate.'): group='Validation and repair'
  elif key.startswith('spawner.') or key.startswith('generation.'): group='Houses and lots'
+ elif key.startswith('rural.'): group='Towns, roads and countryside'
  elif 'tree' in key: group='Trees'
  elif any(t in key for t in ('rail','creek')): group='Rail and waterways'
  else: group='Towns, roads and countryside'

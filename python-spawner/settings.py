@@ -2633,3 +2633,11 @@ define('world.rail_draw_ft',4,1,10,1,'ft','PLACEHOLDER: rail drawing stroke; con
 define('world.chunk_miles',3,1,12,1,'mi','Size of independently cached display chunks.')
 
 define('world.south_drop_ft',4,1,10,1,'ft per mi','Southward drainage grade; watershed ridges add local hill relief.')
+
+define('rural.outbuildings_min',2,0,8,1,'buildings','Minimum rural outbuilding count before fitting to available land.')
+define('rural.outbuildings_max',8,0,16,1,'buildings','Maximum rural outbuilding count; acreages receive fewer.')
+define('rural.building_gap_ft',15,10,40,1,'ft','Space between rural outbuildings and their yard aprons.')
+define('rural.lane_width_ft',14,10,24,1,'ft','Width of rural access lanes and farmyard connections.')
+define('rural.bent_lanes_pct',70,0,100,1,'percent','Share of rural lanes with a bend before the house.')
+define('rural.grove_density',0.8,0,1,0.05,'fraction','Share of irregular shelterbelt marker positions occupied.')
+define('rural.lot_corner_fraction',0.15,0,0.3,0.01,'fraction','Maximum corner cut as a share of rural lot dimensions.')
