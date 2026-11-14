@@ -53,6 +53,36 @@ namespace SpawnGuide
                 Equal(45f, c.SmallTown.LotFrontage.Min); Equal(65f, c.SmallTown.LotFrontage.Max);
             });
             Test("inverted distribution rejected", () => Reject("SmallTown.LotFrontage.Min=10000"));
+            foreach (string name in ConfigProfiles.GetNames())
+            {
+                Test("profile applies and JSON round-trips: " + name, () => {
+                    var c = ConfigProfiles.ApplyProfile(name);
+                    string json = System.Text.Json.JsonSerializer.Serialize(c, ConfigSerialization.JsonOptions);
+                    var copy = System.Text.Json.JsonSerializer.Deserialize<SpawnConfig>(json, ConfigSerialization.JsonOptions)!;
+                    Equal(json, System.Text.Json.JsonSerializer.Serialize(copy, ConfigSerialization.JsonOptions));
+                });
+            }
+            Test("saved profile re-applies identically", () => {
+                var profile = ConfigProfiles.Get("dense-suburban");
+                string json = System.Text.Json.JsonSerializer.Serialize(profile, ConfigSerialization.JsonOptions);
+                var copy = System.Text.Json.JsonSerializer.Deserialize<ConfigProfile>(json, ConfigSerialization.JsonOptions)!;
+                var c = SpawnConfig.Default; copy.Apply(c);
+                Equal(45f, c.SmallTown.LotFrontage.Min);
+            });
+            Test("inactive distribution parameters round-trip", () => {
+                var d = new FloatDistribution(DistributionShape.Uniform, 2, 5, mean: 4, stdDev: 0.25f, alpha: 3);
+                string json = System.Text.Json.JsonSerializer.Serialize(d, ConfigSerialization.JsonOptions);
+                Equal(d, System.Text.Json.JsonSerializer.Deserialize<FloatDistribution>(json, ConfigSerialization.JsonOptions));
+            });
+            Test("binary cache preserves new config sections", () => {
+                string path = System.IO.Path.GetTempFileName();
+                try {
+                    var c = SpawnConfig.Default; c.Noise.FarmDensity = 0.37f; c.TownTiers.KValue = 7;
+                    ConfigSerialization.SaveBinary(c, path);
+                    var loaded = ConfigSerialization.LoadBinary(path);
+                    Equal(0.37f, loaded.Noise.FarmDensity); Equal(7, loaded.TownTiers.KValue);
+                } finally { System.IO.File.Delete(path); }
+            });
             Console.WriteLine($"Selftests: {passed} passed, {failed} failed (override coverage; remaining tier 1 tests pending).");
             return failed == 0 ? 0 : 1;
         }

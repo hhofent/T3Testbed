@@ -342,27 +342,17 @@ namespace SpawnGuide
             writer.WriteString("shape", value.Shape.ToString());
             writer.WriteNumber("min", value.Min);
             writer.WriteNumber("max", value.Max);
-            if (value.Shape == DistributionShape.Normal || value.Shape == DistributionShape.LogNormal)
-            {
-                writer.WriteNumber("mean", value.Mean);
-                writer.WriteNumber("stdDev", value.StdDev);
-            }
-            if (value.Shape == DistributionShape.Triangular)
-                writer.WriteNumber("mode", value.Mode);
-            if (value.Shape == DistributionShape.Poisson || value.Shape == DistributionShape.Exponential)
-                writer.WriteNumber("lambda", value.Lambda);
-            if (value.Shape == DistributionShape.Beta)
-            {
-                writer.WriteNumber("alpha", value.Alpha);
-                writer.WriteNumber("beta", value.BetaParam);
-            }
-            if (value.Shape == DistributionShape.Bimodal)
-            {
-                writer.WriteNumber("weight1", value.Weight1);
-                writer.WriteNumber("value1", value.Value1);
-                writer.WriteNumber("value2", value.Value2);
-            }
-            if (value.Shape == DistributionShape.Dirichlet && value.Concentrations != null)
+            // Preserve inactive shape parameters too: changing shapes after reload must be lossless.
+            writer.WriteNumber("mean", value.Mean);
+            writer.WriteNumber("stdDev", value.StdDev);
+            writer.WriteNumber("mode", value.Mode);
+            writer.WriteNumber("lambda", value.Lambda);
+            writer.WriteNumber("alpha", value.Alpha);
+            writer.WriteNumber("beta", value.BetaParam);
+            writer.WriteNumber("weight1", value.Weight1);
+            writer.WriteNumber("value1", value.Value1);
+            writer.WriteNumber("value2", value.Value2);
+            if (value.Concentrations != null)
             {
                 writer.WritePropertyName("concentrations");
                 writer.WriteStartArray();

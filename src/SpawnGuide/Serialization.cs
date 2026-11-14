@@ -110,59 +110,23 @@ namespace SpawnGuide
             bw.Write(CurrentSchemaVersion);
             bw.Write(config.GetType().AssemblyQualifiedName ?? "");
 
-            // Serialize each config section
-            WriteConfigSection(bw, config.Houses);
-            WriteConfigSection(bw, config.Rural);
-            WriteConfigSection(bw, config.TownBlock);
-            WriteConfigSection(bw, config.SmallTown);
-            WriteConfigSection(bw, config.World);
-            WriteConfigSection(bw, config.Countryside);
-            WriteConfigSection(bw, config.Render);
+            bw.Write("SpawnGuide.FullConfig.v1");
+            bw.Write(JsonSerializer.Serialize(config, JsonOptions));
         }
 
-        /// <summary>
-        /// Load configuration from binary format.
-        /// </summary>
+        /// <summary>Load all sections; obsolete partial caches are rebuilt from JSON.</summary>
         public static SpawnConfig LoadBinary(string path)
         {
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read);
             using var br = new BinaryReader(fs);
-
             int version = br.ReadInt32();
-            string typeName = br.ReadString();
-
-            var config = new SpawnConfig
-            {
-                SchemaVersion = version,
-                Houses = ReadConfigSection<HouseConfig>(br),
-                Rural = ReadConfigSection<RuralConfig>(br),
-                TownBlock = ReadConfigSection<TownBlockConfig>(br),
-                SmallTown = ReadConfigSection<SmallTownConfig>(br),
-                World = ReadConfigSection<WorldConfig>(br),
-                Countryside = ReadConfigSection<CountrysideConfig>(br),
-                Render = ReadConfigSection<RenderConfig>(br),
-            };
-
+            br.ReadString(); // assembly identity retained for format diagnostics
+            if (br.ReadString() != "SpawnGuide.FullConfig.v1")
+                throw new InvalidDataException("Obsolete partial config cache; reload the source JSON.");
+            var config = JsonSerializer.Deserialize<SpawnConfig>(br.ReadString(), JsonReadOptions)
+                ?? throw new InvalidDataException("Empty config cache.");
+            if (config.SchemaVersion != version) throw new InvalidDataException("Config cache version mismatch.");
             return config;
-        }
-
-        private static void WriteConfigSection<T>(BinaryWriter bw, T obj) where T : class, new()
-        {
-            if (obj == null)
-            {
-                bw.Write(false);
-                return;
-            }
-            bw.Write(true);
-            var json = JsonSerializer.Serialize(obj, JsonOptions);
-            bw.Write(json);
-        }
-
-        private static T ReadConfigSection<T>(BinaryReader br) where T : class, new()
-        {
-            if (!br.ReadBoolean()) return new T();
-            string json = br.ReadString();
-            return JsonSerializer.Deserialize<T>(json, JsonReadOptions) ?? new T();
         }
 
         /// <summary>

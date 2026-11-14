@@ -36,6 +36,14 @@ namespace SpawnGuide
 
         static object Set(object owner, string[] parts, int index, string text, string path)
         {
+            if (owner is IntDistribution integerDistribution &&
+                (parts[index].Equals("Min", StringComparison.OrdinalIgnoreCase) || parts[index].Equals("Max", StringComparison.OrdinalIgnoreCase)))
+            {
+                bool maximum = parts[index].Equals("Max", StringComparison.OrdinalIgnoreCase);
+                int bound = int.Parse(text, CultureInfo.InvariantCulture);
+                string converted = ((double)bound + (maximum ? 1 : 0)).ToString(CultureInfo.InvariantCulture);
+                return new IntDistribution((FloatDistribution)Set(integerDistribution.FloatDist, parts, index, converted, path));
+            }
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase;
             MemberInfo member = (MemberInfo?)owner.GetType().GetProperty(parts[index], flags)
                 ?? owner.GetType().GetField(parts[index], flags)
@@ -82,6 +90,7 @@ namespace SpawnGuide
             }
             else if (owner is FloatRange fr) return new FloatRange(member.Name == "Min" ? (float)next : fr.Min, member.Name == "Max" ? (float)next : fr.Max);
             else if (owner is IntRange ir) return new IntRange(member.Name == "Min" ? (int)next : ir.Min, member.Name == "Max" ? (int)next : ir.Max);
+            else if (owner is IntDistribution && member.Name == "FloatDist") return new IntDistribution((FloatDistribution)next);
             else throw new ArgumentException("Read-only setting; override its containing range/distribution as JSON.");
             return owner;
         }

@@ -67,3 +67,10 @@ Config/default mismatches logged, not fixed (per T4 rule): SmallTown street stay
 - Build remains 72 warnings / 0 errors; verify 13/13 pass. Evidence: port-report/takeover-{build,verify,selftests}.txt. StreetRow=42 changes crossroads seed 1993 SHA256 to abe93ebc45428f81875147ca588d7dc7d00593487cffdbf16783727ff7e28a84 (default 10eb5b9b...).
 - T6 is not complete: reference/default presets, profile round-trip repair and pluggable sweep metrics remain. T5/T7/T8 and all tier 2 remain.
 - Exact next step: audit every config setting into port-report/settings-audit.md; read reference constants in small ranges, add BuilderGuy schema/settings-map and Source attribute with migration (T5); finish T6 presets/sweeps, then T7/T8.
+
+## Existing-profile and persistence milestone (2026-11-13)
+- ConfigProfiles now uses the strict immutable-aware setter. All eight existing profiles apply and round-trip; details of obsolete paths/values and their repairs are in port-report/profile-repairs.md.
+- Full-config binary cache replaces incomplete seven-section cache; old caches fall back to source JSON. Distribution JSON preserves inactive parameters. No default generation changes.
+- Selftests: 25 pass / 0 fail. Build: 69 warnings / 0 errors (three old nullable warnings removed). Verify: 13/13 pass. Four root-default smalltown hashes still match the approved baseline.
+- Frozen Python tests: reference/python-spawner/.venv/Scripts/python.exe -m pytest -q reference/python-spawner/tests: 61 passed in 2.07s. Global python command is unavailable; use the existing venv executable on Windows.
+- Last prior commit: 4f2d4ef. T6 still awaits BuilderGuy presets and sweep interface/metrics after T5. Exact next step remains T5/audit, then remaining T6, T7, T8; tier 2 is unstarted.

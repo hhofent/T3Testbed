@@ -33,34 +33,10 @@ namespace SpawnGuide
 
         private void SetValue(object root, string path, object value)
         {
-            string[] parts = path.Split('.');
-            object current = root;
-
-            for (int i = 0; i < parts.Length - 1; i++)
-            {
-                var type = current.GetType();
-                var prop = type.GetProperty(parts[i], System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-                if (prop != null) { current = prop.GetValue(current); continue; }
-                var field = type.GetField(parts[i], System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-                if (field != null) { current = field.GetValue(current); continue; }
-                return;
-            }
-
-            if (current == null) return;
-
-            var targetType = current.GetType();
-            var lastPart = parts[^1];
-            var targetProp = targetType.GetProperty(lastPart, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-            var targetField = targetType.GetField(lastPart, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-
-            if (targetProp != null && targetProp.CanWrite)
-            {
-                targetProp.SetValue(current, Convert.ChangeType(value, targetProp.PropertyType));
-            }
-            else if (targetField != null)
-            {
-                targetField.SetValue(current, Convert.ChangeType(value, targetField.FieldType));
-            }
+            string text = value is System.Text.Json.JsonElement element && element.ValueKind == System.Text.Json.JsonValueKind.String
+                ? element.GetString() ?? ""
+                : value is string str ? str : System.Text.Json.JsonSerializer.Serialize(value, ConfigSerialization.JsonOptions);
+            ConfigOverrides.Apply((SpawnConfig)root, path + "=" + text);
         }
     }
 
@@ -183,7 +159,7 @@ namespace SpawnGuide
                     ["Rural.OutbuildingDensity"] = 0.7f,
                     ["World.TownDensity"] = 0.3f,
                     ["World.FarmDensity"] = 0.1f,
-                    ["World.TownRailProximityMi"] = 15f,
+                    ["Noise.TownRailProximityMi"] = 15f,
                     ["Countryside.FarmsteadDensity"] = 0.6f,
                 }, true));
 
@@ -213,8 +189,7 @@ namespace SpawnGuide
                     ["Houses.GarageModeNoneChance"] = 0.10f,
                     ["Houses.SidingOptions"] = new[]
                     {
-                        "White vinyl", "Light Gray vinyl", "Beige vinyl", "Blue-Gray vinyl",
-                        "Brick front + Light Gray vinyl sides", "Fiber cement (modern)", "Dark Bronze vinyl"
+                        "WhiteVinyl", "LightGrayVinyl", "BeigeVinyl", "BrickFrontVinylSides"
                     },
                     ["SmallTown.GarageModeIntegralChance"] = 0.70f,
                     ["SmallTown.GarageModeDetachedChance"] = 0.20f,
@@ -225,8 +200,8 @@ namespace SpawnGuide
                     ["TownBlock.WalkSurface"] = "concrete",
                     ["Rural.DrivewaySurface"] = "concrete",
                     ["Rural.WalkSurface"] = "concrete",
-                    ["World.RoadLinePavedChance"] = 0.05f,
-                    ["World.RoadLineAbsentChance"] = 0.005f,
+                    ["Noise.RoadLinePavedChance"] = 0.05f,
+                    ["Noise.RoadLineAbsentChance"] = 0.005f,
                 }, true));
 
             // 5. RAILROAD-TOWN - Towns forced on rail, heavy industrial
@@ -234,24 +209,19 @@ namespace SpawnGuide
                 "Classic railroad towns: every town on rail, heavy industrial, elevators dominate",
                 new Dictionary<string, object>
                 {
-                    ["World.TownRailProximityMi"] = 2f,
-                    ["World.RailSpacingMi"] = 30f,
-                    ["World.RailSpurMaxDistanceMi"] = 1f,
-                    ["World.RailSpurAlwaysHasElevator"] = true,
+                    ["Noise.TownRailProximityMi"] = 2f,
+                    ["Noise.RailSpacingMi.Mean"] = 30f,
+                    ["Noise.RailSpurMaxDistanceMi"] = 1f,
+                    ["Noise.RailSpurAlwaysHasElevator"] = true,
                     ["SmallTown.IndustrialDensity"] = 2.0f,
                     ["SmallTown.CommercialDensity"] = 0.8f,
-                    ["SmallTown.RailIndustrialLotWidth.Min"] = 180f,
-                    ["SmallTown.RailIndustrialLotWidth.Max"] = 300f,
                     ["SmallTown.RailIndustrialRowSpacing.Min"] = 40f,
                     ["SmallTown.RailIndustrialRowSpacing.Max"] = 60f,
                     ["SmallTown.ElevatorBinCount.Min"] = 6,
                     ["SmallTown.ElevatorBinCount.Max"] = 10,
                     ["Rural.BinCount.Min"] = 4,
                     ["Rural.BinCount.Max"] = 8,
-                    ["World.TownClassCrossroadsChance"] = 0.1f,
-                    ["World.TownClassHamletChance"] = 0.2f,
-                    ["World.TownClassVillageChance"] = 0.4f,
-                    ["World.TownClassTownChance"] = 0.3f,
+                    ["Noise.TownClassWeights.Concentrations"] = new[] { 0.1f, 0.2f, 0.4f, 0.3f },
                 }, true));
 
             // 6. RIVER-VALLEY - More tributaries, floodplain farms, wetlands
@@ -259,20 +229,19 @@ namespace SpawnGuide
                 "River valley setting: more tributaries, floodplain farms, wetlands",
                 new Dictionary<string, object>
                 {
-                    ["NoiseConfig.TrunkRiverSpacingMi.Mean"] = 15f,
-                    ["NoiseConfig.TrunkRiverSpacingMi.StdDev"] = 4f,
-                    ["NoiseConfig.TributarySpacingMi.Mean"] = 4f,
-                    ["NoiseConfig.TributarySpacingMi.StdDev"] = 1f,
-                    ["NoiseConfig.TributaryLengthBaseMi.Mean"] = 3f,
-                    ["NoiseConfig.RiverMeanderBaseAmpFt"] = 2000f,
-                    ["NoiseConfig.RiverMeanderBaseWavelengthFt"] = 12000f,
-                    ["NoiseConfig.RiverBankTreeChance"] = 0.7f,
-                    ["NoiseConfig.TributaryBankTreeChance"] = 0.55f,
+                    ["Noise.TrunkRiverSpacingMi.Mean"] = 15f,
+                    ["Noise.TrunkRiverSpacingMi.StdDev"] = 4f,
+                    ["Noise.TributarySpacingMi.Mean"] = 4f,
+                    ["Noise.TributarySpacingMi.StdDev"] = 1f,
+                    ["Noise.TributaryLengthBaseMi.Mean"] = 3f,
+                    ["Noise.RiverMeanderBaseAmpFt"] = 2000f,
+                    ["Noise.RiverMeanderBaseWavelengthFt"] = 12000f,
+                    ["Noise.RiverBankTreeChance"] = 0.7f,
+                    ["Noise.TributaryBankTreeChance"] = 0.55f,
                     ["World.FarmDensity"] = 0.1f,
-                    ["World.FarmMarginFt"] = 500f,
+                    ["Noise.FarmMarginFt"] = 500f,
                     ["Rural.ShelterbeltChance"] = 0.3f,
                     ["Rural.ShelterbeltTreeSpacing"] = 12f,
-                    ["NoiseConfig.WetlandDensity"] = 2.0f,
                     ["SmallTown.ResidentialDensity"] = 0.8f,
                     ["Countryside.FieldFeatureDensity"] = 1.5f,
                 }, true));
@@ -299,11 +268,11 @@ namespace SpawnGuide
                     ["Rural.ShelterbeltChance"] = 0f,
                     ["World.TownDensity"] = 0.1f,
                     ["World.FarmDensity"] = 0.05f,
-                    ["World.RailSpacingMi"] = 200f,
-                    ["World.PavedSpacingMi"] = 50f,
+                    ["Noise.RailSpacingMi.Mean"] = 200f,
+                    ["Noise.PavedSpacingMi"] = 50f,
                     ["Countryside.FarmsteadDensity"] = 0.1f,
                     ["Countryside.FieldFeatureDensity"] = 0.1f,
-                    ["Render.ViewerMaxZoom"] = 50f,
+                    ["Render.ViewerMaxZoom"] = 50,
                 }, true));
 
             // 8. TESTING-MAX - Everything maxed, stress test
@@ -319,7 +288,6 @@ namespace SpawnGuide
                     ["SmallTown.MaxExtrasPerTown"] = 5,
                     ["SmallTown.FourSideBlockChance"] = 1.0f,
                     ["SmallTown.RowAlleyChance"] = 1.0f,
-                    ["SmallTown.StreetTreeChance"] = 1.0f,
                     ["TownBlock.HouseDensity"] = 3.0f,
                     ["TownBlock.AlleyChance"] = 1.0f,
                     ["TownBlock.StreetTreeChance"] = 1.0f,
@@ -330,12 +298,12 @@ namespace SpawnGuide
                     ["Rural.ShelterbeltChance"] = 1.0f,
                     ["World.TownDensity"] = 3.0f,
                     ["World.FarmDensity"] = 1.0f,
-                    ["World.RailSpacingMi"] = 20f,
-                    ["World.PavedSpacingMi"] = 5f,
-                    ["World.TownRailProximityMi"] = 20f,
+                    ["Noise.RailSpacingMi.Mean"] = 20f,
+                    ["Noise.PavedSpacingMi"] = 5f,
+                    ["Noise.TownRailProximityMi"] = 20f,
                     ["Countryside.FarmsteadDensity"] = 3.0f,
                     ["Countryside.FieldFeatureDensity"] = 3.0f,
-                    ["Render.ViewerMaxZoom"] = 500f,
+                    ["Render.ViewerMaxZoom"] = 300,
                 }, true));
         }
     }
