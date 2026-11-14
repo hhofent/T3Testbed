@@ -24,7 +24,7 @@ function rasterChunk(src,pixels,span){
  for(const group of root.querySelectorAll('g')){
   const id=group.querySelector('title')?.textContent||'',shape=group.lastElementChild;
   let minimum=0;
-  if(id.startsWith('road:')||id.includes(':street:')){if(viewport[2]>48*mile&&shape.getAttribute('fill')!=='#525954'){group.remove();continue}minimum=shape.getAttribute('fill')==='#525954'?1.2:.65;}
+  if(id.startsWith('paved:')||id.startsWith('road:')||id.includes(':street:')){if(viewport[2]>48*mile&&shape.getAttribute('fill')!=='#525954'&&shape.getAttribute('stroke')!=='#525954'){group.remove();continue}minimum=(shape.getAttribute('fill')==='#525954'||shape.getAttribute('stroke')==='#525954')?1.2:.65;}
   else if(id.startsWith('rail:'))minimum=1.2;
   else if(id.startsWith('river:'))minimum=1.5;
   else if(id.startsWith('tributary:'))minimum=.8;

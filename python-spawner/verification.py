@@ -52,6 +52,7 @@ def intersection_angle(a,b,c,d):
  return math.degrees(math.acos(cosine))
 
 def road_line(f):
+ if 'points' in f: return f['points'][0],f['points'][-1]
  x,y,w,h=f['rect']; axis=f.get('axis') or ('h' if w>=h else 'v')
  return ((x,y+h/2),(x+w,y+h/2)) if axis=='h' else ((x+w/2,y),(x+w/2,y+h))
 
@@ -59,10 +60,11 @@ def crossing_angles(features):
  angles=[]; roads=Index([f for f in features if f['kind']=='roads'])
  for rail in [f for f in features if f['kind']=='rail']:
   for road in roads.candidates(rail['bounds']):
-   c,d=road_line(road)
-   for a,b in zip(rail['points'],rail['points'][1:]):
-    angle=intersection_angle(a,b,c,d)
-    if angle is not None: angles.append(angle)
+   points=road.get('points') or list(road_line(road))
+   for c,d in zip(points,points[1:]):
+    for a,b in zip(rail['points'],rail['points'][1:]):
+     angle=intersection_angle(a,b,c,d)
+     if angle is not None: angles.append(angle)
  return angles
 
 def tree_collisions(features):
@@ -123,16 +125,27 @@ def river_checks(seed,rect):
  return {**drainage_topology_checks(streams,selected),'rivers_downhill':{'pass':not uphill,'failures':uphill[:10]},'no_river_crossings':{'pass':not crossings,'failures':crossings[:10]}}
 
 def paved_road_gaps(features,rect):
- # Inspect actual geometry, including paved edges absent from the feature list.
- x,y,w,h=rect; present={f['id']:f for f in features if f['kind']=='roads'}; gaps=[]
+ # Inspect canonical route geometry, including missing whole route sections.
+ from world import paved_routes
+ present={f['id']:f for f in features if f['kind']=='roads'}; gaps=[]
+ # A scene carries its seed on route features; legacy synthetic scenes default 31.
+ seed=next((f['seed'] for f in features if 'seed' in f),31)
+ for expected in paved_routes(seed,rect):
+  if not intersects(expected['bounds'],rect): continue
+  f=present.get(expected['id'])
+  if f is None or f['surface']!='paved' or f.get('points')!=expected['points']: gaps.append(expected['id'])
+ # Survey sections are retained as addressable road edges as well as routes.
+ from world import paved_edge
+ x,y,w,h=rect
  for axis in ('h','v'):
   c0,c1,s0,s1=(y,y+h,x,x+w) if axis=='h' else (x,x+w,y,y+h)
   for line in range(math.ceil(c0/MILE),math.floor(c1/MILE)+1):
-   if line%option('world.main_spacing_miles')!=1: continue
    for segment in range(math.floor(s0/MILE),math.ceil(s1/MILE)):
-    id=f'road:{axis}:{line}:{segment}'; f=present.get(id)
-    expected=((segment*MILE,line*MILE),((segment+1)*MILE,line*MILE)) if axis=='h' else ((line*MILE,segment*MILE),(line*MILE,(segment+1)*MILE))
-    if f is None or f['surface']!='paved' or road_line(f)!=expected: gaps.append(id)
+    if not paved_edge(seed,axis,line,segment): continue
+    id=f'road:{axis}:{line}:{segment}'
+    # Pure generator inputs used to verify route ownership have no survey edges.
+    if not any(k.startswith('road:') for k in present): continue
+    if id not in present or present[id]['surface']!='paved': gaps.append(id)
  return gaps
 
 

@@ -584,7 +584,8 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
             if rail_hits(bar, wr): continue
             # address street = the street the lot faces
             fx, fy = to_world(L["place"], L["w"], L["d"], L["w"] // number('region.make_region_numbers', 'make_region_577_68'), -FT(number('region.make_region_numbers', 'make_region_577_75')))
-            L["road"] = next(x for x in allroads if inside((fx, fy), road_rect(x)))
+            L["road"] = next((x for x in allroads if inside((fx, fy), road_rect(x))), None)
+            if L["road"] is None: continue  # no lot without a surviving frontage street
             raw.append(L)
     year = region_year(seed)
     lots = []

@@ -1,3 +1,26 @@
+# Item 2 complete, 2026-11-14
+
+Paved routes are planned from drainage before missing gravel edges. Each owns
+continuous 24-mile sections with exact shared endpoints, one/two-mile crossroad
+jogs and 950-foot rounded corners. Route spacing stays nine miles; the seeded
+shared band shift chooses the approach away from drainage junctions. Retained
+survey-edge IDs support addresses and deletion verification; their ends trim
+at curved corners. Missing-edge sampling never removes pavement. Town candidates
+still use the existing region placer pending item 6. Rejected town lots with no
+frontage street now skip safely instead of raising StopIteration.
+
+Fresh full run: 103 passed in 39.55s. Added 70-mile route continuity, curved-jog,
+missing-route and missing-section checks; preserved the old deleted-edge test.
+Sample over both axes in 96x96 mi: 82.53% gravel, 12.11% paved, 4.48% Level B,
+0.87% missing. The verifier inspects actual polylines and paved survey sections.
+Cache version lod-v16-continuous-paved. Existing far-zoom stroke values retained.
+
+NEXT item 3: seeded 24-mile correction offsets for ALL N-S section roads, continuous
+E-W roads and paved jog integration. Then items 4-7, shared style, world rebaseline,
+and final browser screenshots. Item 1 commits e7f582d / edc4b44. This commit is item 2.
+Read only the files listed below. Push only python-test/spawner, no PR/merge/rewrite.
+
+--- Prior checkpoint ---
 # Item 1 complete: e7f582d, 2026-11-14
 
 Resumed at f397d8b on python-test/spawner. Drainage uses coarse basin owners

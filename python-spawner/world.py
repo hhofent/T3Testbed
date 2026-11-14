@@ -17,17 +17,69 @@ def feature(kind,id,**data):
  result['bounds']=data.get('rect') or box(data['points'],data.get('width',0)/2)
  return result
 
+def route_offset(seed,axis,lane,band):
+ return _route_offset(seed,axis,lane,band,option('world.main_spacing_miles'),_drainage_options())
+
+@lru_cache(maxsize=8192)
+def _route_offset(seed,axis,lane,band,spacing,options):
+ # Alternate survey lines: every jog is one or two miles, never a broken edge.
+ if band%2==0: return 0
+ # Water predates highways. Prefer the approach farther from a drainage junction.
+ base=1  # shared corridor shift preserves 9-mile route spacing
+ def score(offset):
+  x,y=((band*24,base+offset) if axis=='h' else (base+offset,band*24))
+  spacing,step=options[0]*MILE,options[1]*MILE
+  rx=round((x*MILE+.12*y*MILE)/spacing); ry=math.floor(y*MILE/step)
+  joins=[f['points'][-1] for f in basin(seed,rx,ry,options) if f['source']]
+  return min(math.dist((x*MILE,y*MILE),p) for p in joins)
+ return max((-1,-2),key=lambda offset:(score(offset),H(seed,'paved',axis,lane,band,offset)))
+
+def paved_points(seed,axis,lane,band):
+ base=lane*option('world.main_spacing_miles')+1
+ a=(base+route_offset(seed,axis,lane,band))*MILE
+ b=(base+route_offset(seed,axis,lane,band+1))*MILE
+ start=band*24*MILE; end=start+24*MILE; radius=.18*MILE
+ direction=1 if b>a else -1
+ pts=[(a,start+radius),(a,end-radius)]
+ def curve(p,q,r):
+  for i in range(1,9):
+   t=i/8; pts.append(((1-t)**2*p[0]+2*(1-t)*t*q[0]+t*t*r[0],(1-t)**2*p[1]+2*(1-t)*t*q[1]+t*t*r[1]))
+ curve(pts[-1],(a,end),(a+direction*radius,end))
+ pts.append((b-direction*radius,end))
+ curve(pts[-1],(b,end),(b,end+radius))
+ return [(y,x) for x,y in pts] if axis=='h' else pts
+
+def paved_routes(seed,rect):
+ spacing=option('world.main_spacing_miles')*MILE
+ for axis in ('h','v'):
+  c0,c1,s0,s1=(rect[1],rect[1]+rect[3],rect[0],rect[0]+rect[2]) if axis=='h' else (rect[0],rect[0]+rect[2],rect[1],rect[1]+rect[3])
+  for lane in range(math.floor(c0/spacing)-1,math.ceil(c1/spacing)+1):
+   for band in range(math.floor(s0/(24*MILE))-1,math.ceil(s1/(24*MILE))+1):
+    yield feature('roads',f'paved:{axis}:{lane}:{band}',points=paved_points(seed,axis,lane,band),width=option('region.row'),surface='paved',seed=seed,axis=axis,route_id=f'paved:{axis}:{lane}',history=['drainage','survey mile line','continuous highway'])
+
+def paved_edge(seed,axis,line,segment):
+ spacing=option('world.main_spacing_miles')
+ band=math.floor(segment/24)
+ for lane in range(math.floor((line-3)/spacing)-1,math.ceil((line+1)/spacing)+1):
+  base=lane*spacing+1
+  if line==base+route_offset(seed,axis,lane,band): return True
+ # Transverse portions of a route belong to the opposite orientation.
+ if line%24==0:
+  opposite='v' if axis=='h' else 'h'; band=line//24
+  for lane in range(math.floor((segment-3)/spacing)-1,math.ceil((segment+1)/spacing)+1):
+   base=lane*spacing+1
+   a=base+route_offset(seed,opposite,lane,band-1); b=base+route_offset(seed,opposite,lane,band)
+   if min(a,b)<=segment<max(a,b): return True
+ return False
+
 def road_type(seed,axis,line,segment):
- if line%option('world.main_spacing_miles')==1: return 'paved'
- # Each removable edge belongs to one disjoint unit-square cycle. At most one
- # of its four edges is removed, so its other three edges are a guaranteed detour.
- # Both orientations participate equally; no query-order-dependent repair.
+ if paved_edge(seed,axis,line,segment): return 'paved'
+ # Each removable edge belongs to one disjoint cycle. The other three edges
+ # guarantee a detour, even if an edge is later upgraded to paved.
  if segment%2==0:
   bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
   candidate=(line%2) if axis=='h' else 2+(line%2)
   if H(seed,'missing-cycle',bx,by)%10000<option('world.missing_pct')*800 and H(seed,'missing-edge',bx,by)%4==candidate: return None
- main=line%option('world.main_spacing_miles')==1
- if main: return 'paved'
  return 'dirt' if H(seed,'surface',axis,line,segment)%10000 < option('world.level_b_pct')*100 else 'gravel'
 
 def rail_lanes(seed,rect):
@@ -53,7 +105,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
    for axis in ('h','v'):
     for i in range(option('world.tile_miles')+1):
      global_line=(ty if axis=='h' else tx)*option('world.tile_miles')+i
-     surface='paved' if global_line%option('world.main_spacing_miles')==1 else 'gravel'
+     surface=road_type(seed,axis,global_line,(tx if axis=='h' else ty)*option('world.tile_miles')+1) or 'gravel'
      output.append(dict(id=f'{axis}{i}',name=f'{axis.upper()} {global_line}',axis=axis,type=surface,c=i*MILE,lo=0,hi=extent,w=option('region.row'),surface_ft=22))
    return output,25
   def rail(local_seed,rs,force):
@@ -269,7 +321,7 @@ def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()
  if len(rect)!=4 or any(not math.isfinite(v) for v in rect) or rect[2]<=0 or rect[3]<=0: raise ValueError('Window requires finite x,y and positive width,height')
  with applied(settings):
-  out=(list(terrain(seed,rect)) if detail else [])+list(rivers(seed,rect))
+  out=(list(terrain(seed,rect)) if detail else [])+list(rivers(seed,rect))+list(paved_routes(seed,rect))
   # Historical section roads are global edges, independent of query or settlement tiles.
   for axis in ('h','v'):
    c0,c1=(rect[1],rect[1]+rect[3]) if axis=='h' else (rect[0],rect[0]+rect[2])
@@ -279,7 +331,14 @@ def window(seed,rect,settings=None,detail=True):
      surface=road_type(seed,axis,line,segment)
      if surface is None: continue
      c,lo=line*MILE,segment*MILE
-     r=(lo,c-option('region.row')/2,MILE,option('region.row')) if axis=='h' else (c-option('region.row')/2,lo,option('region.row'),MILE)
+     length=MILE
+     if surface=='paved':
+      # Rectangular survey sections share the continuous route, but do not
+      # draw straight spurs through its rounded correction corners.
+      trim=.18*MILE
+      if segment%24==0: lo+=trim; length-=trim
+      if segment%24==23: length-=trim
+     r=(lo,c-option('region.row')/2,length,option('region.row')) if axis=='h' else (c-option('region.row')/2,lo,option('region.row'),length)
      out.append(feature('roads',f'road:{axis}:{line}:{segment}',rect=r,surface=surface,history=['wagon trail','upgraded','paved'] if surface=='paved' else ['survey grid','dirt',surface],axis=axis))
   if option('stages.rail'):
    for lane,x,_ in rail_lanes(seed,rect):
@@ -337,7 +396,7 @@ def svg(scene,local=False):
     out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="{0.9 if kind=="roads" else 0.3}" vector-effect="non-scaling-stroke"/>')
    else:
     points=' '.join(f'{a},{b}' for a,b in f['points'])
-    width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' else FT(1)
+    width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' else f.get('width',FT(1))
     if 'widths' in f:
      for a,b,wa,wb in zip(f['points'],f['points'][1:],f['widths'],f['widths'][1:]):
       out.append(f'<polyline points="{a[0]},{a[1]} {b[0]},{b[1]}" fill="none" stroke="{color}" stroke-width="{(wa+wb)/2}" stroke-linecap="round"/>')

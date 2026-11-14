@@ -120,7 +120,8 @@ def test_missing_roads_both_axes_one_percent_and_cycle_detours():
     for segment in range(-100,100):
      if road_type(31,axis,line,segment) is None: missing[axis].append((line,segment))
    assert .007<len(missing[axis])/(40000*8/9)<.013
-   assert all(line%9!=1 for line,segment in missing[axis])
+   from world import paved_edge
+   assert all(not paved_edge(31,axis,line,segment) for line,segment in missing[axis])
   for axis,edges in missing.items():
    for line,segment in edges:
     bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
@@ -142,11 +143,33 @@ def test_empty_water_blocked_town_does_not_poison_prefetch():
 
 def test_paved_roads_never_missing_even_at_maximum_loss():
  from settings import applied
- from world import road_type
+ from world import paved_routes,paved_edge,road_type
  with applied(Settings({'world.missing_pct':10})):
+  routes=list(paved_routes(31,(-30*MILE,-30*MILE,70*MILE,70*MILE)))
+  assert routes
   for axis in ('h','v'):
-   for line in range(-26,28,9):
-    assert all(road_type(31,axis,line,segment)=='paved' for segment in range(-100,100))
+   for line in range(-30,31):
+    for segment in range(-30,31):
+     if paved_edge(31,axis,line,segment): assert road_type(31,axis,line,segment)=='paved'
+
+
+def test_paved_routes_continuous_over_seventy_miles_with_curved_jogs():
+ import math
+ from world import paved_routes
+ from verification import paved_road_gaps
+ from settings import applied
+ rect=(-30*MILE,-30*MILE,70*MILE,70*MILE)
+ with applied(Settings()):
+  routes=list(paved_routes(31,rect)); groups={}
+  for route in routes: groups.setdefault(route['route_id'],[]).append(route)
+  for group in groups.values():
+   group.sort(key=lambda f:int(f['id'].split(':')[-1]))
+   assert all(a['points'][-1]==b['points'][0] for a,b in zip(group,group[1:]))
+   assert sum(sum(math.dist(a,b) for a,b in zip(f['points'],f['points'][1:])) for f in group)>70*MILE
+   assert all(len(f['points'])>10 for f in group)
+  assert not paved_road_gaps(routes,rect)
+  removed=next(f for f in routes if f['id']=='paved:v:0:0')
+  assert removed['id'] in paved_road_gaps([f for f in routes if f is not removed],rect)
 
 
 def test_rail_approaches_are_smooth_and_crossings_square():

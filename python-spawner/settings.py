@@ -2600,7 +2600,7 @@ for _key,_value in DEFAULTS.items():
         CATALOG[_key]['units']='ft'
 for _key,_default,_lo,_hi,_step,_units,_note in [
  ('world.tile_miles',3,3,3,1,'mi','Fixed reference tile size; preserves town geometry.'),
- ('world.main_spacing_miles',9,3,30,3,'mi','PLACEHOLDER: upgraded historical main-road spacing.'),
+ ('world.main_spacing_miles',9,3,30,1,'mi','PLACEHOLDER: upgraded historical main-road spacing.'),
  ('world.level_b_pct',5,0,20,1,'percent','PLACEHOLDER: Level B dirt share.'),
  ('world.missing_pct',1,0,10,1,'percent','Missing section share across both road directions; independent cycle detours preserve connectivity.'),
  ('world.rail_spacing_miles',12,3,60,3,'mi','PLACEHOLDER: north-south rail corridors following road history.'),
