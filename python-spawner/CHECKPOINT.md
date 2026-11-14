@@ -1,3 +1,33 @@
+# Item 6 complete, 2026-11-14
+
+Town owners now follow seeded stations along N-S and E-W rail: candidate station
+intervals are 6-10 mi (8 +/- seeded jitter). Highway towns are independently
+thinned along paved routes, and six-mile local priority competition prevents
+close rail/highway pairs. Junction competition and floodplains can omit a station;
+6-10 mi is the along-line candidate spacing, not a guarantee across omitted sites.
+Towns retain region block/lot variety, edge thinning, 60/30/10 tiny/mid/big weights,
+70/30 downtown/highway commercial arrangement, and in-block trailer runs. Town
+plats rotate with the rail/road; main streets are paved inside the envelope.
+Rail towns export the previously invisible elevator/industrial parcel and depot
+beside the track. Urban driveways and simple tree markers use the existing plans.
+Rural tile town lottery is disabled; farm lots intersecting a town envelope are
+excluded as a group without changing their layouts. Canonical site caching keeps
+ownership independent of query order. Cache lod-v20-route-towns.
+
+Fresh full run: 107 passed in 48.15s. Added station spacing/jitter, accepted town
+minimum distance, skewed sizes, off-rail towns, and elevator/depot presence tests
+across an 80x80 mi sample. Existing overlaps, town spacing, buildings and tree
+checks pass. No final screenshots yet.
+
+Completed commits: 1 e7f582d / edc4b44; 2 f0164fd; 3 b94b173; 4 f834d61;
+5 2d14e32; this commit 6. NEXT item 7: measured farm density currently 2.69-2.77
+per sq mi, so reduce via stable world placement ownership, lengthen access lanes,
+and add small shared-lane clusters. Keep rural lot shapes/layout rules otherwise.
+Then shared style / same-rectangle test, world rebaselines and final browser
+3/10/30/96 mi + crossing/jog/bridge screenshots. Read only files listed below.
+Push only python-test/spawner, no PR/merge/history rewrite.
+
+--- Prior checkpoint ---
 # Item 5 complete, 2026-11-14
 
 Rail has N-S and E-W route owners with seeded activation and gentle C2 bends

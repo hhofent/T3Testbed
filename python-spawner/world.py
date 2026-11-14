@@ -111,6 +111,96 @@ def rail_points(seed,lane,x,row,axis='v'):
   pts.append((along,lateral) if axis=='h' else (lateral,along))
  return pts
 
+def town_candidates(seed,rect):
+ # Stations follow a line's history rather than a two-dimensional town lattice.
+ for axis in ('v','h'):
+  lo,hi=(rect[1],rect[1]+rect[3]) if axis=='v' else (rect[0],rect[0]+rect[2])
+  for lane,c,along in rail_lanes(seed,rect,axis):
+   for k in range(math.floor(lo/(8*MILE))-1,math.ceil(hi/(8*MILE))+1):
+    station=(8*k+H(seed,'town-station',axis,lane,k)%3-1)*MILE
+    shift=correction_shift(seed,math.floor(station/(24*MILE))) if axis=='v' else 0
+    cross=station if axis=='v' else station+correction_shift(seed,math.floor(c/(24*MILE)))
+    u=along+shift
+    x,y=(u,cross) if axis=='v' else (cross,u)
+    yield (f'town:rail:{axis}:{lane}:{k}',axis,x,y,c,True)
+ # Some highway towns grew without a railroad. Stable thinning avoids a lattice.
+ spacing=option('world.main_spacing_miles')*MILE
+ for lane in range(math.floor(rect[0]/spacing)-1,math.ceil((rect[0]+rect[2])/spacing)+1):
+  for k in range(math.floor(rect[1]/(8*MILE))-1,math.ceil((rect[1]+rect[3])/(8*MILE))+1):
+   if H(seed,'off-rail-town',lane,k)%100>=16: continue
+   y=(8*k+H(seed,'off-rail-station',lane,k)%3-1)*MILE
+   band=math.floor(y/(24*MILE))
+   x=(lane*option('world.main_spacing_miles')+1+route_offset(seed,'v',lane,band))*MILE+correction_shift(seed,band)
+   yield (f'town:highway:{lane}:{k}','v',x,y,0,False)
+
+@lru_cache(maxsize=256)
+def _town_scene(seed,site,serialized,detail):
+ settings=apply_document(Settings(),json.loads(serialized)); settings.set('region.n_mi',3)
+ id,axis,x,y,rail_c,on_rail=site
+ u,v=(x,y) if axis=='v' else (y,x); ox,oy=u-MILE,v-MILE; extent=3*MILE
+ def absolute(a,b): return (a+ox,b+oy) if axis=='v' else (b+oy,a+ox)
+ def local(a,b): return (a-ox,b-oy) if axis=='v' else (b-ox,a-oy)
+ with applied(settings):
+  world_box=(x-MILE,y-MILE,extent,extent)
+  barriers=[dict(pts=[local(*p) for p in f['points']],w=f['width']+2*FT(max(option('region.creek_buf')))) for f in rivers(seed,world_box) if intersects(f['bounds'],world_box)]
+  def roads(*args):
+   return [dict(id=f'{a}{i}',name='Main St' if i==1 else f'{i} St',axis=a,type='paved' if i==1 else 'gravel',c=i*MILE,lo=0,hi=extent,w=option('region.row'),surface_ft=22) for a in ('h','v') for i in range(4)],25
+  def rail(*args):
+   if not on_rail: return None
+   c=round(rail_c-ox)
+   return dict(pts=[(c,0),(c,extent)],w=option('region.rail_row'),along='v1',along_c=MILE,x=c,side=1,parallel=(0,extent),crossings=[],site=(MILE,MILE))
+  reg=make_region(H(seed,id),force_town=True,road_factory=roads,rail_factory=rail,water_barriers=barriers)
+  if not reg['town']: return []
+  reg['lots']=[lot for lot in reg['lots'] if lot['spec']['kind']=='town']
+  results=spawn_region(reg) if detail and option('stages.houses') else {}
+  out=[]
+  def add(kind,suffix,r,**kw):
+   a,b=absolute(r[0],r[1]); c,d=absolute(r[0]+r[2],r[1]+r[3])
+   out.append(feature(kind,id+':'+suffix,rect=(min(a,c),min(b,d),abs(c-a),abs(d-b)),**kw))
+  town=reg['town']; add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis)
+  for road in reg['roads']:
+   if road in reg['grid_roads']: continue
+   add('roads','street:'+road['id'],road_rect(road),surface='paved',axis=road['axis'] if axis=='v' else ('h' if road['axis']=='v' else 'v'),history=['town plat','paved'])
+  # The main-street frontage becomes paved only inside the town envelope.
+  bx,by,bw,bh=town['box']
+  for a in ('h','v'):
+   r=(bx,MILE-option('region.row')/2,bw,option('region.row')) if a=='h' else (MILE-option('region.row')/2,by,option('region.row'),bh)
+   add('roads','street:main-'+a,r,surface='paved',axis=a if axis=='v' else ('h' if a=='v' else 'v'),history=['town main street'])
+  for lot in reg['lots']:
+   spec=lot['spec']; pl=lot['place']; lid=spec['id']
+   if detail: add('lots',lid,world_rect(pl,spec['width'],spec['depth']),use='town')
+   plan=results.get(lid,{}).get('plan')
+   if plan:
+    for i,room in enumerate(plan.rooms):
+     a,b,c,d=room.rect(); p=to_world(pl,spec['width'],spec['depth'],a,b); q=to_world(pl,spec['width'],spec['depth'],a+c,b+d)
+     add('buildings',lid+':room:'+str(i),(min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])),use=room.kind)
+    for i,r in enumerate(plan.site.get('drive',[])):
+     a,b,c,d=r; p=to_world(pl,spec['width'],spec['depth'],a,b); q=to_world(pl,spec['width'],spec['depth'],a+c,b+d)
+     add('driveways',lid+':drive:'+str(i),(min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
+    if option('stages.trees'):
+     from trees import local_markers
+     for i,p in enumerate(local_markers(plan)):
+      a,b=to_world(pl,spec['width'],spec['depth'],*p); add('trees',lid+':tree:'+str(i),(a,b,0,0))
+  if detail:
+   for shop in town['commercial']:
+    if shop.get('bldg'): add('buildings','business:'+shop['id'],shop['bldg'],use=shop['type'])
+   for i,parcel in enumerate(reg['parcels']):
+    if parcel['kind'] in ('elevator','industry'): add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
+   if reg['depot']: add('buildings','depot',reg['depot'],use='depot')
+  return out
+
+def settlements(seed,rect,serialized,detail):
+ if not option('stages.towns'): return []
+ halo=8*MILE; expanded=(rect[0]-halo,rect[1]-halo,rect[2]+2*halo,rect[3]+2*halo)
+ candidates=list(town_candidates(seed,expanded)); out=[]
+ def priority(site): return (site[-1],H(seed,'town-priority',site[0]))
+ for site in candidates:
+  id,axis,x,y,c,on_rail=site
+  if not intersects((x-MILE,y-MILE,2*MILE,2*MILE),rect): continue
+  if any(other[0]!=id and math.dist((x,y),(other[2],other[3]))<6*MILE and priority(other)>priority(site) for other in candidates): continue
+  out.extend(_town_scene(seed,site,serialized,detail))
+ return out
+
 @lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
 def _tile(seed,tx,ty,serialized,detail=True):
  settings=apply_document(Settings(),json.loads(serialized))
@@ -142,7 +232,8 @@ def _tile(seed,tx,ty,serialized,detail=True):
    return any(_seg_rect(a,b,(absolute[0]-stream['width']/2,absolute[1]-stream['width']/2,absolute[2]+stream['width'],absolute[3]+stream['width'])) for stream in water if intersects(stream['bounds'],absolute) for a,b in zip(stream['points'],stream['points'][1:]))
   tile_seed=H(seed,'settlement',tx,ty)
   barriers=[dict(pts=[(x-ox,y-oy) for x,y in f['points']],w=f['width']+2*buffer) for f in water]
-  reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,water_barriers=barriers)
+  rural_settings=Settings(settings.values).set('stages.towns',False)
+  reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,water_barriers=barriers,settings=rural_settings)
   # Keep ownership disjoint: reject towns whose envelope would invade another tile.
   if reg['town']:
    b=reg['town']['box']
@@ -407,8 +498,14 @@ def window(seed,rect,settings=None,detail=True):
      for row in range(math.floor(lo/MILE)-1,math.ceil(hi/MILE)+1):
       out.append(feature('rail',f'rail:{axis}:{lane}:{row}',points=rail_points(seed,lane,c,row,axis),width=option('region.rail_row'),axis=axis,route_id=f'rail:{axis}:{lane}',history=['drainage','survey roads','rail']))
   extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles') if detail else 0; serialized=json.dumps(document(settings),sort_keys=True)
+  urban=settlements(seed,rect,serialized,detail)
+  envelopes=[f['bounds'] for f in urban if f['kind']=='towns']; countryside=[]
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
-   for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized,detail))
+   for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1):
+    tile=_tile(seed,tx,ty,serialized,detail)
+    rejected=[f['id'] for f in tile if f['kind'] in ('lots','farms') and any(intersects(f['bounds'],e) for e in envelopes)]
+    countryside.extend(f for f in tile if not any(f['id']==id or f['id'].startswith(id+':') for id in rejected))
+  out.extend(countryside); out.extend(urban)
   out.extend(bridges(out))
   filtered={f['id']:f for f in out if intersects(f['bounds'],rect)}
   # A marker is rejected against geometry from every owner, including shared borders.

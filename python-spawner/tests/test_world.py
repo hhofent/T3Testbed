@@ -363,3 +363,32 @@ def test_rail_density_directions_curvature_and_corrected_crossing_angles():
    angles=crossing_angles(scene['features'])
    assert angles and min(angles)>=45,(seed,min(angles))
    assert sum(a>=75 for a in angles)/len(angles)>=.8
+
+
+def test_route_town_spacing_and_rail_industrial_frontage():
+ import math,json,collections
+ from world import town_candidates,settlements
+ from presets import document
+ from settings import applied
+ settings=Settings({'stages.houses':False})
+ with applied(settings):
+  rect=(-40*MILE,-40*MILE,80*MILE,80*MILE)
+  candidates=list(town_candidates(31,rect)); groups={}
+  for site in candidates:
+   if site[-1]: groups.setdefault(':'.join(site[0].split(':')[:-1]),[]).append(site)
+  for group in groups.values():
+   axis=group[0][1]; group.sort(key=lambda s:s[3] if axis=='v' else s[2])
+   distances=[abs((b[3]-a[3]) if axis=='v' else (b[2]-a[2]))/MILE for a,b in zip(group,group[1:])]
+   assert distances and all(6<=d<=10 for d in distances)
+   assert len(set(distances))>1
+  fs=settlements(31,rect,json.dumps(document(settings),sort_keys=True),True)
+  towns=[f for f in fs if f['kind']=='towns']
+  assert any(t['rail_town'] for t in towns) and any(not t['rail_town'] for t in towns)
+  assert sum(t['size']=='tiny' for t in towns)/len(towns)>=.5
+  assert min(math.dist(a['anchor'],b['anchor']) for i,a in enumerate(towns) for b in towns[i+1:])>=6*MILE
+  for town in towns:
+   if not town['rail_town']: continue
+   prefix=town['id'][:-4]
+   buildings=[f for f in fs if f['kind']=='buildings' and f['id'].startswith(prefix)]
+   assert any(f.get('use')=='depot' for f in buildings)
+   assert any(f.get('use')=='elevator' for f in buildings)
