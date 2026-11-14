@@ -14,6 +14,31 @@ namespace SpawnGuide
                 catch (Exception ex) { failed++; Console.WriteLine("[FAIL] " + name + ": " + ex.Message); }
             }
             void Equal(object expected, object actual) { if (!expected.Equals(actual)) throw new Exception($"Expected {expected}, got {actual}"); }
+            Test("BuilderGuy v2 migration preserves settings and initializes defaults", () => {
+                var c = SpawnConfig.Default;
+                c.SchemaVersion = 2;
+                c.BuilderGuy = null!;
+                c.Commercial.ElevatorWidthFt = 96;
+                ConfigSerialization.Migrate(c, 2);
+                Equal(3, c.SchemaVersion);
+                Equal(96f, c.Commercial.ElevatorWidthFt);
+                Equal(1990, c.BuilderGuy.SnapshotYear);
+                Equal(0.7f, c.BuilderGuy.Commercial.DowntownShare);
+                c.BuilderGuy.Setbacks.SidePercent = 12;
+                ConfigSerialization.Migrate(c, 2);
+                Equal(12d, c.BuilderGuy.Setbacks.SidePercent);
+                var json = System.Text.Json.JsonSerializer.Serialize(c, ConfigSerialization.JsonOptions);
+                var restored = System.Text.Json.JsonSerializer.Deserialize<SpawnConfig>(json, ConfigSerialization.JsonOptions)!;
+                Equal(12d, restored.BuilderGuy.Setbacks.SidePercent);
+            });
+            Test("BuilderGuy scalar controls carry complete metadata", () => {
+                foreach (var type in new[] { typeof(BuilderGuyConfig), typeof(BuilderGuyCommercialConfig), typeof(BuilderGuyHouseConfig), typeof(BuilderGuySetbackConfig), typeof(BuilderGuyRegionConfig) })
+                    foreach (var p in type.GetProperties()) {
+                        if (!p.PropertyType.IsValueType) continue;
+                        foreach (var attribute in new[] { typeof(RangeAttribute), typeof(UnitsAttribute), typeof(RationaleAttribute), typeof(CategoryAttribute), typeof(SourceAttribute) })
+                            if (!Attribute.IsDefined(p, attribute)) throw new Exception(type.Name + "." + p.Name + " missing " + attribute.Name);
+                    }
+            });
             void Reject(string expression)
             {
                 try { ConfigOverrides.ApplyArguments(SpawnConfig.Default, new[] { "--param", expression }); }

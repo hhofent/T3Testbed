@@ -18,6 +18,7 @@ namespace SpawnGuide
         // =========================================================================
         // CORE CONFIG SECTIONS
         // =========================================================================
+        public BuilderGuyConfig BuilderGuy { get; set; } = new();
         public HouseConfig Houses { get; set; } = new();
         public RuralConfig Rural { get; set; } = new();
         public TownBlockConfig TownBlock { get; set; } = new();
@@ -92,7 +93,7 @@ namespace SpawnGuide
         // SCHEMA & MIGRATION
         // =========================================================================
         /// <summary>Current schema version. Increment when adding/removing fields or changing types.</summary>
-        public int SchemaVersion { get; set; } = 2;
+        public int SchemaVersion { get; set; } = 3;
 
         /// <summary>Load configuration from a JSON file. Returns defaults if file doesn't exist.
         /// Automatically migrates from older schema versions and uses binary cache for speed.</summary>

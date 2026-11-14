@@ -31,7 +31,7 @@ namespace SpawnGuide
         /// <summary>
         /// Current schema version. Increment when making breaking changes.
         /// </summary>
-        public const int CurrentSchemaVersion = 2;
+        public const int CurrentSchemaVersion = 3;
 
         /// <summary>
         /// Load configuration from JSON file with automatic migration and binary caching.
@@ -142,8 +142,10 @@ namespace SpawnGuide
                 migrated = MigrateV1ToV2(migrated);
             }
 
-            // Future migrations would go here:
-            // if (fromVersion < 3) migrated = MigrateV2ToV3(migrated);
+            if (fromVersion < 3)
+                migrated.BuilderGuy ??= new BuilderGuyConfig();
+
+            migrated.SchemaVersion = CurrentSchemaVersion;
 
             return migrated;
         }
