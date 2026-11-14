@@ -72,13 +72,14 @@ def _tile(seed,tx,ty,serialized,detail=True):
    absolute=(local[0]+ox-buffer,local[1]+oy-buffer,local[2]+2*buffer,local[3]+2*buffer)
    return any(_seg_rect(a,b,(absolute[0]-stream['width']/2,absolute[1]-stream['width']/2,absolute[2]+stream['width'],absolute[3]+stream['width'])) for stream in water if intersects(stream['bounds'],absolute) for a,b in zip(stream['points'],stream['points'][1:]))
   tile_seed=H(seed,'settlement',tx,ty)
-  reg=make_region(tile_seed,road_factory=roads,rail_factory=rail)
+  barriers=[dict(pts=[(x-ox,y-oy) for x,y in f['points']],w=f['width']+2*buffer) for f in water]
+  reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,water_barriers=barriers)
   # Keep ownership disjoint: reject towns whose envelope would invade another tile.
   if reg['town']:
    b=reg['town']['box']
-   if b[0]<0 or b[1]<0 or b[0]+b[2]>extent or b[1]+b[3]>extent or water_hits(b):
+   if b[0]<0 or b[1]<0 or b[0]+b[2]>extent or b[1]+b[3]>extent:
     off=Settings(settings.values).set('stages.towns',False)
-    reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,settings=off)
+    reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,water_barriers=barriers,settings=off)
   results=spawn_region(reg) if detail and option('stages.houses') else {}
   out=[]; prefix=f'{tx}:{ty}:'
   def rect(r): return (r[0]+ox,r[1]+oy,r[2],r[3])
@@ -160,12 +161,88 @@ def drainage_offset(seed,station,lane):
  amplitude=.8+.2*math.sin(station/MILE*.311+lane*2.37)
  return math.sin(phase)*amplitude*MILE*option('world.river_wander_miles')
 
+def _drainage_options():
+ return tuple(option('world.'+k) for k in ('river_spacing_miles','tributary_spacing_miles','river_width_ft','river_wander_miles'))
+
+def basin_axis(seed,lane,y,spacing,step):
+ # Shared boundary anchors, independent region interiors, and a southwest datum.
+ row=math.floor(y/step); t=(y-row*step)/step
+ jitter=lambda r:(H(seed,'basin',lane,r)%10001/10000-.5)*spacing*.22
+ smooth=t*t*(3-2*t)
+ return lane*spacing-.12*y+jitter(row)*(1-smooth)+jitter(row+1)*smooth
+
+@lru_cache(maxsize=4096)
+def basin(seed,lane,row,options):
+ spacing,step,width,wander=options
+ spacing*=MILE; step*=MILE; width=FT(width)
+ owner=H(seed,'basin',lane,row); count=RIVER_SAMPLES
+ phase=owner%10000/10000*2*math.pi
+ cycles=2+(owner//10000)%2
+ amplitude=MILE*wander*1.6*(1.1+(owner//100000)%401/1000)
+ def trunk(t,phase=phase,cycles=cycles):
+  y=(row+t)*step
+  # The envelope shares both position and tangent with the next coarse region.
+  x=basin_axis(seed,lane,y,spacing,step)+amplitude*math.sin(cycles*2*math.pi*t+phase)*math.sin(math.pi*t)**2
+  return x,y
+ points=[trunk(i/count) for i in range(count+1)]
+ out=[]
+ for i in range(count):
+  station=row*count+i
+  out.append(feature('rivers',f'river:{lane}:{station}',points=points[i:i+2],width=width,stream_order=3,flow='southwest',source=False,downstream=f'river:{lane}:{station+1}',basin=(lane,row)))
+ for side in (-1,1):
+  # Disjoint tributary catchments on each bank. Every reach owns its random bends.
+  join=count if side==1 else count*3//4
+  n=join-2
+  ident=f'river:branch:{lane}:{row}:{side}'
+  key=H(seed,ident); phase=key%10000/10000*2*math.pi
+  cycles=2+(key//10000)%3
+  distance=spacing*(.27+(key//100000)%61/1000)
+  branch=[]
+  for i in range(n+1):
+   t=i/n; y=(row+(join-n+i)/count)*step
+   center=trunk((join-n+i)/count)[0]
+   offset=distance*(1-t)*(1+.38*math.sin(cycles*2*math.pi*t+phase)*math.sin(math.pi*t))
+   branch.append((center+side*offset,y))
+  branch[-1]=points[join]
+  widths=[width*(.025+.375*(i/n)**.7) for i in range(n+1)]
+  out.append(feature('rivers',ident,points=branch,width=width*.4,widths=widths,stream_order=2,flow='southwest',source=True,downstream=f'river:{lane}:{row*count+join}',basin=(lane,row)))
+  # A second branching level, confined to the outer bank of its receiving reach.
+  end=n//2; start=0; child=[]; child_id=ident+':headwater'
+  key=H(seed,child_id); phase=key%10000/10000*2*math.pi
+  for i in range(end+1):
+   t=i/end; x,y=branch[i]
+   offset=spacing*.1*(1-t)*(1+.38*math.sin(6*math.pi*t+phase)*math.sin(math.pi*t))
+   child.append((x+side*offset,y))
+  child[-1]=branch[end]
+  widths=[width*(.006+.114*(i/end)**.7) for i in range(end+1)]
+  out.append(feature('rivers',child_id,points=child,width=width*.12,widths=widths,stream_order=1,flow='southwest',source=True,downstream=ident,basin=(lane,row)))
+ return out
+
+def _distance_to_segment(x,y,a,b):
+ dx,dy=b[0]-a[0],b[1]-a[1]
+ t=max(0,min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)))
+ return math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)
+
+@lru_cache(maxsize=512)
+def _valley_cells(seed,lane,row,options):
+ cells={}
+ for k in (lane-1,lane,lane+1):
+  for r in (row-1,row,row+1):
+   for f in basin(seed,k,r,options):
+    for a,b in zip(f['points'],f['points'][1:]):
+     for ix in range(math.floor(min(a[0],b[0])/MILE),math.floor(max(a[0],b[0])/MILE)+1):
+      for iy in range(math.floor(a[1]/MILE),math.floor(b[1]/MILE)+1):
+       cells.setdefault((ix,iy),[]).append((a,b))
+ return cells
+
 def elevation(seed,x,y):
- # A south-sloping datum plus watershed ridges. The same valley centers own rivers.
- spacing=option('world.river_spacing_miles')*MILE
- lane=round(x/spacing)
- distance=min(abs(x-k*spacing-drainage_x(seed,y,k)) for k in (lane-1,lane,lane+1))
- return -y/MILE*option('world.south_drop_ft')+option('world.relief_ft')*(1-math.cos(distance/spacing*2*math.pi))/2
+ options=_drainage_options(); spacing,step=options[0]*MILE,options[1]*MILE
+ lane=round((x+.12*y)/spacing); row=math.floor(y/step)
+ cells=_valley_cells(seed,lane,row,options); ix,iy=math.floor(x/MILE),math.floor(y/MILE)
+ distance=min([3*MILE]+[_distance_to_segment(x,y,a,b) for dx in range(-3,4) for dy in range(-3,4) for a,b in cells.get((ix+dx,iy+dy),())])
+ # All streams are at the south-sloping valley datum, including every tributary.
+ relief=option('world.relief_ft')*(1-math.exp(-distance/(MILE*.8)))**2
+ return -y/MILE*option('world.south_drop_ft')+relief
 
 def terrain(seed,rect):
  cell=FT(option('world.contour_cell_ft')); interval=option('world.contour_interval_ft')
@@ -181,36 +258,12 @@ def terrain(seed,rect):
     for i in range(0,len(points)-1,2): yield feature('contours',f'contour:{ix}:{iy}:{level}:{i}',points=points[i:i+2],height=level)
 
 def rivers(seed,rect):
- spacing=option('world.river_spacing_miles')*MILE; step=option('world.tributary_spacing_miles')*MILE; width=FT(option('world.river_width_ft')); sample=step/RIVER_SAMPLES
- wander=option('world.river_wander_miles')*MILE
- lo=drainage_station(seed,rect[1]); hi=drainage_station(seed,rect[1]+rect[3])
- for lane in range(math.floor((rect[0]-wander-spacing/2)/spacing),math.ceil((rect[0]+rect[2]+wander+spacing/2)/spacing)+1):
-  def point(station,offset=0):
-   return (lane*spacing+drainage_offset(seed,station,lane)+offset,drainage_y(seed,station))
-  for row in range(math.floor(lo/sample)-1,math.ceil(hi/sample)+1):
-   yield feature('rivers',f'river:{lane}:{row}',points=[point(row*sample),point((row+1)*sample)],width=width,flow='south',source=False,downstream=f'river:{lane}:{row+1}')
-  for row in range(math.floor(lo/step)-1,math.ceil(hi/step)+1):
-   for side in (-1,1):
-    # Most of a tributary interval: several miles and many display chunks.
-    reach=(.85+H(seed,'source-reach',lane,row,side)%10/100)*step
-    join_index=row*RIVER_SAMPLES+(RIVER_SAMPLES if side==1 else RIVER_SAMPLES*3//4)
-    join=join_index*sample; count=round(reach/sample); start=(join_index-count)*sample; reach=count*sample
-    offset=side*spacing*(.22+H(seed,'source-ridge',lane,row,side)%22/100)
-    # Own the branch's bends independently of the receiving channel. Keep the
-    # excursion inside its bank of the basin so it cannot cross the trunk.
-    branch_seed=H(seed,'basin',lane,row,'branch',side)
-    phase=branch_seed%10000/10000*2*math.pi
-    cycles=2+(branch_seed//10000)%3
-    points=[]
-    for i in range(count+1):
-     t=i/count
-     d=offset*(1-t)**2*(1+.025*math.sin(t*cycles*2*math.pi+phase)*math.sin(math.pi*t))
-     points.append(point((join_index-count+i)*sample,d))
-    points[-1]=point(join)
-    # Widths are sampled at vertices. The scalar remains the conservative
-    # broad-phase collision width used by lots and settlement exclusion.
-    widths=[width*(.06+.44*(i/count)**.7) for i in range(count+1)]
-    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=points,width=width/2,widths=widths,stream_order=1,flow='south',source=True,downstream=f'river:{lane}:{join_index}')
+ options=_drainage_options(); spacing,step=options[0]*MILE,options[1]*MILE
+ # Undo the southwest shear before choosing owners. Halo covers whole tributaries.
+ left=rect[0]+.12*rect[1]; right=rect[0]+rect[2]+.12*(rect[1]+rect[3])
+ for lane in range(math.floor(left/spacing)-1,math.ceil(right/spacing)+2):
+  for row in range(math.floor(rect[1]/step)-1,math.ceil((rect[1]+rect[3])/step)+1):
+   yield from basin(seed,lane,row,options)
 
 def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()

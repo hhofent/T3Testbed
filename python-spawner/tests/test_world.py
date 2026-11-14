@@ -204,3 +204,52 @@ def test_river_bends_vary_between_lanes_and_global_intervals():
   assert all(a[k]==b[k] for k in a.keys()&b.keys())
   joins=[tuple(f['points'][-1]) for f in a.values() if f['source']]
   assert len(joins)==len(set(joins))
+
+
+def test_basin_hierarchy_widens_at_owned_confluences_and_varies_shapes():
+ import math,statistics
+ from world import rivers,elevation
+ from settings import applied
+ with applied(Settings()):
+  streams=list(rivers(31,(-40*MILE,-40*MILE,80*MILE,80*MILE)))
+  by_id={f['id']:f for f in streams}
+  assert {f['stream_order'] for f in streams}=={1,2,3}
+  branches=[f for f in streams if f['source']]
+  ratios=[]; profiles=[]
+  for f in branches:
+   receiver=by_id.get(f['downstream'])
+   if receiver is None: continue
+   assert f['points'][-1] in receiver['points']
+   assert f['width']<receiver['width']
+   assert f['stream_order']<receiver['stream_order']
+   # Confluences point downstream, with a genuine angled approach.
+   a,b=f['points'][-2:]; j=receiver['points'].index(b)
+   c=receiver['points'][min(j+1,len(receiver['points'])-1)]
+   if c!=b:
+    u=(b[0]-a[0],b[1]-a[1]); v=(c[0]-b[0],c[1]-b[1])
+    assert u[1]>0 and v[1]>0
+    assert abs(u[0]*v[1]-u[1]*v[0])>1
+   for x,y in f['points'][::8]:
+    assert abs(elevation(31,x,y)+y/MILE*4)<1e-7
+   p=f['points']; length=sum(math.dist(a,b) for a,b in zip(p,p[1:]))
+   ratios.append(length/math.dist(p[0],p[-1]))
+   profiles.append(tuple(round((x-p[0][0])/MILE,6) for x,y in p))
+  assert 1.6<=statistics.median(ratios)<=2.5
+  assert len(set(profiles))==len(profiles)
+  # Coarse-region trunk endpoints meet exactly, but the interiors never repeat.
+  from world import basin,_drainage_options
+  profiles=[]
+  for row in range(-6,6):
+   a=basin(31,0,row,_drainage_options())[:64]
+   b=basin(31,0,row+1,_drainage_options())[0]
+   assert a[-1]['points'][-1]==b['points'][0]
+   profiles.append(tuple(round((f['points'][0][0]-a[0]['points'][0][0])/MILE,6) for f in a))
+  assert len(set(profiles))==len(profiles)
+
+
+def test_world_region_never_calls_legacy_creeks(monkeypatch):
+ import region,world
+ world._tile.cache_clear()
+ def forbidden(*args): raise AssertionError('legacy per-tile water was called')
+ monkeypatch.setattr(region,'make_creeks',forbidden)
+ assert window(14,(0,0,MILE,MILE),Settings({'stages.houses':False}),detail=False)['features']

@@ -472,10 +472,10 @@ def place_edge_biz(seed, town, roads, rail, occupied):
 
 
 # ---------- region ----------
-def make_region(seed, force_town=False, overrides=None, force_rail=None, force_pop=None, road_factory=None, rail_factory=None):
+def make_region(seed, force_town=False, overrides=None, force_rail=None, force_pop=None, road_factory=None, rail_factory=None, water_barriers=None):
     roads, pct = (road_factory or make_roads)(seed, force_town)
     rail = (rail_factory or make_rail)(seed, roads, force_rail)
-    creeks = make_creeks(seed, roads)
+    creeks = make_creeks(seed, roads) if water_barriers is None else water_barriers
     bar = [rail] + creeks if rail else list(creeks)     # rail corridor + floodplains: no lots or parcels
     town = make_town(seed, roads, rail, force_town, force_pop, creeks)
     if town and not option("generation.parity"):
