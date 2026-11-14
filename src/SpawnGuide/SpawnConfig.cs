@@ -525,8 +525,6 @@ namespace SpawnGuide
             ["hamlet"] = new TownSizePreset { Columns = 4, EWStreets = 3, LotsMin = 3, LotsMax = 4, CommercialPads = 6, CivicAnchors = 2, DeadEnds = 1, Tier = 1, Label = "HAMLET" },
             ["village"] = new TownSizePreset { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 10, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
             ["town"] = new TownSizePreset { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 14, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
-            ["boyden"] = new TownSizePreset { Columns = 7, EWStreets = 5, LotsMin = 3, LotsMax = 5, CommercialPads = 10, CivicAnchors = 4, DeadEnds = 1, Tier = 2, Label = "VILLAGE" },
-            ["hull"] = new TownSizePreset { Columns = 10, EWStreets = 6, LotsMin = 3, LotsMax = 5, CommercialPads = 14, CivicAnchors = 5, DeadEnds = 2, Tier = 3, Label = "TOWN" },
         };
 
         // --- Town extras (legacy - replaced by TownExtraDef feature grammar) ---

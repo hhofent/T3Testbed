@@ -29,17 +29,17 @@ aerial photos; section-line grid, 1-mile spacing).
 4 lots per side, seeded archetypes, 20–22 ft setbacks, yard trees, street trees,
 public sidewalks, spur walks to each door, integral or side-entry garages with short
 driveways, occasional rear pole garage onto a seeded alley, or detached garage for
-farmhouses. Matched to the gridded unincorporated towns in the reference images
-(George, Craig, Struble — orthogonal streets, some lots alley-loaded, heavy canopy).
+farmhouses. Matched to gridded unincorporated towns in the reference images: orthogonal streets,
+some lots alley-loaded.
 
-**Small town** (`--map smalltown --size hamlet|boyden|hull`) — a whole seeded grid
-town, George/Craig/Struble class: highway along the south edge (commercial strip —
-a gas station, feed store, co-op, hardware, elevator with bin row east of MAIN), cardinal
-grid inside, blocks with houses on **4 sides** (~72% of blocks; side lots face the N–S
-streets, houses rotated 90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of
-every street with a walk from each one to the front door and a concrete drive to each
-garage, street trees, per-row alleys (~55%), heavy canopy. Sizes: hamlet ~0.4 mi,
-boyden ~0.7 mi, hull ~1.1 mi. The street network is closed by a **perimeter loop** that
+**Small town** (`--map smalltown --size crossroads|hamlet|village|town`) — a whole seeded
+grid town: highway along the south edge (commercial strip — a gas station, feed store,
+co-op, hardware, elevator with bin row east of MAIN), cardinal grid inside, blocks with
+houses on **4 sides** (~72% of blocks; side lots face the N–S streets, houses rotated
+90°) or 2 sides, 20–30 ft setbacks, sidewalks on both sides of every street with a walk
+from each one to the front door and a concrete drive to each garage, street trees,
+per-row alleys (~55%), heavy canopy. Sizes: crossroads ~0.25 mi, hamlet ~0.4 mi,
+village ~0.7 mi, town ~1.1 mi. The street network is closed by a **perimeter loop** that
 jogs on its north edge, so the town is encircled without the ring ever being an even
 rectangle, and exactly **one dead-end street** hangs off it with empty lots along it —
 the only deliberate vacancy in town.
@@ -80,7 +80,7 @@ where a farmyard or a town is in the way.
 **3-mile cell** (`--map country`, seed via `--seed`) — a 3-mile (15840 ft) test cell
 with towns straddling the interior section-line junction or a cell boundary, 1-mile
 grid roads, field fills, farmstead clusters, HWY 18 to the cell edges. Four views per
-run: hamlet (centered), boyden (centered), hull (partial at the west edge), hamlet
+run: hamlet (centered), village (centered), town (partial at the west edge), hamlet
 (partial at the north edge) — the "partial town, partial rural" framing.
 
 **Infinite world** (`--map world`) — the destination architecture. A window is a pure
@@ -114,7 +114,7 @@ browser** — phones can't reach a local file.
 **Live seeds from the spawner** — `dotnet run -- --serve` starts the built-in HTTP
 server on 127.0.0.1:8735. With it running, the 🎲 random button and seed box generate
 ANY seed on demand — no baking needed. `GET /` serves the viewer,
-`GET /gen?seed=N&size=hamlet|boyden|hull` generates a fixed map fresh,
+`GET /gen?seed=N&size=crossroads|hamlet|village|town` generates a fixed map fresh,
 `GET /world?seed&cx&cz&span&ppf&lod` renders any infinite-world window, and
 `GET /world-center?seed` returns the nearest town's center so a new seed opens on a
 town. Baked maps still work offline.

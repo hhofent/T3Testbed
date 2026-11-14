@@ -6,8 +6,8 @@ namespace SpawnGuide
 
 /// <summary>
 /// A street that is not on the town's grid: the diagonal rail-corridor street and
-/// the curved residential street. Iowa towns have them — George runs Boiler Ave
-/// along the old rail line, Boyden's Railroad St curves through the south third —
+/// the curved residential street. Iowa towns have them — one town's main drag runs
+/// along the old rail line, another's Railroad St curves through the south third —
 /// and a rectangle cannot draw them.
 ///
 /// The street is laid out before the blocks are filled, so the blocks leave room

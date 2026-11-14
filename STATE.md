@@ -41,12 +41,12 @@ ports later.
   sparingly; prefer numeric/text observations.
 - 2026-11-11: durability scheme replaced append-only `handoff.md` with
   `STATE.md` (rewrite-in-place) + `docs/research/` (write-once) + `git log` (journal).
-- Town density ladder (user answer 2026-11-11): hamlet (George-class) typically
-  every ~30 mi — very rare under ~10 mi apart, essentially guaranteed by ~50 mi.
-  Boyden-class ~1 per 30 mi. Hull-class ~1 per 100 mi (the largest a town ever spawns).
-  Farmsteads a few per section; most of the map is fields on the section grid.
+- Town density ladder (user answer 2026-11-11): hamlet typically every ~30 mi —
+  very rare under ~10 mi apart, essentially guaranteed by ~50 mi. Village ~1 per 30 mi.
+  Town ~1 per 100 mi (the largest a town ever spawns). Farmsteads a few per section;
+  most of the map is fields on the section grid.
 - Build order (user answer 2026-11-11): ONE small town first, then grow it bigger
-  for testing (hamlet → boyden → hull as parameter bumps). NO spawn-frequency
+  for testing (crossroads → hamlet → village → town as parameter bumps). NO spawn-frequency
   field yet — frequency comes after the sizes look right.
 - Infinite-world rule (2026-11-11): a 3-mile cell is the lens **request unit**, not an
   independent render tile. Content is pure in world coordinates; windows are rendered as
@@ -75,10 +75,10 @@ ports later.
   if rail runs within 9 mi, priority suppression inside 20 mi, and a trunk river within
   1,200 ft vetoes the site. The highway through a town is continuous; county roads are
   clipped inside town footprints.
-- **Town names are generic place names (user, 2026-11-11).** Boyden/Hull/George are
-  gone from the world: a 40-name pool (`COLD SPRING`, `PINEHURST`, `OAKDALE`, …) and
-  generic sizes (`crossroads` / `hamlet` / `village` / `town`). The old preset names
-  survive only as CLI aliases.
+- **Town names are generic place names (user, 2026-11-11).** The old real-town names
+  are gone from the world: a 40-name pool (`COLD SPRING`, `PINEHURST`, `OAKDALE`, …)
+  and generic sizes (`crossroads` / `hamlet` / `village` / `town`). The old preset names
+  are removed.
 - **Town streets form a loop, not a cul-de-sac maze (user, 2026-11-11).** A perimeter
   street encircles the town with a jog in its north edge; every street end meets another
   street. Exactly one dead end per town (two for the biggest) hangs off the perimeter
@@ -95,9 +95,9 @@ ports later.
 - `src/SpawnGuide/` ~2700 LOC, builds clean with .NET 5 SDK (`dotnet run -- --seed 1993`,
   also `--map rural|town|smalltown|country|world`, `--archetype ranch|farmhouse|split-level`,
   `--verify`, `--serve`). No external packages.
-- `--map smalltown --size hamlet|boyden|hull` (`SmallTown.cs`, 2026-11-11):
+- `--map smalltown --size crossroads|hamlet|village|town` (`SmallTown.cs`, 2026-11-11):
   seed 1993 hamlet = 168 houses (4-sided blocks ~72%, side lots face N–S streets,
-  rotated houses), Boyden 530, Hull 1034. Civic anchors on the grid (2 parks,
+  rotated houses), village = 530, town = 1034. Civic anchors on the grid (2 parks,
   school, 2 churches), elevator + bin row, HWY-18 commercial strip, sidewalks on
   both sides of every street, per-row alleys, heavy canopy. `--seeds a,b,c` =
   multiple seeds per run; `out/examples.html` gallery = smalltown×3 + country×3.
@@ -137,7 +137,7 @@ ports later.
   **built blocks**. Baked maps still work offline; the server is optional for old maps
   and required for live world panning.
 - SpawnGuide --serve [--port N] starts the built-in spawner on 127.0.0.1:N (default
-  8735): `/` viewer, `/gen?seed=N&size=hamlet|boyden|hull` old fixed maps,
+  8735): `/` viewer, `/gen?seed=N&size=crossroads|hamlet|village|town` old fixed maps,
   `/world?seed&cx&cz&span&ppf&lod` world windows, `/world-center?seed`. CORS + HEAD are
   handled so a `file://` viewer can detect the server. World SVG cache = 24 windows.
   Controls: dropdown, 🎲 random button, seed entry box. Bake pool: 13 hamlet seeds.
@@ -167,8 +167,8 @@ ports later.
 - Highway spine (HWY 18) now built out on BOTH sides: north band = elevator +
   1–2 industrial boxes + pads kept clear of both; south band = sparse fringe with
   industrial or store(s) + 1–3 highway-facing houses. Trees are trunk dots only.
-- Partial-town cells: `--map country` generates 4 views (hamlet + boyden centered,
-  hull partial-west, hamlet partial-north) — town clipped at the cell boundary,
+- Partial-town cells: `--map country` generates 4 views (hamlet + village centered,
+  town partial-west, hamlet partial-north) — town clipped at the cell boundary,
   cut hard at the frame: partial town + partial rural (user's ask).
 - Sequencing note: parallel thread (durability agent) committed mid-build twice;
   verify with `git status` before committing; STATE.md is the source of truth.

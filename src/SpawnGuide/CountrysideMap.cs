@@ -10,9 +10,9 @@ namespace SpawnGuide
 /// A 3-mile square cell (three sections) with the 1-mile section-grid roads, large
 /// field fills, scattered farmsteads, and the town seeded at the central grid
 /// junction (the real pattern: towns sit at section-line corners). HWY 18 runs
-/// through the town and continues to the cell edges, like the real Highway 18 at
-/// George / Boyden / Hull.
-/// The town grows with each test via --size hamlet|boyden|hull; town geometry
+/// through the town and continues to the cell edges, like a real state highway
+/// through a small town.
+/// The town grows with each test via --size crossroads|hamlet|village|town; town geometry
 /// comes from SmallTownGenerator and is shifted into the cell.
 /// detail=false → far-LOD (silhouettes, trunk dots) for the zoomed-out view;
 /// detail=true  → everything (walls, captions) for the viewer's close-in layer.

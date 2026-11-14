@@ -272,28 +272,6 @@
                                                        "DeadEnds":  2,
                                                        "Tier":  3,
                                                        "Label":  "TOWN"
-                                                   },
-                                          "boyden":  {
-                                                         "Columns":  7,
-                                                         "EWStreets":  5,
-                                                         "LotsMin":  3,
-                                                         "LotsMax":  5,
-                                                         "CommercialPads":  10,
-                                                         "CivicAnchors":  4,
-                                                         "DeadEnds":  1,
-                                                         "Tier":  2,
-                                                         "Label":  "VILLAGE"
-                                                     },
-                                          "hull":  {
-                                                       "Columns":  10,
-                                                       "EWStreets":  6,
-                                                       "LotsMin":  3,
-                                                       "LotsMax":  5,
-                                                       "CommercialPads":  14,
-                                                       "CivicAnchors":  5,
-                                                       "DeadEnds":  2,
-                                                       "Tier":  3,
-                                                       "Label":  "TOWN"
                                                    }
                                       },
                       "extraCourtChance":  0.5,

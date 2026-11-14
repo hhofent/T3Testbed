@@ -47,9 +47,7 @@ namespace SpawnGuide
                 "hamlet" => 1,
                 "village" => 2,
                 "town" => 3,
-                "boyden" => 2,  // alias for village
-                "hull" => 3,    // alias for town
-                _ => 1,         // default hamlet
+                _ => throw new ArgumentException($"Unknown town size '{sizeName}'. Valid sizes: crossroads, hamlet, village, town."),
             };
 
             // Use TownTierSystem if available in parent config

@@ -25,6 +25,13 @@ static class Program
         return Array.IndexOf(args, name) >= 0;
     }
 
+    static readonly string[] ValidTownSizes = { "crossroads", "hamlet", "village", "town" };
+
+    static bool IsValidTownSize(string sizeName)
+    {
+        return Array.IndexOf(ValidTownSizes, (sizeName ?? "").ToLowerInvariant()) >= 0;
+    }
+
     // Load configuration
     static SpawnConfig LoadConfig(string[] args)
     {
@@ -457,6 +464,16 @@ static class Program
                         var q = qs.Split('&', StringSplitOptions.RemoveEmptyEntries).ToDictionary(p => p.Split('=')[0], p => p.Split('=').Length > 1 ? p.Split('=')[1] : "", StringComparer.OrdinalIgnoreCase);
                         if (!uint.TryParse(q.GetValueOrDefault("seed", ""), out var s)) s = 1993;
                         var sz = q.GetValueOrDefault("size", "hamlet");
+                        if (!IsValidTownSize(sz))
+                        {
+                            ctx.Response.StatusCode = 400;
+                            ctx.Response.ContentType = "text/plain; charset=utf-8";
+                            var msg = $"Invalid size '{sz}'. Valid sizes: crossroads, hamlet, village, town.";
+                            var errBytes = System.Text.Encoding.UTF8.GetBytes(msg);
+                            ctx.Response.OutputStream.Write(errBytes, 0, errBytes.Length);
+                            ctx.Response.Close();
+                            continue;
+                        }
                         var map = SmallTownGenerator.Generate(s, sz, false, null, config.SmallTown);
                         var svg = SvgMapRenderer.Render(map);
                         ctx.Response.ContentType = "image/svg+xml";
@@ -562,7 +579,7 @@ static class Program
         }
         if (mapMode is "country" or "all")
         {
-            foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("boyden", null), ("hull", "west"), ("hamlet", "north") })
+            foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("village", null), ("town", "west"), ("hamlet", "north") })
             {
                 string stem = $"country-{seed}-{sz}{(es != null ? "-" + es : "")}";
                 var m = CountrysideMap.Generate(seed, sz, detail: false, edge: es, config: config.Countryside);
@@ -732,7 +749,7 @@ static class Program
                 foreach (var s in smalltownSeeds)
                     if (File.Exists(Path.Combine(outDir, $"smalltown-{s}.svg")))
                         maps.Add(ViewerMapJson($"Small town — seed {s}", $"smalltown-{s}.svg", null, 1.55, outDir, s));
-                foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("boyden", null), ("hull", "west"), ("hamlet", "north") })
+                foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("village", null), ("town", "west"), ("hamlet", "north") })
                 {
                     string stem = $"country-{seed}-{sz}{(es != null ? "-" + es : "")}";
                     if (!File.Exists(Path.Combine(outDir, $"{stem}.svg")) || !File.Exists(Path.Combine(outDir, $"{stem}-detail.svg")))

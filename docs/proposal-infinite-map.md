@@ -91,8 +91,7 @@ deterministic suppression:
   `OAKDALE`, …). The old reference-map names are gone — a world of every town called
   Boyden or Hull reads as a bug, not as flavour.
 - Sizes are generic: **crossroads** (2 columns), **hamlet** (4), **village** (7),
-  **town** (10). The old `boyden`/`hull` preset names remain as aliases so existing
-  commands keep working.
+  **town** (10). The old `boyden`/`hull` preset names were removed with the port.
 
 Seed 1993 over 330 miles: 32 towns, minimum gap 10 mi — 15 crossroads, 11 hamlet,
 4 village, 2 town. All 32 are within 16 miles of a rail line.
