@@ -74,6 +74,28 @@ def tree_collisions(features):
   if any(intersects(rect,b['bounds']) for b in blockers.candidates(rect)): failed.append(f['id'])
  return failed
 
+def river_checks(seed,rect):
+ from world import rivers,elevation
+ step=option('world.tributary_spacing_miles')*MILE
+ expanded=(rect[0]-step,rect[1]-step,rect[2]+2*step,rect[3]+2*step)
+ streams=list(rivers(seed,expanded)); by_id={f['id']:f for f in streams}
+ selected=[f for f in streams if intersects(f['bounds'],rect)]
+ dead=[]; uphill=[]; crossings=[]
+ close=lambda a,b:math.dist(a,b)<.001
+ for f in selected:
+  downstream=by_id.get(f['downstream'])
+  if downstream is None or not close(f['points'][-1],downstream['points'][0]): dead.append(f['id'])
+  if not f['source'] and not any(close(g['points'][-1],f['points'][0]) for g in streams): dead.append(f['id']+':upstream')
+  if any(elevation(seed,*b)>elevation(seed,*a)+1e-7 for a,b in zip(f['points'],f['points'][1:])): uphill.append(f['id'])
+ for i,f in enumerate(selected):
+  for g in selected[i+1:]:
+   if not intersects(f['bounds'],g['bounds']): continue
+   for a,b in zip(f['points'],f['points'][1:]):
+    for c,d in zip(g['points'],g['points'][1:]):
+     if any(close(p,q) for p in (a,b) for q in (c,d)): continue
+     if intersection_angle(a,b,c,d) is not None: crossings.append((f['id'],g['id']))
+ return {'river_continuity':{'pass':not dead,'failures':dead[:10],'examined':len(selected)},'rivers_downhill':{'pass':not uphill,'failures':uphill[:10]},'no_river_crossings':{'pass':not crossings,'failures':crossings[:10]}}
+
 def run(seed=31,settings=None,rect=None):
  settings=settings or Settings(); rect=rect or (0,0,3*MILE,3*MILE)
  with applied(settings):
@@ -103,4 +125,5 @@ def run(seed=31,settings=None,rect=None):
    'rail_crossings':{'pass':all(a>=option('verify.minimum_angle_deg') for a in all_angles) and near>=option('verify.square_share'),'count':len(all_angles),'minimum_angle':min(all_angles,default=None),'near_square_share':near},
    'no_tree_on_geometry':{'pass':not trees,'failures':trees[:10],'count':len(trees),'examined':sum(f['kind']=='trees' for f in features)},
   }
+  checks.update(river_checks(seed,rect))
   return {'seed':seed,'pass':all(v['pass'] for v in checks.values()),'checks':checks}

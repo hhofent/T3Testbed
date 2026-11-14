@@ -2631,3 +2631,5 @@ define('world.tile_cache_size',128,128,128,1,'tiles','PLACEHOLDER: fixed in-memo
 define('world.rail_draw_ft',4,1,10,1,'ft','PLACEHOLDER: rail drawing stroke; contours use 1 ft and feature outlines 0.3 screen pixels.')
 
 define('world.chunk_miles',3,1,12,1,'mi','Size of independently cached display chunks.')
+
+define('world.south_drop_ft',4,1,10,1,'ft per mi','Southward drainage grade; watershed ridges add local hill relief.')

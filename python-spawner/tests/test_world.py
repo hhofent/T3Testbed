@@ -22,3 +22,12 @@ def test_rivers_flow_south_and_merge_into_wider_trunks():
  assert streams
  assert all(f['points'][1][1]>f['points'][0][1] for f in streams)
  assert all(f['downstream'].startswith('river:') for f in streams)
+
+
+def test_drainage_continuity_crossings_and_downhill():
+ from verification import river_checks
+ from settings import applied
+ for seed in (13,31,46):
+  with applied(Settings()):
+   checks=river_checks(seed,(-10*MILE,-10*MILE,40*MILE,40*MILE))
+   assert all(c['pass'] for c in checks.values()),checks

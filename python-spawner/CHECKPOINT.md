@@ -32,7 +32,11 @@ Browser measurements, loopback HTTP + actual control.html JS, 1280x800:
 
 ## Exact next step
 Fix 3 done: real navigation labels, accessible names and tooltips; all buttons act.
-Next: fix 4 rivers (continuous downhill,
+Fix 4 done: coordinate-owned continuous south-draining trunk streams, explicit
+source tributaries joining shared vertices, watershed-aligned downhill terrain.
+Verifier checks continuity, downhill elevations and crossings over overlapping views.
+83 tests pass, including three 40x40 mi drainage checks.
+Next: fix 5 rural variety; completed fix 4 rivers (continuous downhill,
 merging, no crossings/dead ends, verification); 5 rural variety and settings;
 6 diagonal/road-parallel rail, crossings >=45 degrees and >=80% within 15 of square;
 7 random missing road segments in both directions (~1%), connected network;

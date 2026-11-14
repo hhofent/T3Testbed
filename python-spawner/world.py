@@ -109,10 +109,16 @@ def _tile(seed,tx,ty,serialized,detail=True):
      if r[0]>=0 and r[1]>=0 and r[0]+r[2]<=extent and r[1]+r[3]<=extent: add('buildings','business:'+shop['id'],r,use=shop['type'])
   return out
 
+def drainage_x(seed,y):
+ step=option('world.tributary_spacing_miles')*MILE
+ phase=H(seed,'river-watershed')%10000/10000*2*math.pi
+ return math.sin(y/(step*option('world.river_wave_steps'))+phase)*MILE*option('world.river_wander_miles')
+
 def elevation(seed,x,y):
- wave=option('world.hill_wavelength_miles')*MILE
- phase=(H(seed,'hills')%10000)/10000*2*math.pi
- return option('world.relief_ft')*(2+math.sin(x/wave*2*math.pi+phase)+math.cos(y/wave*2*math.pi-phase))/4
+ # A south-sloping datum plus watershed ridges. The same valley centers own rivers.
+ spacing=option('world.river_spacing_miles')*MILE
+ distance=abs((x-drainage_x(seed,y)+spacing/2)%spacing-spacing/2)
+ return -y/MILE*option('world.south_drop_ft')+option('world.relief_ft')*(1-math.cos(distance/spacing*2*math.pi))/2
 
 def terrain(seed,rect):
  cell=FT(option('world.contour_cell_ft')); interval=option('world.contour_interval_ft')
@@ -120,7 +126,7 @@ def terrain(seed,rect):
   for iy in range(math.floor(rect[1]/cell)-1,math.ceil((rect[1]+rect[3])/cell)+1):
    corners=[(ix*cell,iy*cell),((ix+1)*cell,iy*cell),((ix+1)*cell,(iy+1)*cell),(ix*cell,(iy+1)*cell)]
    heights=[elevation(seed,*p) for p in corners]
-   for level in range(interval,int(option('world.relief_ft'))+interval,interval):
+   for level in range(math.floor(min(heights)/interval)*interval,math.ceil(max(heights)/interval)*interval+interval,interval):
     points=[]
     for a,b,ha,hb in zip(corners,corners[1:]+corners[:1],heights,heights[1:]+heights[:1]):
      if (ha<=level<hb) or (hb<=level<ha):
@@ -128,15 +134,24 @@ def terrain(seed,rect):
     for i in range(0,len(points)-1,2): yield feature('contours',f'contour:{ix}:{iy}:{level}:{i}',points=points[i:i+2],height=level)
 
 def rivers(seed,rect):
- spacing=option('world.river_spacing_miles')*MILE; step=option('world.tributary_spacing_miles')*MILE; width=FT(option('world.river_width_ft'))
- for lane in range(math.floor(rect[0]/spacing)-1,math.ceil((rect[0]+rect[2])/spacing)+1):
-  phase=H(seed,'river',lane)%100/100*2*math.pi
-  def x(y): return lane*spacing+math.sin(y/(step*option('world.river_wave_steps'))+phase)*MILE*option('world.river_wander_miles')
+ spacing=option('world.river_spacing_miles')*MILE; step=option('world.tributary_spacing_miles')*MILE; width=FT(option('world.river_width_ft')); sample=step/16
+ wander=option('world.river_wander_miles')*MILE
+ for lane in range(math.floor((rect[0]-wander-spacing/2)/spacing),math.ceil((rect[0]+rect[2]+wander+spacing/2)/spacing)+1):
+  def point(y,offset=0): return (lane*spacing+drainage_x(seed,y)+offset,y)
+  for row in range(math.floor(rect[1]/sample)-1,math.ceil((rect[1]+rect[3])/sample)+1):
+   yield feature('rivers',f'river:{lane}:{row}',points=[point(row*sample),point((row+1)*sample)],width=width,flow='south',source=False,downstream=f'river:{lane}:{row+1}')
   for row in range(math.floor(rect[1]/step)-1,math.ceil((rect[1]+rect[3])/step)+1):
-   y=row*step; end=(x(y+step),y+step)
-   yield feature('rivers',f'river:{lane}:{row}',points=[(x(y),y),end],width=width,flow='south',downstream=f'river:{lane}:{row+1}')
    for side in (-1,1):
-    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=[(lane*spacing+side*spacing/2,y),end],width=width/2,flow='south',downstream=f'river:{lane}:{row+1}')
+    reach=(.55+H(seed,'source-reach',lane,row,side)%35/100)*step
+    join=(row+1)*step; start=join-reach
+    offset=side*spacing*(.22+H(seed,'source-ridge',lane,row,side)%22/100)
+    points=[]
+    for i in range(17):
+     t=i/16; d=offset*(1-t)*(1+.08*math.sin(t*2*math.pi))
+     points.append(point(start+reach*t,d))
+    # Explicit shared vertex at the confluence: branches join, never cross.
+    points[-1]=point(join)
+    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=points,width=width/2,flow='south',source=True,downstream=f'river:{lane}:{(row+1)*16}')
 
 def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()
