@@ -1,0 +1,2832 @@
+[
+ {
+  "seed": 1,
+  "lots": 36,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 9
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 2,
+  "lots": 33,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 3,
+  "lots": 28,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 2
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0
+ },
+ {
+  "seed": 4,
+  "lots": 38,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 10
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 5,
+  "lots": 37,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 6,
+  "lots": 34,
+  "by_kind": {
+   "acreage": 7,
+   "farmstead": 27
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 7,
+  "lots": 33,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 8,
+  "lots": 29,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0
+ },
+ {
+  "seed": 9,
+  "lots": 31,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0
+ },
+ {
+  "seed": 10,
+  "lots": 30,
+  "by_kind": {
+   "acreage": 6,
+   "farmstead": 24
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 11,
+  "lots": 40,
+  "by_kind": {
+   "farmstead": 34,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 12,
+  "lots": 52,
+  "by_kind": {
+   "farmstead": 18,
+   "acreage": 5,
+   "town": 29
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 4,
+   "blocks": 7,
+   "houses": 29,
+   "trailers": 2,
+   "pop_est": 82,
+   "band": 0,
+   "year": 1995,
+   "businesses": [
+    "bank",
+    "church",
+    "city hall / fire",
+    "locker plant",
+    "post office",
+    "tavern",
+    "vacant (former drug store)",
+    "vacant (former variety)"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 13,
+  "lots": 44,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 3,
+   "town": 12
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 2,
+   "blocks": 4,
+   "houses": 12,
+   "trailers": 0,
+   "pop_est": 29,
+   "band": 0,
+   "year": 2000,
+   "businesses": [
+    "cafe",
+    "city hall / fire",
+    "lumberyard",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 14,
+  "lots": 346,
+  "by_kind": {
+   "acreage": 2,
+   "farmstead": 28,
+   "town": 316
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "town": {
+   "size": "big",
+   "rail_town": false,
+   "cols": 11,
+   "rows": 9,
+   "blocks": 54,
+   "houses": 316,
+   "trailers": 121,
+   "pop_est": 770,
+   "band": 2,
+   "year": 1995,
+   "businesses": [
+    "auto repair",
+    "bank (branch)",
+    "cafe",
+    "church",
+    "city hall / fire",
+    "gas station",
+    "grocery (highway)",
+    "insurance",
+    "lumberyard",
+    "post office",
+    "vet"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 15,
+  "lots": 34,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 16,
+  "lots": 63,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 7,
+   "town": 29
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 6,
+   "houses": 29,
+   "trailers": 12,
+   "pop_est": 94,
+   "band": 0,
+   "year": 1995,
+   "businesses": [
+    "post office",
+    "tavern",
+    "vacant (former drug store)"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 22,
+    "trailers_in_block": 17,
+    "pads": 33,
+    "reason": "stick 22 < 2 x (trailers 17 + pads 33)"
+   }
+  }
+ },
+ {
+  "seed": 17,
+  "lots": 34,
+  "by_kind": {
+   "farmstead": 24,
+   "acreage": 10
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 18,
+  "lots": 330,
+  "by_kind": {
+   "acreage": 6,
+   "farmstead": 28,
+   "town": 296
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "fuel"
+  ],
+  "park_pads": 28,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "big",
+   "rail_town": false,
+   "cols": 11,
+   "rows": 9,
+   "blocks": 52,
+   "houses": 296,
+   "trailers": 49,
+   "pop_est": 778,
+   "band": 2,
+   "year": 2000,
+   "businesses": [
+    "auto repair",
+    "bank (branch)",
+    "beauty shop",
+    "church",
+    "city hall / fire",
+    "farm supply",
+    "funeral home",
+    "gas station",
+    "hardware",
+    "nursing home",
+    "post office",
+    "school",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": true,
+    "stick": 267,
+    "trailers_in_block": 53,
+    "pads": 28,
+    "reason": "stick 267 >= 2 x (trailers 53 + pads 28)"
+   }
+  }
+ },
+ {
+  "seed": 19,
+  "lots": 36,
+  "by_kind": {
+   "farmstead": 30,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 20,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 30,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0
+ },
+ {
+  "seed": 21,
+  "lots": 36,
+  "by_kind": {
+   "farmstead": 34,
+   "acreage": 2
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 3000.0
+ },
+ {
+  "seed": 22,
+  "lots": 76,
+  "by_kind": {
+   "farmstead": 35,
+   "acreage": 8,
+   "town": 33
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 3000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 5,
+   "houses": 33,
+   "trailers": 15,
+   "pop_est": 91,
+   "band": 0,
+   "year": 1995,
+   "businesses": [
+    "cafe",
+    "church",
+    "gas station",
+    "post office",
+    "vet"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 18,
+    "trailers_in_block": 15,
+    "pads": 40,
+    "reason": "stick 18 < 2 x (trailers 15 + pads 40)"
+   }
+  }
+ },
+ {
+  "seed": 23,
+  "lots": 97,
+  "by_kind": {
+   "acreage": 12,
+   "farmstead": 31,
+   "town": 54
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 9,
+   "houses": 54,
+   "trailers": 8,
+   "pop_est": 132,
+   "band": 0,
+   "year": 1995,
+   "businesses": [
+    "city hall / fire",
+    "farm supply"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 24,
+  "lots": 71,
+  "by_kind": {
+   "farmstead": 24,
+   "acreage": 6,
+   "town": 41
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 7,
+   "houses": 41,
+   "trailers": 4,
+   "pop_est": 103,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "auto repair",
+    "bank",
+    "city hall / fire",
+    "grocery",
+    "implement dealer",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 25,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 34,
+   "acreage": 1
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 26,
+  "lots": 82,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 5,
+   "town": 50
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 9,
+   "houses": 50,
+   "trailers": 6,
+   "pop_est": 118,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 27,
+  "lots": 36,
+  "by_kind": {
+   "farmstead": 25,
+   "acreage": 11
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 28,
+  "lots": 349,
+  "by_kind": {
+   "farmstead": 26,
+   "town": 317,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0,
+  "town": {
+   "size": "big",
+   "rail_town": true,
+   "cols": 12,
+   "rows": 8,
+   "blocks": 48,
+   "houses": 317,
+   "trailers": 84,
+   "pop_est": 775,
+   "band": 2,
+   "year": 1995,
+   "businesses": [
+    "bank",
+    "beauty shop",
+    "cafe",
+    "church",
+    "church",
+    "city hall / fire",
+    "drug store",
+    "gas station",
+    "grocery",
+    "hardware",
+    "implement dealer",
+    "insurance",
+    "nursing home",
+    "post office",
+    "tavern",
+    "vacant (former grocery)",
+    "vacant (former hardware)",
+    "vacant (former variety)",
+    "vet"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 29,
+  "lots": 76,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 6,
+   "town": 41
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 8,
+   "houses": 41,
+   "trailers": 15,
+   "pop_est": 98,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "farm supply",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 26,
+    "trailers_in_block": 15,
+    "pads": 37,
+    "reason": "stick 26 < 2 x (trailers 15 + pads 37)"
+   }
+  }
+ },
+ {
+  "seed": 30,
+  "lots": 63,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 5,
+   "town": 29
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 3000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 6,
+   "houses": 29,
+   "trailers": 9,
+   "pop_est": 72,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "church",
+    "gas station"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 20,
+    "trailers_in_block": 9,
+    "pads": 29,
+    "reason": "stick 20 < 2 x (trailers 9 + pads 29)"
+   }
+  }
+ },
+ {
+  "seed": 31,
+  "lots": 203,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 4,
+   "town": 173
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 15,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": true,
+   "cols": 6,
+   "rows": 8,
+   "blocks": 29,
+   "houses": 173,
+   "trailers": 33,
+   "pop_est": 427,
+   "band": 1,
+   "year": 1985,
+   "businesses": [
+    "bank",
+    "cafe",
+    "church",
+    "church",
+    "city hall / fire",
+    "grocery",
+    "insurance",
+    "post office",
+    "school",
+    "vacant (former drug store)",
+    "vacant (former grocery)"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": true,
+    "stick": 140,
+    "trailers_in_block": 33,
+    "pads": 15,
+    "reason": "stick 140 >= 2 x (trailers 33 + pads 15)"
+   }
+  }
+ },
+ {
+  "seed": 32,
+  "lots": 68,
+  "by_kind": {
+   "farmstead": 22,
+   "acreage": 2,
+   "town": 44
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 4,
+   "blocks": 8,
+   "houses": 44,
+   "trailers": 18,
+   "pop_est": 110,
+   "band": 0,
+   "year": 1995,
+   "businesses": [
+    "city hall / fire",
+    "gas station",
+    "implement dealer",
+    "post office",
+    "tavern",
+    "vet"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 26,
+    "trailers_in_block": 18,
+    "pads": 37,
+    "reason": "stick 26 < 2 x (trailers 18 + pads 37)"
+   }
+  }
+ },
+ {
+  "seed": 33,
+  "lots": 69,
+  "by_kind": {
+   "farmstead": 28,
+   "town": 37,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 8,
+   "houses": 37,
+   "trailers": 13,
+   "pop_est": 94,
+   "band": 0,
+   "year": 2000,
+   "businesses": [
+    "church",
+    "lumberyard",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 24,
+    "trailers_in_block": 13,
+    "pads": 25,
+    "reason": "stick 24 < 2 x (trailers 13 + pads 25)"
+   }
+  }
+ },
+ {
+  "seed": 34,
+  "lots": 38,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 35,
+  "lots": 38,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0
+ },
+ {
+  "seed": 36,
+  "lots": 63,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 9,
+   "town": 27
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 6,
+   "houses": 27,
+   "trailers": 4,
+   "pop_est": 70,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "church",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 23,
+    "trailers_in_block": 4,
+    "pads": 40,
+    "reason": "stick 23 < 2 x (trailers 4 + pads 40)"
+   }
+  }
+ },
+ {
+  "seed": 37,
+  "lots": 38,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 38,
+  "lots": 36,
+  "by_kind": {
+   "farmstead": 30,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 39,
+  "lots": 32,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 40,
+  "lots": 29,
+  "by_kind": {
+   "farmstead": 24,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 41,
+  "lots": 63,
+  "by_kind": {
+   "farmstead": 28,
+   "town": 28,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 6,
+   "houses": 28,
+   "trailers": 3,
+   "pop_est": 74,
+   "band": 0,
+   "year": 1985,
+   "businesses": [
+    "cafe",
+    "church",
+    "city hall / fire",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 42,
+  "lots": 33,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 43,
+  "lots": 37,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 9
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 44,
+  "lots": 56,
+  "by_kind": {
+   "farmstead": 25,
+   "acreage": 4,
+   "town": 27
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 6,
+   "houses": 27,
+   "trailers": 8,
+   "pop_est": 70,
+   "band": 0,
+   "year": 2000,
+   "businesses": [
+    "church",
+    "city hall / fire",
+    "gas station",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 19,
+    "trailers_in_block": 8,
+    "pads": 40,
+    "reason": "stick 19 < 2 x (trailers 8 + pads 40)"
+   }
+  }
+ },
+ {
+  "seed": 45,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 46,
+  "lots": 170,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 7,
+   "town": 135
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": false,
+   "cols": 7,
+   "rows": 6,
+   "blocks": 28,
+   "houses": 135,
+   "trailers": 38,
+   "pop_est": 384,
+   "band": 1,
+   "year": 2000,
+   "businesses": [
+    "church",
+    "city hall / fire",
+    "insurance",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 111,
+    "trailers_in_block": 46,
+    "pads": 15,
+    "reason": "stick 111 < 2 x (trailers 46 + pads 15)"
+   }
+  }
+ },
+ {
+  "seed": 47,
+  "lots": 159,
+  "by_kind": {
+   "farmstead": 35,
+   "acreage": 8,
+   "town": 116
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 3000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": false,
+   "cols": 6,
+   "rows": 5,
+   "blocks": 20,
+   "houses": 116,
+   "trailers": 37,
+   "pop_est": 283,
+   "band": 1,
+   "year": 1985,
+   "businesses": [
+    "auto repair",
+    "cafe",
+    "church",
+    "city hall / fire",
+    "insurance",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 79,
+    "trailers_in_block": 37,
+    "pads": 27,
+    "reason": "stick 79 < 2 x (trailers 37 + pads 27)"
+   }
+  }
+ },
+ {
+  "seed": 48,
+  "lots": 62,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 8,
+   "town": 27
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 3,
+   "blocks": 5,
+   "houses": 27,
+   "trailers": 3,
+   "pop_est": 70,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "bank",
+    "grocery",
+    "post office",
+    "vacant (former grocery)"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 24,
+    "trailers_in_block": 3,
+    "pads": 20,
+    "reason": "stick 24 < 2 x (trailers 3 + pads 20)"
+   }
+  }
+ },
+ {
+  "seed": 49,
+  "lots": 31,
+  "by_kind": {
+   "farmstead": 23,
+   "acreage": 8
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 50,
+  "lots": 58,
+  "by_kind": {
+   "farmstead": 33,
+   "acreage": 5,
+   "town": 20
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 2,
+   "blocks": 4,
+   "houses": 20,
+   "trailers": 4,
+   "pop_est": 48,
+   "band": 0,
+   "year": 1995,
+   "businesses": [],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 51,
+  "lots": 39,
+  "by_kind": {
+   "farmstead": 31,
+   "acreage": 8
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 52,
+  "lots": 32,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 53,
+  "lots": 39,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 54,
+  "lots": 39,
+  "by_kind": {
+   "farmstead": 31,
+   "acreage": 8
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 55,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 56,
+  "lots": 33,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 57,
+  "lots": 40,
+  "by_kind": {
+   "farmstead": 33,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 3000.0
+ },
+ {
+  "seed": 58,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 8
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 59,
+  "lots": 55,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 6,
+   "town": 22
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 4,
+   "houses": 22,
+   "trailers": 6,
+   "pop_est": 50,
+   "band": 0,
+   "year": 1985,
+   "businesses": [
+    "cafe",
+    "grocery",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 16,
+    "trailers_in_block": 6,
+    "pads": 30,
+    "reason": "stick 16 < 2 x (trailers 6 + pads 30)"
+   }
+  }
+ },
+ {
+  "seed": 60,
+  "lots": 33,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 61,
+  "lots": 29,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 62,
+  "lots": 92,
+  "by_kind": {
+   "farmstead": 35,
+   "acreage": 8,
+   "town": 49
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 4,
+   "blocks": 8,
+   "houses": 49,
+   "trailers": 15,
+   "pop_est": 122,
+   "band": 0,
+   "year": 1995,
+   "businesses": [
+    "gas station",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 63,
+  "lots": 126,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 3,
+   "town": 94
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": true,
+   "cols": 5,
+   "rows": 7,
+   "blocks": 18,
+   "houses": 94,
+   "trailers": 12,
+   "pop_est": 230,
+   "band": 0,
+   "year": 2000,
+   "businesses": [
+    "cafe",
+    "city hall / fire",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 64,
+  "lots": 26,
+  "by_kind": {
+   "acreage": 2,
+   "farmstead": 24
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 65,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 31,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 66,
+  "lots": 39,
+  "by_kind": {
+   "farmstead": 34,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 67,
+  "lots": 34,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0
+ },
+ {
+  "seed": 68,
+  "lots": 164,
+  "by_kind": {
+   "farmstead": 27,
+   "town": 131,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": true,
+   "cols": 5,
+   "rows": 8,
+   "blocks": 20,
+   "houses": 131,
+   "trailers": 38,
+   "pop_est": 324,
+   "band": 1,
+   "year": 1985,
+   "businesses": [
+    "auto repair",
+    "cafe",
+    "church",
+    "funeral home",
+    "gas station",
+    "hardware",
+    "implement dealer",
+    "insurance",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 69,
+  "lots": 30,
+  "by_kind": {
+   "farmstead": 24,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 70,
+  "lots": 38,
+  "by_kind": {
+   "farmstead": 29,
+   "acreage": 9
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 71,
+  "lots": 28,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 2
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 72,
+  "lots": 315,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 6,
+   "town": 283
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "big",
+   "rail_town": true,
+   "cols": 12,
+   "rows": 8,
+   "blocks": 49,
+   "houses": 283,
+   "trailers": 64,
+   "pop_est": 689,
+   "band": 1,
+   "year": 1985,
+   "businesses": [
+    "auto repair",
+    "cafe",
+    "church",
+    "church",
+    "city hall / fire",
+    "drug store",
+    "implement dealer",
+    "lumberyard",
+    "post office",
+    "vacant (former drug store)"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 73,
+  "lots": 31,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0
+ },
+ {
+  "seed": 74,
+  "lots": 30,
+  "by_kind": {
+   "acreage": 4,
+   "farmstead": 26
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0
+ },
+ {
+  "seed": 75,
+  "lots": 34,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 76,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 77,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 8
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 78,
+  "lots": 78,
+  "by_kind": {
+   "acreage": 7,
+   "farmstead": 30,
+   "town": 41
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 4,
+   "blocks": 7,
+   "houses": 41,
+   "trailers": 11,
+   "pop_est": 103,
+   "band": 0,
+   "year": 2000,
+   "businesses": [
+    "gas station",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 79,
+  "lots": 39,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0
+ },
+ {
+  "seed": 80,
+  "lots": 39,
+  "by_kind": {
+   "farmstead": 30,
+   "acreage": 9
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0
+ },
+ {
+  "seed": 81,
+  "lots": 31,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0
+ },
+ {
+  "seed": 82,
+  "lots": 30,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 83,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 30,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 84,
+  "lots": 31,
+  "by_kind": {
+   "farmstead": 28,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0
+ },
+ {
+  "seed": 85,
+  "lots": 75,
+  "by_kind": {
+   "farmstead": 24,
+   "town": 47,
+   "acreage": 4
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 4,
+   "blocks": 7,
+   "houses": 47,
+   "trailers": 21,
+   "pop_est": 125,
+   "band": 0,
+   "year": 2000,
+   "businesses": [
+    "cafe",
+    "church",
+    "city hall / fire",
+    "gas station",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 86,
+  "lots": 81,
+  "by_kind": {
+   "farmstead": 32,
+   "town": 46,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 3,
+   "rows": 3,
+   "blocks": 9,
+   "houses": 46,
+   "trailers": 10,
+   "pop_est": 120,
+   "band": 0,
+   "year": 1985,
+   "businesses": [
+    "bank",
+    "church",
+    "gas station",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 87,
+  "lots": 209,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 5,
+   "town": 172
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": false,
+   "cols": 8,
+   "rows": 6,
+   "blocks": 34,
+   "houses": 172,
+   "trailers": 50,
+   "pop_est": 449,
+   "band": 1,
+   "year": 1990,
+   "businesses": [
+    "cafe",
+    "church",
+    "church",
+    "city hall / fire",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 132,
+    "trailers_in_block": 50,
+    "pads": 35,
+    "reason": "stick 132 < 2 x (trailers 50 + pads 35)"
+   }
+  }
+ },
+ {
+  "seed": 88,
+  "lots": 42,
+  "by_kind": {
+   "farmstead": 34,
+   "acreage": 8
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 89,
+  "lots": 37,
+  "by_kind": {
+   "farmstead": 30,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0
+ },
+ {
+  "seed": 90,
+  "lots": 33,
+  "by_kind": {
+   "farmstead": 27,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 91,
+  "lots": 36,
+  "by_kind": {
+   "farmstead": 31,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 92,
+  "lots": 28,
+  "by_kind": {
+   "farmstead": 22,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 93,
+  "lots": 138,
+  "by_kind": {
+   "farmstead": 26,
+   "acreage": 6,
+   "town": 106
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0,
+  "town": {
+   "size": "mid",
+   "rail_town": true,
+   "cols": 5,
+   "rows": 8,
+   "blocks": 19,
+   "houses": 106,
+   "trailers": 28,
+   "pop_est": 264,
+   "band": 1,
+   "year": 1995,
+   "businesses": [
+    "church",
+    "church",
+    "farm supply",
+    "gas station",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 94,
+  "lots": 37,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 5
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 6000.0
+ },
+ {
+  "seed": 95,
+  "lots": 62,
+  "by_kind": {
+   "farmstead": 28,
+   "town": 27,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 5000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 2,
+   "blocks": 4,
+   "houses": 27,
+   "trailers": 8,
+   "pop_est": 67,
+   "band": 0,
+   "year": 1985,
+   "businesses": [
+    "bank",
+    "insurance",
+    "post office",
+    "vacant (former drug store)",
+    "vacant (former hardware)"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 96,
+  "lots": 37,
+  "by_kind": {
+   "farmstead": 31,
+   "acreage": 6
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 97,
+  "lots": 73,
+  "by_kind": {
+   "farmstead": 22,
+   "town": 44,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 0,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel",
+   "industry"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": true,
+   "cols": 2,
+   "rows": 4,
+   "blocks": 8,
+   "houses": 44,
+   "trailers": 17,
+   "pop_est": 103,
+   "band": 0,
+   "year": 1985,
+   "businesses": [
+    "cafe",
+    "post office"
+   ],
+   "unplaced": [],
+   "park_rule": {
+    "ok": false,
+    "stick": 27,
+    "trailers_in_block": 17,
+    "pads": 33,
+    "reason": "stick 27 < 2 x (trailers 17 + pads 33)"
+   }
+  }
+ },
+ {
+  "seed": 98,
+  "lots": 40,
+  "by_kind": {
+   "farmstead": 33,
+   "acreage": 7
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": false,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0
+ },
+ {
+  "seed": 99,
+  "lots": 51,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 6,
+   "town": 13
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 1,
+  "parcels": [
+   "cemetery",
+   "church",
+   "elevator",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 7000.0,
+  "town": {
+   "size": "tiny",
+   "rail_town": false,
+   "cols": 2,
+   "rows": 2,
+   "blocks": 4,
+   "houses": 13,
+   "trailers": 1,
+   "pop_est": 48,
+   "band": 0,
+   "year": 1990,
+   "businesses": [
+    "city hall / fire",
+    "post office",
+    "tavern"
+   ],
+   "unplaced": [],
+   "park_rule": null
+  }
+ },
+ {
+  "seed": 100,
+  "lots": 35,
+  "by_kind": {
+   "farmstead": 32,
+   "acreage": 3
+  },
+  "road_miles": 24.0,
+  "paved_share": 0.25,
+  "rail": true,
+  "creeks": 2,
+  "parcels": [
+   "cemetery",
+   "church",
+   "fuel"
+  ],
+  "park_pads": 0,
+  "rail_crossings": 5,
+  "rail_parallel_ft": 4000.0
+ }
+]

@@ -1,0 +1,87 @@
+[
+ {
+  "seed": 13,
+  "lots": 44,
+  "built": 44,
+  "avg_attempts": 2.136,
+  "retry_causes": {
+   "35": 18,
+   "8": 11,
+   "27": 10,
+   "23": 24,
+   "30": 8
+  },
+  "drive_rule3": {
+   "pass": 44
+  },
+  "seconds": 0.1
+ },
+ {
+  "seed": 14,
+  "lots": 346,
+  "built": 346,
+  "avg_attempts": 1.607,
+  "retry_causes": {
+   "23": 49,
+   "35": 114,
+   "8": 24,
+   "27": 16,
+   "30": 44
+  },
+  "drive_rule3": {
+   "pass": 346
+  },
+  "seconds": 0.4
+ },
+ {
+  "seed": 30,
+  "lots": 63,
+  "built": 63,
+  "avg_attempts": 1.794,
+  "retry_causes": {
+   "30": 11,
+   "35": 23,
+   "8": 9,
+   "23": 20,
+   "27": 4
+  },
+  "drive_rule3": {
+   "pass": 63
+  },
+  "seconds": 0.1
+ },
+ {
+  "seed": 31,
+  "lots": 203,
+  "built": 203,
+  "avg_attempts": 1.842,
+  "retry_causes": {
+   "23": 74,
+   "35": 62,
+   "8": 34,
+   "30": 25,
+   "27": 20
+  },
+  "drive_rule3": {
+   "pass": 203
+  },
+  "seconds": 0.3
+ },
+ {
+  "seed": 46,
+  "lots": 170,
+  "built": 170,
+  "avg_attempts": 1.782,
+  "retry_causes": {
+   "23": 45,
+   "35": 65,
+   "30": 22,
+   "8": 18,
+   "27": 15
+  },
+  "drive_rule3": {
+   "pass": 170
+  },
+  "seconds": 0.2
+ }
+]
