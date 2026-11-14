@@ -49,3 +49,12 @@ Config/default mismatches logged, not fixed (per T4 rule): SmallTown street stay
 - Verify: `dotnet run -c Release -- --verify --seed 1993` (13/13 pass)
 - Baseline hash check: render 4 smalltown sizes + country + world at seed 1993 (each `--map smalltown --size <sz> --seed 1993 --out <dir>` then rename smalltown-1993.svg to smalltown-<sz>-1993.svg; `--map country`; `--map world`) and sha256-compare to port-report/baseline-hashes.txt. Country/world match; smalltown sizes differ — see PRE-EXISTING issue above (do not "fix").
 - Python: `cd reference/python-spawner && .venv/bin/python -m pytest -q tests` (61 passed); `export_reference.py` regenerates reference_out.
+
+## Takeover baseline milestone (2026-11-13)
+- Actual takeover HEAD: 7286652; branch port/builder-guy-towns. Initial status: only untracked user prompt packs (T3-port-prompts.zip, T3-port-prompts/, newprompts/).
+- Read shared spec from newprompts/CODING-AGENT-PROMPT.md (no root copy), root decisions/clashes, and tier prompts for scope/stop rules.
+- Clean Release: dotnet clean then dotnet build src/SpawnGuide/SpawnGuide.csproj -c Release: 72 warnings, 0 errors. Verify seed 1993: 13/13 pass.
+- Initial --selftest is NOT implemented: it silently falls through to gallery generation and exits 0. Do not treat this as a test pass.
+- User approved re-baselining smalltown hashes from clean 35647a8 because the old baseline was reported as recorded from a stale incremental build. Rebuilt a git archive of 35647a8 in an isolated temporary directory (no branch checkout/history changes).
+- Correction to the previous diagnosis: clean 35647a8 from repo root reproduces 10eb5b9b...; from src/SpawnGuide it reproduces the old 8fd7862f... . Working-directory config auto-discovery explains both hashes without stale binaries: src/SpawnGuide loads spawnconfig.json; repo root uses code defaults. The new baseline explicitly uses REPO ROOT, no --config, seed 1993. All four smalltown hashes updated; all six country/world hashes unchanged. Current recovered code matches the four new smalltown hashes.
+- No generation logic or decision changed. Exact next step: finish strict repeatable --param overrides and their selftests, then commit T6 override subtask; complete the rest of T6 after T5 schema.
