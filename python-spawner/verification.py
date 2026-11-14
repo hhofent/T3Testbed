@@ -74,18 +74,44 @@ def tree_collisions(features):
   if any(intersects(rect,b['bounds']) for b in blockers.candidates(rect)): failed.append(f['id'])
  return failed
 
+def drainage_topology_checks(streams,selected=None):
+ """Validate canonical receivers, including confluences at interior vertices.
+
+ A query halo may omit downstream reaches of unselected boundary features;
+ only selected receivers must exist, but every visible graph cycle is invalid.
+ """
+ by_id={f['id']:f for f in streams}
+ selected=streams if selected is None else selected
+ dead=[]; cycles=[]
+ close=lambda a,b:math.dist(a,b)<.001
+ for f in selected:
+  receiver=by_id.get(f['downstream'])
+  if receiver is None or not any(close(f['points'][-1],p) for p in receiver['points']):
+   dead.append(f['id'])
+  if not f['source'] and not any(close(g['points'][-1],f['points'][0]) for g in streams if g['id']!=f['id']):
+   dead.append(f['id']+':upstream')
+ # Iterative traversal avoids recursion limits on long sampled main channels.
+ done=set()
+ for start in by_id:
+  path={}; node=start
+  while node in by_id and node not in done:
+   if node in path:
+    cycles.append(node); break
+   path[node]=True; node=by_id[node]['downstream']
+  done.update(path)
+ return {'river_continuity':{'pass':not dead,'failures':dead[:10],'examined':len(selected)},
+         'river_acyclic':{'pass':not cycles,'failures':cycles[:10]}}
+
+
 def river_checks(seed,rect):
  from world import rivers,elevation
  step=option('world.tributary_spacing_miles')*MILE
  expanded=(rect[0]-step,rect[1]-step,rect[2]+2*step,rect[3]+2*step)
- streams=list(rivers(seed,expanded)); by_id={f['id']:f for f in streams}
+ streams=list(rivers(seed,expanded))
  selected=[f for f in streams if intersects(f['bounds'],rect)]
- dead=[]; uphill=[]; crossings=[]
+ uphill=[]; crossings=[]
  close=lambda a,b:math.dist(a,b)<.001
  for f in selected:
-  downstream=by_id.get(f['downstream'])
-  if downstream is None or not close(f['points'][-1],downstream['points'][0]): dead.append(f['id'])
-  if not f['source'] and not any(close(g['points'][-1],f['points'][0]) for g in streams): dead.append(f['id']+':upstream')
   if any(elevation(seed,*b)>elevation(seed,*a)+1e-7 for a,b in zip(f['points'],f['points'][1:])): uphill.append(f['id'])
  for i,f in enumerate(selected):
   for g in selected[i+1:]:
@@ -94,7 +120,7 @@ def river_checks(seed,rect):
     for c,d in zip(g['points'],g['points'][1:]):
      if any(close(p,q) for p in (a,b) for q in (c,d)): continue
      if intersection_angle(a,b,c,d) is not None: crossings.append((f['id'],g['id']))
- return {'river_continuity':{'pass':not dead,'failures':dead[:10],'examined':len(selected)},'rivers_downhill':{'pass':not uphill,'failures':uphill[:10]},'no_river_crossings':{'pass':not crossings,'failures':crossings[:10]}}
+ return {**drainage_topology_checks(streams,selected),'rivers_downhill':{'pass':not uphill,'failures':uphill[:10]},'no_river_crossings':{'pass':not crossings,'failures':crossings[:10]}}
 
 def paved_road_gaps(features,rect):
  # Inspect actual geometry, including paved edges absent from the feature list.

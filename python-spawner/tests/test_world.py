@@ -53,6 +53,32 @@ def test_drainage_continuity_crossings_and_downhill():
    assert all(c['pass'] for c in checks.values()),checks
 
 
+def test_drainage_topology_accepts_owned_interior_confluences():
+ from verification import drainage_topology_checks
+ main=dict(id='main',points=[(0,0),(0,1),(0,2)],source=True,downstream='tail')
+ tail=dict(id='tail',points=[(0,2),(0,3)],source=False,downstream='outside')
+ branch=dict(id='branch',points=[(1,0),(0,1)],source=True,downstream='main')
+ # The halo contains the tail, whose own receiver is beyond the query.
+ checks=drainage_topology_checks([main,tail,branch],[main,branch])
+ assert all(c['pass'] for c in checks.values()),checks
+ branch['downstream']='tail'
+ assert not drainage_topology_checks([main,tail,branch],[branch])['river_continuity']['pass']
+ branch['downstream']='missing'
+ assert not drainage_topology_checks([main,tail,branch],[branch])['river_continuity']['pass']
+
+
+def test_drainage_topology_rejects_cycles_even_with_connected_endpoints():
+ from verification import drainage_topology_checks
+ a=dict(id='a',points=[(0,0),(1,1)],source=False,downstream='b')
+ b=dict(id='b',points=[(1,1),(0,0)],source=False,downstream='a')
+ checks=drainage_topology_checks([a,b])
+ assert checks['river_continuity']['pass']
+ assert not checks['river_acyclic']['pass']
+ # Long chains must not depend on Python's recursion depth.
+ chain=[dict(id=str(i),points=[(0,i),(0,i+1)],source=i==0,downstream=str(i+1)) for i in range(2000)]
+ assert drainage_topology_checks(chain,chain[:1])['river_acyclic']['pass']
+
+
 def test_rural_variety_reproducible_and_within_lots():
  from rural import layout,TYPES
  from region import make_region,spawn_region

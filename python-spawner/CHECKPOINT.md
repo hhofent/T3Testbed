@@ -1,4 +1,24 @@
-# Real-life generation order request � WIP, 2026-11-14
+# Item 1 verification preparation â€” WIP, 2026-11-14
+
+Resumed at b282432 on python-test/spawner. Item 1 is STILL INCOMPLETE;
+items 2-7 have not been started. This WIP changes verification only, not geometry.
+The next implementation step remains the basin replacement described below.
+
+Extracted drainage_topology_checks: directed downstream ownership may join an
+interior canonical vertex of a receiving reach, instead of requiring its first
+vertex. Missing/wrong receivers still fail. Added iterative cycle detection so
+connected endpoints cannot disguise a cyclic drainage graph. Query-halo boundary
+receivers are checked only for selected features; cycles are checked throughout
+the supplied graph. Tests cover interior confluences, wrong/missing receivers,
+a connected two-reach cycle and a 2,000-reach chain without recursive traversal.
+
+Fresh full test run: 100 passed in 43.47s. Parity: all five regenerated legacy PNG pairs byte-identical. No new browser screenshots: this WIP changes no rendering. The requested
+3/10/30/96 mi and crossing/jog/bridge screenshots remain pending; historical
+screenshots are not evidence of the unfinished overhaul. No numbered item is
+claimed complete. Read only the files named by the following checkpoint section.
+
+--- Prior checkpoint ---
+# Real-life generation order request â€” WIP, 2026-11-14
 
 Started at 265c044 on python-test/spawner. This section supersedes the previous
 "no further implementation steps pending" statement. The seven numbered items
