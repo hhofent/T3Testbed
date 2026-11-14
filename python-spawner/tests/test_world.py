@@ -141,3 +141,20 @@ def test_towns_remain_spaced_at_default_world_settings():
  assert 3<=len(centers)<=12
  nearest=[min(math.dist(a,b)/MILE for b in centers if b!=a) for a in centers]
  assert min(nearest)>=3 and max(nearest)<=25
+
+
+def test_river_bends_vary_between_lanes_and_global_intervals():
+ from world import drainage_x,rivers
+ from settings import applied
+ with applied(Settings()):
+  profiles=[]
+  for lane in (-1,0,1):
+   for start in (-24,0,24):
+    profiles.append(tuple(round(drainage_x(31,(start+i)*MILE,lane)/MILE,5) for i in range(8)))
+  assert len(set(profiles))==len(profiles)
+  a={f['id']:f for f in rivers(31,(-10*MILE,-3*MILE,20*MILE,6*MILE))}
+  b={f['id']:f for f in rivers(31,(-10*MILE,0,20*MILE,6*MILE))}
+  assert a.keys()&b.keys()
+  assert all(a[k]==b[k] for k in a.keys()&b.keys())
+  joins=[tuple(f['points'][-1]) for f in a.values() if f['source']]
+  assert len(joins)==len(set(joins))

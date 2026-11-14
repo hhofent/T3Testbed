@@ -39,7 +39,7 @@ def rail_lanes(seed,rect):
   yield lane,x,along
 
 def rail_points(seed,lane,x,row):
- # One constant offset throughout every crossing and chunk.
+ # The corridor has one fixed offset: every section and chunk shares this line.
  return [(x,row*MILE),(x,(row+1)*MILE)]
 
 @lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
@@ -150,14 +150,21 @@ def drainage_station(seed,y):
   else: hi=mid
  return (lo+hi)/2
 
-def drainage_x(seed,y):
- station=drainage_station(seed,y)
- return math.sin(station*drainage_omega()+drainage_phase(seed))*MILE*option('world.river_wander_miles')
+def drainage_x(seed,y,lane=0):
+ return drainage_offset(seed,drainage_station(seed,y),lane)
+
+def drainage_offset(seed,station,lane):
+ phase=station*drainage_omega()+drainage_phase(H(seed,'channel',lane))
+ # Incommensurate long waves change bend phase and amplitude without tile resets.
+ phase+=.7*math.sin(station/MILE*.173+lane*1.91)
+ amplitude=.8+.2*math.sin(station/MILE*.311+lane*2.37)
+ return math.sin(phase)*amplitude*MILE*option('world.river_wander_miles')
 
 def elevation(seed,x,y):
  # A south-sloping datum plus watershed ridges. The same valley centers own rivers.
  spacing=option('world.river_spacing_miles')*MILE
- distance=abs((x-drainage_x(seed,y)+spacing/2)%spacing-spacing/2)
+ lane=round(x/spacing)
+ distance=min(abs(x-k*spacing-drainage_x(seed,y,k)) for k in (lane-1,lane,lane+1))
  return -y/MILE*option('world.south_drop_ft')+option('world.relief_ft')*(1-math.cos(distance/spacing*2*math.pi))/2
 
 def terrain(seed,rect):
@@ -179,21 +186,22 @@ def rivers(seed,rect):
  lo=drainage_station(seed,rect[1]); hi=drainage_station(seed,rect[1]+rect[3])
  for lane in range(math.floor((rect[0]-wander-spacing/2)/spacing),math.ceil((rect[0]+rect[2]+wander+spacing/2)/spacing)+1):
   def point(station,offset=0):
-   return (lane*spacing+math.sin(station*drainage_omega()+drainage_phase(seed))*wander+offset,drainage_y(seed,station))
+   return (lane*spacing+drainage_offset(seed,station,lane)+offset,drainage_y(seed,station))
   for row in range(math.floor(lo/sample)-1,math.ceil(hi/sample)+1):
    yield feature('rivers',f'river:{lane}:{row}',points=[point(row*sample),point((row+1)*sample)],width=width,flow='south',source=False,downstream=f'river:{lane}:{row+1}')
   for row in range(math.floor(lo/step)-1,math.ceil(hi/step)+1):
    for side in (-1,1):
     # Most of a tributary interval: several miles and many display chunks.
     reach=(.85+H(seed,'source-reach',lane,row,side)%10/100)*step
-    join=(row+1)*step; start=join-reach
+    join_index=row*RIVER_SAMPLES+(RIVER_SAMPLES if side==1 else RIVER_SAMPLES*3//4)
+    join=join_index*sample; count=round(reach/sample); start=(join_index-count)*sample; reach=count*sample
     offset=side*spacing*(.22+H(seed,'source-ridge',lane,row,side)%22/100)
     points=[]
-    for i in range(RIVER_SAMPLES+1):
-     t=i/RIVER_SAMPLES; d=offset*(1-t)*(1+.08*math.sin(t*2*math.pi))
-     points.append(point(start+reach*t,d))
+    for i in range(count+1):
+     t=i/count; d=offset*(1-t)**2*(1+.08*math.sin(t*2*math.pi))
+     points.append(point((join_index-count+i)*sample,d))
     points[-1]=point(join)
-    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=points,width=width/2,flow='south',source=True,downstream=f'river:{lane}:{(row+1)*RIVER_SAMPLES}')
+    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=points,width=width/2,flow='south',source=True,downstream=f'river:{lane}:{join_index}')
 
 def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()

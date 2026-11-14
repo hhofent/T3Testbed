@@ -1,6 +1,31 @@
+# Completed fixes 2-4, 2026-11-13
+Fix 2: f1eedc7. Match chunk raster dimensions to CSS display size on every zoom;
+minimum strokes survive SVG image rasterization. Gravel drops above 48 mi.
+Fix 3: c3f24bf. Straight fixed-offset rail; no per-mile sideways excursion.
+Fix 4: lane-specific continuous phase/amplitude variation in global coordinates;
+terrain follows those valleys. Tributaries share the trunk sampling lattice,
+join at staggered stations with a vanishing lateral slope, and keep exact
+canonical downstream endpoints. Cache version lod-v13-varied-rivers.
+
+Validation: full pytest 97 passed in 31.85s. Five regenerated parity pairs
+byte-identical. Full geometric verifier passed seeds 13,14,30,31,46.
+Real Chromium regressionZoomPanCache and regressionDistantChunks passed (both
+seeds, all ten distant locations). regressionStrokePixels measured water 1.498px,
+rail and paved road 1.2px at 24/80/256px chunk sizes.
+Fresh server, seed 14: Ready and decoded at 3/30/48/96 mi and x=90 mi.
+96 mi: 1024 visible decoded chunks, zero transparent chunks.
+Screenshots: artifacts/fix2-4-3mi.png, fix2-4-30mi.png, fix2-4-48mi.png,
+fix2-4-96mi.png, fix2-4-90mi-away.png; artifacts/fix3-rail-crossing.png
+uses rail_enabled_pct=100 to expose the straight offset crossing.
+No user acceptance is inferred. Cold overview generation latency remains.
+Push only python-test/spawner. No merge, force push, history rewrite or PR.
+No further implementation steps pending; restart the server to load this version.
+
+--- Previous checkpoint and history follow ---
+
 # Python spawner checkpoint
 
-## Current request, 2026-11-13: fix 1 complete; fixes 2-4 pending
+## Previous handoff, 2026-11-13: fix 1 complete; fixes 2-4 pending
 Started at 01b2368 on python-test/spawner. Read this section before historical
 status below, which describes earlier work and does NOT establish acceptance of
 the latest four reported issues.
@@ -28,7 +53,7 @@ Full pytest: 96 passed in 33.17s. Added far SVG local-coordinate regression for
 both seeds at -198,-90,40,90,198 mi. tools/check_images.py regenerated all five
 parity pairs, all byte-identical; no parity artifact diff.
 
-## Exact next step for latest request
+## Previous next step (completed below)
 Implement fix 2 (zoom-based line widths) BEFORE fix 3 (straight offset rail,
 square road crossings, remove sideways easing bulges) and fix 4 (nonrepeating
 continuous meanders, downhill joins, no fan seams). Those are NOT completed.

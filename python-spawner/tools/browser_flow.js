@@ -47,3 +47,17 @@ async function regressionDistantChunks(){
  }
  return results;
 }
+
+// Measure decoded stroke coverage, including subpixel antialiasing.
+async function regressionStrokePixels(){
+ const results=[];
+ for(const pixels of [24,80,256])for(const [kind,minimum] of [["river",1.5],["rail",1.2],["road",1.2]]){
+  const span=3*mile,svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${span} ${span}"><g><title>${kind}:0:0</title><polyline points="${span/2},0 ${span/2},${span}" fill="${kind==='road'?'#525954':'none'}" stroke="#509bc6" stroke-width="100"/></g></svg>`;
+  const img=new Image();img.src=rasterChunk('data:image/svg+xml,'+encodeURIComponent(svg),pixels,span);await img.decode();
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=pixels;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+  const row=ctx.getImageData(0,Math.floor(pixels/2),pixels,1).data;let width=0;for(let i=3;i<row.length;i+=4)width+=row[i]/255;
+  if(Math.abs(width-minimum)>.15)throw Error(kind+' pixel width: '+width);
+  results.push({kind,pixels,width});
+ }
+ return results;
+}
