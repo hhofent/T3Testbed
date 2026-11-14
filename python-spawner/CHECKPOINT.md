@@ -1,3 +1,50 @@
+# Real-life generation order request — WIP, 2026-11-14
+
+Started at 265c044 on python-test/spawner. This section supersedes the previous
+"no further implementation steps pending" statement. The seven numbered items
+in the new request are NOT complete. Preserve all earlier styling/foliage and
+rural layout decisions. Push only python-test/spawner; no PR, merge or rewrite.
+
+Fresh full validation: 98 passed in 40.94s. Legacy parity: all five pairs byte-identical.
+
+Partial item 1 implemented: tributaries now carry monotonically increasing vertex
+widths (6% to 50% of trunk width), rendered as tapered SVG reaches. Conservative
+maximum widths still protect lots/towns. Branch ids seed a separate bend phase
+and frequency. Cache version lod-v14-tapered-branches prevents stale SVG reuse.
+These are incremental changes, NOT the requested replacement basin network:
+branches still use the trunk scaffold, trunks remain north-south lanes, terrain
+still derives from trunks, and branching orders beyond 1 remain outstanding.
+The first, stronger perturbation failed the existing downhill verifier; reduced
+variation passes the 14 world tests including continuity, crossings and downhill.
+New test covers strictly increasing widths and unique normalized branch profiles.
+
+Parity regeneration: five before/after PNG pairs remain byte-identical. That
+script exercises legacy region parity, not the changed world renderer. No world
+rebaseline or requested browser screenshots have been produced yet. Do not claim
+that unchanged legacy parity proves browser/PNG style agreement.
+Team source /workspace/pytest-check3/review/realism-factcheck.md is unavailable on
+this Windows machine; use the numbers in the user's request.
+
+Next: finish item 1 basin topology, independently owned geometry, variable trunk
+direction/spacing, downstream joins, stream order and terrain from all streams;
+then items 2-7 in order, committing/pushing each with test results here. Shared
+PNG/browser style table and same-rectangle output test remain required. Real
+browser screenshots at 3/10/30/96 mi plus actual rail-road crossing, paved
+correction-line jog and bridge remain required; filenames must carry seed/coords.
+
+Read only these files as needed on resume (paths relative to python-spawner):
+- world.py, chunks.py: world topology, geometry, rendering, caching.
+- region.py, rural.py, settings.py, presets.py: integration boundaries and options;
+  rural lot layout stays untouched except the requested world placement interface.
+- map_render.py, control.html, control.py, cli.py: shared style/export and browser.
+- verification.py, tests/test_world.py, tests/test_chunks.py,
+  tests/test_control.py: geometry and regression checks.
+- tools/check_images.py, tools/browser_flow.js: parity and real browser checks.
+Run py -3.11 -m pytest python-spawner/tests -q and
+py -3.11 python-spawner/tools/check_images.py. The root untracked newprompts/ and
+reference/ folders are unrelated and must remain untouched.
+
+--- Earlier checkpoint follows ---
 # Completed fixes 2-4, 2026-11-13
 Fix 2: f1eedc7. Match chunk raster dimensions to CSS display size on every zoom;
 minimum strokes survive SVG image rasterization. Gravel drops above 48 mi.

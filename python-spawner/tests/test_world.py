@@ -24,6 +24,26 @@ def test_rivers_flow_south_and_merge_into_wider_trunks():
  assert all(f['downstream'].startswith('river:') for f in streams)
 
 
+def test_branch_widths_grow_from_headwaters_and_bends_have_independent_ids():
+ from world import rivers
+ from settings import applied
+ with applied(Settings()):
+  streams=list(rivers(31,(-40*MILE,-40*MILE,80*MILE,80*MILE)))
+  branches=[f for f in streams if f['source']]
+  assert len(branches)>10
+  profiles=[]
+  for branch in branches:
+   widths=branch['widths']
+   assert len(widths)==len(branch['points'])
+   assert all(0<a<b for a,b in zip(widths,widths[1:]))
+   assert widths[0]<widths[-1]/4
+   assert widths[-1]==branch['width']
+   # Normalize translation and scale; region-owned curves must still differ.
+   points=branch['points']; start,end=points[0],points[-1]
+   profiles.append(tuple(round((p[0]-end[0])/(start[0]-end[0]),6) for p in points[1:-1]))
+  assert len(set(profiles))==len(profiles)
+
+
 def test_drainage_continuity_crossings_and_downhill():
  from verification import river_checks
  from settings import applied

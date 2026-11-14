@@ -196,12 +196,21 @@ def rivers(seed,rect):
     join_index=row*RIVER_SAMPLES+(RIVER_SAMPLES if side==1 else RIVER_SAMPLES*3//4)
     join=join_index*sample; count=round(reach/sample); start=(join_index-count)*sample; reach=count*sample
     offset=side*spacing*(.22+H(seed,'source-ridge',lane,row,side)%22/100)
+    # Own the branch's bends independently of the receiving channel. Keep the
+    # excursion inside its bank of the basin so it cannot cross the trunk.
+    branch_seed=H(seed,'basin',lane,row,'branch',side)
+    phase=branch_seed%10000/10000*2*math.pi
+    cycles=2+(branch_seed//10000)%3
     points=[]
     for i in range(count+1):
-     t=i/count; d=offset*(1-t)**2*(1+.08*math.sin(t*2*math.pi))
+     t=i/count
+     d=offset*(1-t)**2*(1+.025*math.sin(t*cycles*2*math.pi+phase)*math.sin(math.pi*t))
      points.append(point((join_index-count+i)*sample,d))
     points[-1]=point(join)
-    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=points,width=width/2,flow='south',source=True,downstream=f'river:{lane}:{join_index}')
+    # Widths are sampled at vertices. The scalar remains the conservative
+    # broad-phase collision width used by lots and settlement exclusion.
+    widths=[width*(.06+.44*(i/count)**.7) for i in range(count+1)]
+    yield feature('rivers',f'tributary:{lane}:{row}:{side}',points=points,width=width/2,widths=widths,stream_order=1,flow='south',source=True,downstream=f'river:{lane}:{join_index}')
 
 def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()
@@ -276,6 +285,10 @@ def svg(scene,local=False):
    else:
     points=' '.join(f'{a},{b}' for a,b in f['points'])
     width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' else FT(1)
-    out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}"/>')
+    if 'widths' in f:
+     for a,b,wa,wb in zip(f['points'],f['points'][1:],f['widths'],f['widths'][1:]):
+      out.append(f'<polyline points="{a[0]},{a[1]} {b[0]},{b[1]}" fill="none" stroke="{color}" stroke-width="{(wa+wb)/2}" stroke-linecap="round"/>')
+    else:
+     out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}"/>')
    out.append('</g>')
  out.append('</svg>'); return ''.join(out).encode()
