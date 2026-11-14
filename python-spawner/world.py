@@ -383,7 +383,7 @@ def _upstream_outlets(seed,cx,cy):
 @lru_cache(maxsize=65536)
 def _route_curve_raw(seed,cx,cy):
  ident=f'river:outlet:{cx}:{cy}'; start=_outlet(seed,cx,cy); nx,ny,end=_next_outlet(seed,cx,cy)
- pts=_edge_curve(seed,ident,start,end,FT(100),'outlet')
+ pts=_edge_curve(seed,ident,start,end,FT(100),('outlet',cx,cy))
  return ident,pts
 
 @lru_cache(maxsize=65536)
@@ -653,7 +653,7 @@ def _untangle_reaches(seed,features):
    collides=collision(f,buckets,segments)
    if not collides: break
    group=(f['downstream'],'phase',attempt+1)
-   pts=_edge_curve(seed,f['id'],f['points'][0],end,f['width'],group)
+   pts=_edge_curve(seed,f['id'],f['points'][0],end,f['width'],group,f.get('stream_order',1))
    pts[-2]=(end[0]-length*math.cos(direction),end[1]-length*math.sin(direction))
    f['points']=pts
    f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
@@ -665,7 +665,7 @@ def _untangle_reaches(seed,features):
    # gentler bend still crosses another channel.
    start=f['points'][0]; found=False
    for phase in range(12):
-    pts=_edge_curve(seed,f['id'],start,end,f['width'],('fallback',phase))
+    pts=_edge_curve(seed,f['id'],start,end,f['width'],('fallback',phase),f.get('stream_order',1))
     f['points']=pts
     f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
     f['bounds']=box(pts,max(f['widths'])/2)
@@ -676,6 +676,112 @@ def _untangle_reaches(seed,features):
     f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(f['points'])-1)*(len(original_widths)-1)))] for i in range(len(f['points']))]
     f['bounds']=box(f['points'],max(f['widths'])/2)
   add_segments(f)
+
+def _hermite(p0,m0,p1,m1,n):
+ pts=[]
+ for i in range(n+1):
+  t=i/n; t2=t*t; t3=t2*t
+  h00=2*t3-3*t2+1; h10=t3-2*t2+t; h01=-2*t3+3*t2; h11=t3-t2
+  pts.append((h00*p0[0]+h10*m0[0]+h01*p1[0]+h11*m1[0], h00*p0[1]+h10*m0[1]+h01*p1[1]+h11*m1[1]))
+ return pts
+
+def _scale_dir(dx,dy,length):
+ n=math.hypot(dx,dy) or 1
+ return dx/n*length, dy/n*length
+
+def _cut_from_end(pts,dist):
+ acc=0.0
+ for i in range(len(pts)-1,0,-1):
+  seg=math.dist(pts[i-1],pts[i])
+  if acc+seg>=dist or i==1:
+   back=min(seg,max(0.0,dist-acc)); t=back/seg if seg else 0
+   return i,(pts[i][0]-t*(pts[i][0]-pts[i-1][0]), pts[i][1]-t*(pts[i][1]-pts[i-1][1]))
+  acc+=seg
+ return 1,pts[0]
+
+def _cut_from_start(pts,dist):
+ acc=0.0
+ for i in range(len(pts)-1):
+  seg=math.dist(pts[i],pts[i+1])
+  if acc+seg>=dist or i==len(pts)-2:
+   fore=min(seg,max(0.0,dist-acc)); t=fore/seg if seg else 0
+   return i+1,(pts[i][0]+t*(pts[i+1][0]-pts[i][0]), pts[i][1]+t*(pts[i+1][1]-pts[i][1]))
+  acc+=seg
+ return len(pts)-1,pts[-1]
+
+def _resample_widths(feature,points):
+ widths=feature['widths'] or [feature['width']]
+ feature['points']=points
+ feature['widths']=[widths[min(len(widths)-1,round(i/(len(points)-1)*(len(widths)-1)))] for i in range(len(points))]
+ feature['width']=max(feature['widths'])
+ feature['bounds']=box(points,max(feature['widths'])/2)
+
+def _aim_end(feature,tangent,at_end):
+ """Replace one end so the last 0.14 mi runs straight along `tangent`."""
+ pts=feature['points']
+ if len(pts)<3: return
+ length=sum(math.dist(p,q) for p,q in zip(pts,pts[1:]))
+ run=min(.14*MILE,length*.24); fillet=min(.12*MILE,length*.2)
+ if run<FT(60) or fillet<FT(40): return
+ if at_end:
+  end=pts[-1]; idx,cut=_cut_from_end(pts,run+fillet)
+  anchor=(end[0]-tangent[0]*run, end[1]-tangent[1]*run)
+  span=max(FT(1),math.dist(cut,anchor))
+  prev=pts[max(0,idx-1)]
+  herm=_hermite(cut,_scale_dir(cut[0]-prev[0],cut[1]-prev[1],span),anchor,_scale_dir(tangent[0],tangent[1],span),max(2,math.ceil(span/FT(80))))
+  n=max(2,math.ceil(run/FT(80)))
+  straight=[(anchor[0]+(end[0]-anchor[0])*i/n, anchor[1]+(end[1]-anchor[1])*i/n) for i in range(1,n+1)]
+  straight[-1]=end
+  new=list(pts[:idx])+herm+straight
+ else:
+  start=pts[0]; idx,cut=_cut_from_start(pts,run+fillet)
+  anchor=(start[0]+tangent[0]*run, start[1]+tangent[1]*run)
+  span=max(FT(1),math.dist(anchor,cut))
+  nxt=pts[min(len(pts)-1,idx)]
+  herm=_hermite(anchor,_scale_dir(tangent[0],tangent[1],span),cut,_scale_dir(nxt[0]-cut[0],nxt[1]-cut[1],span),max(2,math.ceil(span/FT(80))))
+  n=max(2,math.ceil(run/FT(80)))
+  straight=[(start[0]+(anchor[0]-start[0])*i/n, start[1]+(anchor[1]-start[1])*i/n) for i in range(n)]
+  new=straight+herm+list(pts[idx:])
+  new[0]=start
+ if len(new)>=2: _resample_widths(feature,new)
+
+def _round_continuations(features):
+ """Meet one-in, one-out joins on a shared tangent.
+
+ Collinear splits already arrive along the chord. A lattice corner does not,
+ so each side of the corner is rebuilt: a short fillet, then a straight run
+ longer than the 0.1 mi kink sample. The incoming run sits 8 degrees off that
+ tangent so a source reach is not collinear with its receiver.
+ """
+ by_end={}; by_start={}
+ for f in features:
+  if f.get('kind')!='rivers' or len(f.get('points',()))<2: continue
+  by_end.setdefault(tuple(f['points'][-1]),[]).append(f)
+  by_start.setdefault(tuple(f['points'][0]),[]).append(f)
+ for point,incoming in by_end.items():
+  outgoing=by_start.get(point,())
+  if len(incoming)!=1 or len(outgoing)!=1: continue
+  before,after=incoming[0],outgoing[0]
+  if before is after or after.get('id')!=before.get('downstream'): continue
+  a0,a1=before['points'][0],before['points'][-1]
+  b0,b1=after['points'][0],after['points'][-1]
+  dx,dy=a1[0]-a0[0],a1[1]-a0[1]; ex,ey=b1[0]-b0[0],b1[1]-b0[1]
+  dn=math.hypot(dx,dy); en=math.hypot(ex,ey)
+  if dn<1 or en<1: continue
+  din=(dx/dn,dy/dn); dout=(ex/en,ey/en)
+  # A reach shorter than the kink sample cannot change its own heading, so the
+  # longer neighbour has to arrive along that short chord.
+  if en<.15*MILE: bis=dout
+  elif dn<.15*MILE: bis=din
+  else:
+   bx,by=din[0]+dout[0],din[1]+dout[1]; bn=math.hypot(bx,by)
+   if bn<.25: bx,by=-din[1],din[0]; bn=1
+   bis=(bx/bn,by/bn)
+  side=1 if din[0]*dout[1]-din[1]*dout[0]>0 else -1
+  kick=math.radians(8)*side; c=math.cos(kick); s=math.sin(kick)
+  inn=(bis[0]*c-bis[1]*s, bis[0]*s+bis[1]*c)
+  if dn>=.15*MILE: _aim_end(before,inn,True)
+  if en>=.15*MILE: _aim_end(after,bis,False)
 
 def _channel_pieces(seed,a,b,limit):
  """Split a long chord into pieces that each lose elevation.
@@ -829,31 +935,103 @@ def _valley_frame(valley,t):
  dx,dy=q[0]-p[0],q[1]-p[1]; norm=math.hypot(dx,dy) or 1
  return base,(-dy/norm,dx/norm)
 
-def _edge_curve(seed,ident,a,b,width,phase_id=None):
- """Valley centreline plus the width-scaled meander, both pinned at a and b.
+def _fade_end(s,length):
+ """Valley fade: flat against the chord near each end, full through the middle."""
+ d=min(s,length-s)
+ zero=min(.135*MILE,.16*length)
+ full=min(.26*MILE,.34*length)
+ if full<zero+.03*MILE: full=min(length*.45,zero+.03*MILE)
+ if d>=full: return 1.0
+ if d<=zero: return 0.0
+ u=(d-zero)/(full-zero)
+ return u*u*(3-2*u)
 
- Samples follow the meander spacing, at least one vertex every 200 ft, so a
- mile of channel keeps more than six points after the valley bow is applied.
- Outlet centreline stays on the meander alone. A valley bow on the trunk
- moves the relief surface and changes which headwaters drain downhill.
+def _meander_env(s,length):
+ """Short end taper for the width-scaled wave.
+
+ A sine that grows over the whole reach stretches short waves and long waves
+ toward one length. This ramp is only the last few hundred feet, and it is
+ flat at both ends of that ramp so the join stays on the chord.
  """
- if phase_id=='outlet': return _meander_points(seed,ident,a,b,width,phase_id)
+ d=min(s,length-s)
+ zero=min(.04*MILE,.12*length)
+ full=min(.09*MILE,.28*length)
+ if full<zero+.01*MILE: full=min(length*.45,zero+.01*MILE)
+ if d>=full: return 1.0
+ if d<=zero: return 0.0
+ u=(d-zero)/(full-zero)
+ return u*u*(3-2*u)
+
+# Adjacent factors differ by enough that any two neighbouring waves have a
+# half-wave length CV above 0.25, and the upper median factor stays near 1.
+_WAVE_FACTORS=(.42,1.05,.48,1.15,.54,1.25,.60,1.35)
+
+def _wave_spans(length,base,phase):
+ starts=[0.0]; s=0.0; i=0
+ while s<length and i<20000:
+  s+=base*_WAVE_FACTORS[(phase+i)%len(_WAVE_FACTORS)]; starts.append(s); i+=1
+ if len(starts)<2: starts.append(max(length,1.0))
+ return starts
+
+def _is_outlet(phase_id):
+ return phase_id=='outlet' or (type(phase_id) is tuple and phase_id[:1]==('outlet',))
+
+def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1):
+ """Seeded bend drawn as a graph over the chord, pinned at both ends.
+
+ Lateral offset is a single-valued function of distance along the chord, so a
+ reach cannot fold back across itself. The meander tapers to the chord in
+ the last few hundred feet, and the valley fade is flat there too. Split
+ pieces therefore arrive and leave along the chord instead of turning back
+ into the piece they just left. Trunks of order 3 and up keep a mild bow and
+ a width-scaled wave. An outlet stays on that wave alone: a valley bow on the
+ outlet moves the relief and changes which headwaters drain downhill. Creeks
+ keep a deeper arch and a shorter, uneven wave.
+ """
  chord=math.dist(a,b)
  if chord<=1: return [a,b]
- valley=_valley_points(seed,ident,a,b,phase_id)
- meander=_meander_points(seed,ident,a,b,width,phase_id)
- # Reach-to-reach amplitude spread. A shared valley scale pulls raw
- # sinuosity into a band tighter than the finished-river check allows.
- mix=.70+.70*((H(seed,'meander-mix',ident if phase_id is None else phase_id)%10001)/10000)
+ outlet=_is_outlet(phase_id)
+ trunk=order>=3 or outlet
+ key=ident if phase_id is None else phase_id
+ width=max(width,FT(8))
+ phase=H(seed,'a2-wave',key)%len(_WAVE_FACTORS)
+ if trunk:
+  base=11.6*width
+  amp_frac=.060+.042*((H(seed,'a2-amp',key)%10001)/10000)
+  # Outlet relief is the distance to this centreline. A mile-scale bow
+  # lifts the downstream node above the upstream one.
+  valley_amp=0.0 if outlet else (.11+.04*((H(seed,'a2-valley',key)%10001)/10000))*min(chord,2*MILE)
+  bows=max(1,int(round(chord/(2*MILE))))
+  slope=amp_frac
+  # A partial train on a wide trunk is one bend the sampler splits into
+  # similar halves. Wait until several width-scaled waves fit.
+  if not outlet and chord<4.5*base: slope=0.0
+ else:
+  base=(.042+.032*((H(seed,'a2-lam',key)%10001)/10000))*MILE
+  amp_frac=.30+.28*((H(seed,'a2-amp',key)%10001)/10000)
+  valley_amp=(.30+.18*((H(seed,'a2-valley',key)%10001)/10000))*chord
+  bows=1
+  slope=min(amp_frac,(10*width)/(1.35*base))
+ starts=_wave_spans(chord,base,phase)
+ sign=1 if H(seed,'a2-side',key)%2==0 else -1
+ h2=(H(seed,'a2-h2',key)%20001)/10000-1
  ux=(b[0]-a[0])/chord; uy=(b[1]-a[1])/chord; nx,ny=-uy,ux
- output=[a]
- for p in meander[1:-1]:
-  along=(p[0]-a[0])*ux+(p[1]-a[1])*uy
-  lat=((p[0]-a[0])*nx+(p[1]-a[1])*ny)*mix
-  base,normal=_valley_frame(valley,min(1,max(0,along/chord)))
-  output.append((base[0]+normal[0]*lat,base[1]+normal[1]*lat))
- output.append(b)
- return output
+ step=FT(80) if trunk else FT(40)
+ n=max(2,math.ceil(chord/step))
+ pts=[]; k=0
+ for i in range(n+1):
+  s=chord*i/n; t=s/chord
+  while k<len(starts)-2 and s>=starts[k+1]: k+=1
+  # A full sine on a short trunk, faded at both ends, breaks into four
+  # similar bends. One arch stays under that count and still leaves the chord.
+  if trunk and slope>0: bow=math.sin(2*math.pi*bows*t)+.10*h2*math.sin(4*math.pi*bows*t)
+  else: bow=math.sin(math.pi*t)*(1+.22*h2*math.sin(2*math.pi*t))
+  wave=max(1e-6,starts[k+1]-starts[k])
+  u=min(1.0,max(0.0,(s-starts[k])/wave))
+  lat=_fade_end(s,chord)*sign*valley_amp*bow+_meander_env(s,chord)*slope*wave*math.sin(2*math.pi*u)
+  pts.append((a[0]+ux*s+nx*lat,a[1]+uy*s+ny*lat))
+ pts[0]=a; pts[-1]=b
+ return pts
 
 def _diagonal_allowed(seed,gx,gy,nx,ny):
  if abs(nx-gx)!=1 or abs(ny-gy)!=1: return True
@@ -883,6 +1061,9 @@ def basin(seed,cx,cy,options):
    if any(rid!=f'river:outlet:{cx}:{cy}' and min((_distance_to_segment(*p,a,b) for a,b in zip(points,points[1:])),default=math.inf)<.75*NODE_STEP for rid,points in distance_barriers): continue
    candidates[(gx,gy)]=p
  potential={key:_network_potential(seed,p,routes) for key,p in candidates.items()}
+ # Station can fall while distance-to-outlet rises. Relief then lifts the
+ # downstream node, so a step has to lose elevation and not only potential.
+ height={key:elevation(seed,*p) for key,p in candidates.items()}
  downstream={}; owned_edges=[]; growth_type={}
  for key in candidates:
   draw=H(seed,'headward-event',cx,cy,key[0],key[1])%1000
@@ -898,7 +1079,7 @@ def basin(seed,cx,cy,options):
     if other not in candidates or not _diagonal_allowed(seed,gx,gy,*other): continue
     q=candidates[other]
     op=potential[other]
-    if op<own: options2.append((op,H(seed,'path',gx,gy,gx+dx,gy+dy),other))
+    if op<own and height[other]<=height[key]+1e-7: options2.append((op,H(seed,'path',gx,gy,gx+dx,gy+dy),other))
   target=None
   for _,_,other in sorted(options2):
    q=candidates[other]
@@ -915,7 +1096,7 @@ def basin(seed,cx,cy,options):
   if target is None:
    distant=[]
    for other,q in candidates.items():
-    if other==key or potential[other]>=own: continue
+    if other==key or potential[other]>=own or height[other]>height[key]+1e-7: continue
     distance=math.dist(p,q)
     if distance>2.2*NODE_STEP: continue
     distant.append((potential[other],H(seed,'path-fallback',gx,gy,other[0],other[1]),distance,other))
@@ -1014,7 +1195,7 @@ def basin(seed,cx,cy,options):
      c=line[i+2] if i+2<len(line) else qnext
      direction=(c[0]-b[0],c[1]-b[1])
      side=1 if direction[0]*(a[1]-b[1])-direction[1]*(a[0]-b[0])>=0 else -1
-     pts=_edge_curve(seed,ids[i],a,b,widths[key],(receiver,side))
+     pts=_edge_curve(seed,ids[i],a,b,widths[key],(receiver,side),order[key])
      profile=[widths[key]]*len(pts)
      out.append(feature('rivers',ids[i],points=pts,width=widths[key],widths=profile,
       stream_order=order[key],flow='regional',source=(i==0 and not incoming[key]),downstream=next_id,
@@ -1031,7 +1212,7 @@ def basin(seed,cx,cy,options):
    next_id=f'{ident}:part:{i+1}' if i+1<count else receiver
    w0=widths[key]+(end_width-widths[key])*i/count
    w1=widths[key]+(end_width-widths[key])*(i+1)/count
-   pts=_edge_curve(seed,piece_id,pa,pb,(w0+w1)/2,(receiver,side,i))
+   pts=_edge_curve(seed,piece_id,pa,pb,(w0+w1)/2,(receiver,side,i),order[key])
    span=max(1,len(pts)-1)
    profile=[w0+(w1-w0)*k/span for k in range(span+1)]
    out.append(feature('rivers',piece_id,points=pts,width=max(profile,default=w0),widths=profile,
@@ -1081,6 +1262,7 @@ def basin(seed,cx,cy,options):
   route_order[route['id']]=order; route['stream_order']=order
  _angle_reaches(seed,out)
  _untangle_reaches(seed,out)
+ _round_continuations(out)
  return out
 
 def _distance_to_segment(x,y,a,b):

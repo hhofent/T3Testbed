@@ -12,6 +12,7 @@ import river_chunks
 import river_crossings
 import river_lattice
 import river_metrics
+import river_meander
 import river_valley
 
 
@@ -37,6 +38,8 @@ def main(argv=None):
     if not args.quick:
         valley_seeds = seeds if args.seeds else (14, 30, 31)
         checks.append(('valley geometry', lambda: river_valley.run(valley_seeds, False, progress)))
+        meander_seeds = seeds if args.seeds else (14, 30, 31)
+        checks.append(('meander geometry', lambda: river_meander.run(meander_seeds, False, progress)))
     for i, (label, run) in enumerate(checks, 1):
         print(f"\n=== {i}/{len(checks)}: {label} ===", flush=True)
         try:

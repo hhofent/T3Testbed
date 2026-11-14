@@ -10,7 +10,7 @@ crossings/bridges 75/75; chunk hash match, 12 features; outlet SD 28.78°).
 
 1. Versioned chunk cache — done. See below.
 2. Curved valley paths — awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
-3. Varied meanders, no kinks — `checks/river_meander.py`. Per-reach local-wavelength CV >= 0.25; non-junction nodes with heading change over 35° = 0; order-1 reaches with amplitude over 20x channel width = 0.
+3. Varied meanders, no kinks — awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
 4. Junction angles — `checks/river_junctions.py`. All joins, unfiltered, last 0.3 mi vs receiving channel. Seeds 14/30/31: mean 55-75°, under 25° < 5%, minimum >= 10°.
 5. Channel spacing — `checks/river_spacing.py`. Order >= 2 channels that do not join within 0.5 mi stay at least 0.4 mi apart. Violation count 0 on the 40 mi window; print the worst pair.
 6. Real copy test — resample each branch over 3 mi, compare normalised curvature profiles, flag correlation >= 0.9. Must fail on `b2ee52f` and on a same-recipe sine pair, and flag under 5% on the new network.
@@ -50,7 +50,36 @@ Review renders, not committed (`check-results/` is ignored):
 - `python-spawner/check-results/a2-part2/seed31-40mi.png`
 - `python-spawner/check-results/a2-part2/seed14-8mi.png`
 
-Next: part 3, varied meanders, after these four maps have been looked at.
+The review of these maps found folded joins and a uniform trunk wiggle. Part 3 fixes both.
+
+## Part 3: varied meanders — awaiting visual review
+
+Check `checks/river_meander.py` was shown failing on head `8f3a90a` before the new centreline. The amplitude metric is a 0.22 mi high-pass on the middle of the reach, not a cubic residual of the valley bow. `py checks/river_meander.py` exit 1, 111.60s.
+
+- seed 14: self-intersections 33; reversals 13; continuation kinks 168; order-1 over 20x width 0.0% (0/719); wavelength CV median 0.243, below 0.25 on 52.9% (567/1072); trunk sinuosity median 1.970; trunk wavelength/width 34.76; trunk gentle length 6.5%; trunk amplitude CV 0.607
+- seed 30: self-intersections 10; reversals 9; kinks 164; order-1 0.0% (0/698); CV median 0.238, below 55.1% (590/1071); trunk sinuosity 1.893; wavelength/width 37.07; gentle 6.0%; amplitude CV 0.580
+- seed 31: self-intersections 32; reversals 14; kinks 204; order-1 0.0% (0/701); CV median 0.244, below 52.9% (568/1074); trunk sinuosity 1.968; wavelength/width 33.79; gentle 6.7%; amplitude CV 0.659
+
+After the chord-graph centreline, the same command exited 0 in 148.89s.
+
+- seed 14: self-intersections 0; reversals 0; kinks 0; order-1 over 20x width 0.0% (0/726); wavelength CV median 0.607, below 0.25 on 0.0% (0/1090); trunk sinuosity median 1.224; trunk wavelength/width 11.33; trunk gentle length 71.4%; trunk amplitude CV 0.615
+- seed 30: self-intersections 0; reversals 0; kinks 0; order-1 0.0% (0/689); CV median 0.612, below 0.0% (0/1092); trunk sinuosity 1.215; wavelength/width 11.69; gentle 74.7%; amplitude CV 0.587
+- seed 31: self-intersections 0; reversals 0; kinks 0; order-1 0.0% (0/705); CV median 0.616, below 0.0% (0/1062); trunk sinuosity 1.197; wavelength/width 11.49; gentle 75.7%; amplitude CV 0.659
+
+`py checks/river_valley.py` still passes, exit 0 in 144.25s. Seed 14 median 1.302, edge mi 0.746/0.989/1.379, straight 0.61%, points/mi min 26.4. Seed 30: 1.305, 0.748/0.992/1.380, 0.69%, 26.4. Seed 31: 1.289, 0.750/0.988/1.375, 0.52%, 26.5.
+
+`py -m pytest -q`: 114 passed in 68.60s. `py checks/run_all.py --quick` passed: seed 13, 9 mi, entropy 0.903, E-W 21.1%, sinuosity median/spread 1.705/0.953, order-1 width 12.39-15.00 ft, bridges 77/77, chunk features 20, outlet SD 28.78°.
+
+Outlet centreline stays on the width-scaled wave. A valley bow there moves relief and makes a headwater edge climb. A step also has to lose elevation, not only network potential. Wide trunks shorter than 4.5 wavelengths keep one arch, because a partial wave train measures as four similar bends.
+
+Review renders, not committed (`check-results/` is ignored):
+
+- `python-spawner/check-results/a2-part3/seed14-40mi.png`
+- `python-spawner/check-results/a2-part3/seed30-40mi.png`
+- `python-spawner/check-results/a2-part3/seed31-40mi.png`
+- `python-spawner/check-results/a2-part3/seed14-8mi.png`
+
+Next: part 4, junction angles, after these four maps have been looked at.
 
 ---
 
