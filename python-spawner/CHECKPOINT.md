@@ -1,6 +1,15 @@
 # Python spawner checkpoint
 
 ## Status
+River fix: canonical endless trunks now have four times as many bends and four
+times the samples. Smooth longitudinal compression produces tight oxbow-like
+hairpins while preserving strict downstream order (no closed/self-crossing loops).
+Tributaries span 85-94% of the default eight-mile interval and merge into wider
+trunks. Existing amplitude/period controls set bend size. Floodplain exclusion now
+includes the configured creek buffer; roads remain unbroken bridge decks above
+water. Fifteen world/verification tests pass, including 40-mile continuity, downhill
+and crossing checks for seeds 13,31,46, plus multi-chunk length/neck regressions.
+
 Rail fix: replaced five-point sawtooth deviations with sampled C2 eased curves,
 with straight square approaches at every section crossing. Regression checks
 heading changes, exact crossing tangents and shared endpoints; 10 world tests pass.

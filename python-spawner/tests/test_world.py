@@ -113,3 +113,22 @@ def test_rail_approaches_are_smooth_and_crossings_square():
   assert max(abs(b-a) for a,b in zip(headings,headings[1:]))<math.radians(15)
   assert headings[0]==headings[-1]==0
   assert points[-1]==rail_points(31,0,0,6)[0]
+
+
+def test_long_winding_tributaries_and_tight_trunks_across_chunks():
+ import math
+ from settings import applied
+ from world import rivers,drainage_y,drainage_omega
+ with applied(Settings()):
+  streams=list(rivers(31,(-20*MILE,-20*MILE,40*MILE,40*MILE)))
+  branches=[f for f in streams if f['source']]
+  assert all(sum(math.dist(a,b) for a,b in zip(f['points'],f['points'][1:]))>6*MILE for f in branches)
+  trunk=[f for f in streams if f['id'].startswith('river:0:')]
+  assert len(trunk)>200
+  # Oxbow-like necks compress longitudinal spacing by roughly tenfold.
+  omega=drainage_omega(); step=.001*MILE
+  grades=[(drainage_y(31,i*step+step)-drainage_y(31,i*step))/step for i in range(5000)]
+  assert 0<min(grades)<.11
+  by_id={f['id']:f for f in streams}
+  for f in trunk:
+   if f['downstream'] in by_id: assert f['points'][-1]==by_id[f['downstream']]['points'][0]

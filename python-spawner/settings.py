@@ -2625,8 +2625,8 @@ define('verify.bin_ft',300,100,1000,50,'ft','PLACEHOLDER: spatial indexing cell 
 CATALOG['region.mile'].update(min=DEFAULTS['region.mile'],max=DEFAULTS['region.mile'],units='ticks per mile')
 CATALOG['region.n_mi'].update(min=2,max=6,units='mi')
 define('world.hill_wavelength_miles',4,1,12,1,'mi','PLACEHOLDER: analytic rolling-hill wavelength; normalized sine/cosine field.')
-define('world.river_wander_miles',1,0,3,0.25,'mi','PLACEHOLDER: trunk meander amplitude; phase sampled in 100 stable increments.')
-define('world.river_wave_steps',2,1,6,1,'tributary steps','PLACEHOLDER: trunk meander wavelength factor.')
+define('world.river_wander_miles',1,0,3,0.25,'mi','Sideways size of continuous, tight-necked river bends.')
+define('world.river_wave_steps',2,1,6,1,'tributary steps','Trunk bend period: each unit is one quarter of the tributary interval.')
 define('world.tile_cache_size',128,128,128,1,'tiles','PLACEHOLDER: fixed in-memory LRU capacity; viewport-independent.')
 define('world.rail_draw_ft',4,1,10,1,'ft','PLACEHOLDER: rail drawing stroke; contours use 1 ft and feature outlines 0.3 screen pixels.')
 
