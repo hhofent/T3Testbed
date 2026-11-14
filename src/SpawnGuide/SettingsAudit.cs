@@ -85,7 +85,7 @@ namespace SpawnGuide
                     int at = Array.FindIndex(lines, start, l => l.Contains(" " + leaf.Member.Name + " {"));
                     if (at >= 0) declaration = file.Replace('\\', '/') + ":" + (at + 1);
                 }
-                rows.Add($"| {leaf.Path} | unverified | {result} | {declaration} | {note.Replace("|", "\\|")} |");
+                rows.Add($"| {leaf.Path} | unverified | {result} | {declaration} | {note.Replace("\r", " ").Replace("\n", " ").Replace("|", "\\|")} |");
             }
             rows.Insert(4, $"Inventory: {changed + unchanged + rejected + structural} settings; changed {changed}; unchanged {unchanged}; rejected probes {rejected}; structural/unprobed {structural}.");
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);

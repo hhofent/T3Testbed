@@ -2,8 +2,8 @@
 
 **Resume instructions:** Fetch `port/builder-guy-towns`, read PORT-CHECKPOINT.md, STATE.md, T3-DECISIONS.md and SETTINGS-CLASHES.md, run the rebuild/test commands, confirm the numbers match the checkpoint, then continue at 'Exact next step'.
 
-Date/time: 2026-11-13 20:03 America/Chicago  
-Last implementation commit before audit: de66546; resumed from 994c539 (audit/checkpoint commit follows)  
+Date/time: 2026-11-13 20:03 America/Chicago
+Last implementation commit before audit: de66546; resumed from 994c539 (audit/checkpoint commit follows)
 Branch: port/builder-guy-towns, origin https://github.com/hhofent/T3Testbed.git
 
 ## Status
