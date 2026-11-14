@@ -39,17 +39,8 @@ def rail_lanes(seed,rect):
   yield lane,x,along
 
 def rail_points(seed,lane,x,row):
- y=row*MILE
- # C2 easing: zero slope and curvature at square crossing approaches and crest.
- near_main=min((row-1)%option('world.main_spacing_miles'),(1-row)%option('world.main_spacing_miles'))<=2
- diagonal=not near_main and H(seed,'rail-diagonal',lane,row)%100<option('world.rail_diagonal_pct')
- offset=option('world.rail_bend_miles')*MILE if diagonal else 0
- points=[]
- for i in range(65):
-  t=i/64; u=max(0,min(1,(t-.15)/.35 if t<=.5 else (.85-t)/.35))
-  ease=u*u*u*(10+u*(-15+6*u))
-  points.append((x+offset*ease,y+t*MILE))
- return points
+ # One constant offset throughout every crossing and chunk.
+ return [(x,row*MILE),(x,(row+1)*MILE)]
 
 @lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
 def _tile(seed,tx,ty,serialized,detail=True):

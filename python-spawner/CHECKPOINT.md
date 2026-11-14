@@ -171,3 +171,6 @@ folders remain untouched. No new user acceptance is claimed.
 
 ## Fix 2, 2026-11-13
 Chunk SVGs now rasterize at their displayed CSS size, with screen-space minima for roads, rail, water and town outlines. Gravel drops above 48 mi. Raw SVG cache identity stays reusable; each image rerasterizes on size changes. Full pytest: 96 passed; parity regeneration running.
+
+## Fix 3, 2026-11-13
+Removed per-mile rail excursions. Canonical straight offset corridors have square crossings and exact shared endpoints. Updated the old diagonal expectation to require straight geometry. Parity: five byte-identical pairs.

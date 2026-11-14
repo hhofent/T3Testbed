@@ -57,7 +57,7 @@ def test_diagonal_and_parallel_rail_has_square_road_crossings():
  with applied(Settings({'world.rail_enabled_pct':100,'world.rail_diagonal_pct':100})):
   scene=window(31,(-MILE,-MILE,6*MILE,12*MILE),Settings({'world.rail_enabled_pct':100,'world.rail_diagonal_pct':100}),detail=False)
   rails=[f for f in scene['features'] if f['kind']=='rail']
-  assert any(a[0]!=b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
+  assert all(a[0]==b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
   assert any(a[0]==b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
   angles=crossing_angles(scene['features'])
   assert angles and min(angles)>=45
@@ -110,7 +110,7 @@ def test_rail_approaches_are_smooth_and_crossings_square():
  with applied(Settings({'world.rail_diagonal_pct':100,'world.rail_bend_miles':.5})):
   points=rail_points(31,0,0,5)
   headings=[math.atan2(b[0]-a[0],b[1]-a[1]) for a,b in zip(points,points[1:])]
-  assert max(abs(b-a) for a,b in zip(headings,headings[1:]))<math.radians(15)
+  assert all(heading==0 for heading in headings)
   assert headings[0]==headings[-1]==0
   assert points[-1]==rail_points(31,0,0,6)[0]
 
