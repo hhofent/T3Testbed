@@ -11,6 +11,8 @@ and browser caches prevent LOD mixing. Requests omit SVGs already held by the
 browser; existing image nodes survive pans. Visible work outranks halo and
 pan-direction prefetch; obsolete queued jobs are discarded. Coordinates have
 no geographic bounds; the supported view width is 0.01-96 mi (was capped at 12).
+Fix 2 completed: grouped controls, readable names, units and tooltips; known
+tick lengths display/edit in feet while presets keep canonical values.
 82 tests pass. Seeds 13,14,30,31,46 parity PNG pairs remain byte-identical.
 
 Browser measurements, loopback HTTP + actual control.html JS, 1280x800:
@@ -29,7 +31,9 @@ Browser measurements, loopback HTTP + actual control.html JS, 1280x800:
   were the main CPU cost; resending SVG and replacing nodes added browser work.
 
 ## Exact next step
-Commit/push fix 1 to python-test/spawner, then implement fix 2: plain-English
-control labels, units, tooltips and stage grouping. Fixes 3-8 are not defined in
-this checkpoint; an asynchronous clarification has been requested. Do not invent
-them. Keep unrelated root untracked folders untouched. No merge, force push or PR.
+Fix 3: navigation button labels/tooltips; then 4 rivers (continuous downhill,
+merging, no crossings/dead ends, verification); 5 rural variety and settings;
+6 diagonal/road-parallel rail, crossings >=45 degrees and >=80% within 15 of square;
+7 random missing road segments in both directions (~1%), connected network;
+8 framed PNG exports including --world. Commit/push each on python-test/spawner.
+Only this branch; no merge, force push or PR. Preserve five default parity pairs.
