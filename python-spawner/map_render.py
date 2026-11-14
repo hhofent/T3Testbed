@@ -63,9 +63,9 @@ def xf_for(L):
 def draw_lot(ax, L, labels, fs):
     s = L["spec"]; x, y, w, h = world_rect(L["place"], s["width"], s["depth"])
     ax.add_patch(Rectangle((f(x), f(y)), f(w), f(h), fill=False, lw=0.6, ec="#2a6"))
-    p = res[s["id"]]["plan"]
+    p = res.get(s["id"],{}).get("plan")
     if p: draw_house(ax, p, xf_for(L), fs=fs, labels=labels)
-    else: ax.add_patch(Rectangle((f(x), f(y)), f(w), f(h), fill=False, hatch="xx", ec="r", lw=0.3))
+    elif s["id"] in res: ax.add_patch(Rectangle((f(x), f(y)), f(w), f(h), fill=False, hatch="xx", ec="r", lw=0.3))
 
 def png(region,results,town_only=True):
     global reg,res,t

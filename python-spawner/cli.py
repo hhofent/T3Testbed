@@ -6,6 +6,8 @@ from presets import stack,save,diff
 def parser():
  p=argparse.ArgumentParser(description=__doc__)
  p.add_argument('--seed',type=int,default=31)
+ p.add_argument('--serve',action='store_true')
+ p.add_argument('--port',type=int)
  p.add_argument('--preset',action='append',default=[],help='Stack a named preset or JSON path')
  p.add_argument('--param',action='append',default=[],metavar='a.b=value')
  p.add_argument('--save-preset'); p.add_argument('--diff',action='store_true')
@@ -22,6 +24,9 @@ def main(argv=None):
  except (ValueError,KeyError,OSError) as error: p.error(str(error))
  if args.save_preset: save(settings,args.save_preset)
  if args.diff: print(json.dumps(diff(settings),indent=2)); return
+ if args.serve:
+  from control import serve
+  serve(args.port,settings); return
  if args.sweep:
   from sweep import sweep
   key,lo,hi,steps=args.sweep

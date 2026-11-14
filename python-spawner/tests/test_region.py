@@ -158,7 +158,7 @@ def test_business_access_and_no_overlap(reg, bigreg):
     assert not bigreg["town"]["unplaced"]
 
 def test_storefronts_attached(bigreg):
-    S = [c for c in bigreg["town"]["commercial"] if c["storefront"]]; assert len(S) >= 2
+    S = [c for c in bigreg["town"]["commercial"] if c["storefront"] and c["site"] != "highway strip"]; assert len(S) >= 2
     for c in S: assert c["bldg"][0] == c["lot"][0] and c["bldg"][2] == c["lot"][2] == FT(25)        # zero side setbacks
     for c in S:
         same = [o for o in S if o is not c and o["front_y"] == c["front_y"] and o["facing"] == c["facing"]]

@@ -2481,11 +2481,13 @@ def _clamp(value,default,lo,hi,path):
     if isinstance(default,(tuple,list)):
         if not isinstance(value,(tuple,list)) or len(value)!=len(default): raise ValueError(path+' requires the original sequence length')
         result=type(default)(_clamp(v,d,a,b,path) for v,d,a,b in zip(value,default,lo,hi))
-        if isinstance(default,tuple) and len(default)==2 and all(type(x) in (int,float) for x in default) and default[0]<=default[1] and result[0]>result[1]: raise ValueError(path+' requires min <= max')
+        if isinstance(default,tuple) and len(default)==2 and all(type(x) in (int,float) for x in default) and default[0]<=default[1] and path in DEFAULTS and result[0]>result[1]: raise ValueError(path+' requires min <= max')
         return result
     if isinstance(default,range):
         if not isinstance(value,range) or not value or value.step<=0: raise ValueError(path+' requires a nonempty increasing range')
-        return value
+        result=range(max(lo['start'],min(hi['start'],value.start)),max(lo['stop'],min(hi['stop'],value.stop)),max(lo['step'],min(hi['step'],value.step)))
+        if not result: raise ValueError(path+' requires min < max')
+        return result
     if isinstance(default,set):
         if value!=default: raise ValueError(path+' is an algorithm invariant')
         return copy.deepcopy(default)
@@ -2498,7 +2500,9 @@ class Settings:
         for key,value in (values or {}).items(): self.set(key,value)
     def set(self,key,value):
         if key in DEFAULTS:
-            spec=CATALOG[key]; self.values[key]=_clamp(value,DEFAULTS[key],spec['min'],spec['max'],key)
+            spec=CATALOG[key]; candidate=_clamp(value,DEFAULTS[key],spec['min'],spec['max'],key)
+            if key in ('region.town_size','region.base_take','region.farm_per_mile','region.creek_n') and sum(w for _,w in candidate)<=0: raise ValueError(key+' requires a positive total weight')
+            self.values[key]=candidate
         else:
             # Nested dictionary/list leaves are addressable with dotted --param paths.
             parent=next((k for k in sorted(DEFAULTS,key=len,reverse=True) if key.startswith(k+'.')),None)
@@ -2523,6 +2527,8 @@ def applied(settings):
                 for target in modules.values():
                     if hasattr(target,name) and (target is modules[mod] or name in ('T','CLR','HEAD','GRID','MODULE','SF')):
                         saved.append((target,name,getattr(target,name))); setattr(target,name,copy.deepcopy(value))
+            if not settings.values['stages.trailers']:
+                saved.append((region,'TRAILER_RUN_PCT',region.TRAILER_RUN_PCT)); region.TRAILER_RUN_PCT=0
             yield
         finally:
             for target,name,value in reversed(saved): setattr(target,name,value)
@@ -2554,3 +2560,18 @@ for _spec in CATALOG.values():
 for _key,_value in DEFAULTS.items():
     if 'pct' in _key and type(_value) in (int,float):
         CATALOG[_key].update(min=0,max=100,units='percent')
+
+def define(key,default,lo,hi,step,units,note,source='placeholder'):
+    DEFAULTS[key]=default
+    CATALOG[key]=dict(default=default,min=lo,max=hi,step=step,units=units,note=note,source=source)
+define('controls.debounce_ms',300,100,1000,50,'ms','PLACEHOLDER: redraw after changes stop; requested approximately 300 ms.')
+define('controls.port',8765,1024,65535,1,'TCP port','PLACEHOLDER: local control server port.')
+define('controls.seed',31,0,2147483647,1,'seed','PLACEHOLDER: initial seed and random seed range.')
+define('trees.spacing_ft',30,10,100,5,'ft','PLACEHOLDER: spacing of small trunk markers; no canopy.')
+define('controls.max_request_bytes',2097152,65536,8388608,65536,'bytes','PLACEHOLDER: request body limit for local JSON settings.')
+define('generation.max_feature_attempts',100,1,1000,1,'attempts','PLACEHOLDER: finite rail-facility placement retry limit for incompatible settings.')
+for _key,_value in DEFAULTS.items():
+    if isinstance(_value,range):
+        CATALOG[_key]['min']={'start':0,'stop':1,'step':1}
+        CATALOG[_key]['max']={'start':_value.stop*2,'stop':_value.stop*3,'step':max(1,_value.step*4)}
+        CATALOG[_key]['units']='ft'

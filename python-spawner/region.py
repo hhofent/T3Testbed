@@ -99,6 +99,7 @@ def rail_hits(rail, rect, pad=number('region.invariants_numbers', 'rail_hits_92_
 def make_rail(seed, roads, force=None):
     """Rail stage (after roads): mostly straight; runs parallel just off one N-S road's ROW past the E-W blacktop,
     then leans off diagonally to the region edges, crossing roads at grade."""
+    if not option("stages.rail"): return None
     d = rng(seed, "railroute")
     if not (d.chance("has", RAIL_PCT) if force is None else force): return None
     top = N_MI * MILE
@@ -127,6 +128,7 @@ CREEK_BUF = DEFAULTS['region.creek_buf']
 
 def make_creeks(seed, roads):
     """Meandering, roughly diagonal polylines (Lyon County refs). The first passes 900-2200 ft off the blacktop crossing."""
+    if not option("stages.creeks"): return []
     d = rng(seed, "creek"); top = N_MI * MILE; out = []
     ew = next(r for r in roads if r["type"] == "paved" and r["axis"] == "h"); ns = next((r for r in roads if r["type"] == "paved" and r["axis"] == "v"), None)
     ax_, ay_ = (ns["c"] if ns else top // number('region.make_creeks_numbers', 'make_creeks_132_42')), ew["c"]
@@ -253,6 +255,7 @@ def _church(x0, w, F, n, cnt):
 def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     """Rail town where the rail passes the blacktop crossing (grid on the far side of the road, rows along the rail),
     else maybe a no-rail town at the blacktop x blacktop crossing."""
+    if not option("stages.towns"): return None
     d = rng(seed, "town")
     ew = next((r for r in roads if r["type"] == "paved" and r["axis"] == "h"), None)
     ns = next((r for r in roads if r["type"] == "paved" and r["axis"] == "v"), None)
@@ -408,10 +411,11 @@ def place_rail_features(seed, town, rail, occupied, bar=None):
     """Rail towns only: depot between road and track, elevator 3-6 ac across the track with a siding beside it."""
     d = rng(seed, "rail"); sd, rx, Yc = rail["side"], rail["x"], town["Yc"]
     depot = (int(rx - sd * (RAIL_ROW // number('region.place_rail_features_numbers', 'place_rail_features_410_40') - FT(number('region.place_rail_features_numbers', 'place_rail_features_410_47'))) - FT(number('region.place_rail_features_numbers', 'place_rail_features_410_57'))), Yc + ROW // number('region.place_rail_features_numbers', 'place_rail_features_410_75') + FT(number('region.place_rail_features_numbers', 'place_rail_features_410_82')), FT(number('region.place_rail_features_numbers', 'place_rail_features_410_91')), FT(number('region.place_rail_features_numbers', 'place_rail_features_410_99')))
-    while True:
+    for attempt in range(option("generation.max_feature_attempts")):
         w, h = FT(d.choice("ew", list(range(number('region.place_rail_features_numbers', 'place_rail_features_412_44'), number('region.place_rail_features_numbers', 'place_rail_features_412_49'), number('region.place_rail_features_numbers', 'place_rail_features_412_54'))))), FT(d.choice("eh", list(range(number('region.place_rail_features_numbers', 'place_rail_features_412_91'), number('region.place_rail_features_numbers', 'place_rail_features_412_96'), number('region.place_rail_features_numbers', 'place_rail_features_412_101')))))
         if ELEV_AC[number('region.place_rail_features_numbers', 'place_rail_features_413_19')] <= acres(w, h) <= ELEV_AC[number('region.place_rail_features_numbers', 'place_rail_features_413_48')]: break
         d = Draw(H(d.seed, "again"))
+    else: return None, depot, None
     ex = rx + sd * (RAIL_ROW // number('region.place_rail_features_numbers', 'place_rail_features_415_32') + FT(number('region.place_rail_features_numbers', 'place_rail_features_415_39'))); ex = ex if sd > number('region.place_rail_features_numbers', 'place_rail_features_415_61') else ex - w
     rect = None
     for y0 in (Yc - ROW // number('region.place_rail_features_numbers', 'place_rail_features_417_27') - FT(number('region.place_rail_features_numbers', 'place_rail_features_417_34')) - h, Yc + ROW // number('region.place_rail_features_numbers', 'place_rail_features_417_55') + FT(number('region.place_rail_features_numbers', 'place_rail_features_417_62')), Yc - ROW // number('region.place_rail_features_numbers', 'place_rail_features_417_79') - FT(number('region.place_rail_features_numbers', 'place_rail_features_417_86')) - h):
@@ -617,9 +621,12 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
         lots.append({"spec": spec, "place": pl, "road_id": L["road"]["id"], "along": L["along"]})
     lots.sort(key=lambda l: (l["road_id"], l["along"], l["spec"]["id"]))
     paved_len = sum(r["hi"] - r["lo"] for r in roads if r["type"] == "paved"); tot = sum(r["hi"] - r["lo"] for r in roads)
-    return {"seed": seed, "creeks": creeks, "rail": rail, "roads": allroads, "grid_roads": roads, "town": town, "lots": lots, "parcels": parcels,
+    result = {"seed": seed, "creeks": creeks, "rail": rail, "roads": allroads, "grid_roads": roads, "town": town, "lots": lots, "parcels": parcels,
             "depot": depot, "siding": siding, "clear": clear, "paved_pct_drawn": pct, "paved_share": paved_len / tot,
             "road_miles": tot / MILE}
+    from commercial_layout import arrange
+    arrange(result)
+    return result
 
 # ---------- rule 35 ----------
 def signature(plan):

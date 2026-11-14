@@ -3,6 +3,7 @@ import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from spawner import FT, SF
+from settings import option
 C = {"garage": "#d9d9d9", "kitchen": "#ffe8a3", "living": "#c9e7c2", "dining": "#f6d2b8", "family": "#f6d2b8",
      "bedroom": "#cfe0f7", "bath": "#bfeef0", "hall": "#f2f2f2", "utility": "#e6d5f2", "mudroom": "#e6d5f2"}
 f = lambda t: t / FT(1)
@@ -23,7 +24,12 @@ def draw_house(ax, plan, xf=IDENT, fs=5.5, labels=True):
     x0, x1 = L["side_left"], L["width"] - L["side_right"]
     _rect(ax, xf, x0, L["front_setback"], x1 - x0, L["depth"] - L["front_setback"] - L["rear_setback"],
           fill=False, ls="--", ec="#c33", lw=0.8, zorder=5)      # drawn above rooms (old bug: rooms hid it)
-    for g in plan.site.get("grove", []): _rect(ax, xf, *g, color="#5a9e4b", alpha=0.45, lw=0)
+    if option('stages.trees') and not option('generation.parity'):
+        from trees import local_markers
+        for x,y in local_markers(plan):
+            px,py=xf(x,y); ax.plot(f(px),f(py),'.',color='#42633b',markersize=2)
+    elif option('generation.parity'):
+        for g in plan.site.get("grove", []): _rect(ax, xf, *g, color="#5a9e4b", alpha=0.45, lw=0)
     for r in plan.site.get("drive", []): _rect(ax, xf, *r, color="#c8b48a" if L.get("drive_surface") == "gravel" else "#bbb", lw=0)
     for n, r in plan.site.get("farm", []):
         _rect(ax, xf, *r, fc="#7a4a2a", ec="k", lw=0.4)
