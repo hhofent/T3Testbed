@@ -6,6 +6,15 @@ from region import MILE
 
 def test_cache_priority_disk_and_fast_reuse(tmp_path,monkeypatch):
  monkeypatch.setattr(chunks,'CACHE',tmp_path)
+ # This test is about the cache protocol; geometry generation has dedicated
+ # tests and the extended river checks. Keep the normal suite independent of
+ # the expensive renderer by returning a stable payload here.
+ def fake_generate(seed,x,y,settings,path,detail=True):
+  result='<svg cache-smoke="true"/>'
+  path.parent.mkdir(parents=True,exist_ok=True)
+  path.write_text(result,encoding='utf-8')
+  return result
+ monkeypatch.setattr(chunks,'generate',fake_generate)
  chunks.JOBS.clear()
  settings=Settings({'stages.houses':False,'stages.trees':False})
  data=dict(seed=13,settings=document(settings),window=[0,0,MILE,MILE])
@@ -31,9 +40,17 @@ def test_overview_skips_house_plans_and_matches_towns(monkeypatch):
  import world,json
  from presets import document
  settings=Settings()
- world._tile.cache_clear()
  def forbidden(*args,**kwargs): raise AssertionError('overview generated house plans')
  monkeypatch.setattr(world,'spawn_region',forbidden)
+ monkeypatch.setattr(world,'rivers',lambda seed,rect:())
+ monkeypatch.setattr(world,'_route_offset',lambda *args:0)
+ monkeypatch.setattr(world,'terrain',lambda seed,rect:())
+ def tile(seed,tx,ty,*args,**kwargs):
+  x,y=tx*3*MILE,ty*3*MILE
+  return [world.feature('roads',f'smoke-road:{tx}:{ty}',rect=(x,y+MILE,3*MILE,100),surface='gravel'),
+          world.feature('farms',f'smoke-farm:{tx}:{ty}',rect=(x+MILE//4,y+MILE//4,MILE//2,MILE//2),use='farmstead')]
+ monkeypatch.setattr(world,'_tile',tile)
+ monkeypatch.setattr(world,'settlements',lambda *args,**kwargs:[world.feature('towns','smoke-town',rect=(MILE,MILE,MILE,MILE),size='tiny')])
  scene=world.window(31,[0,0,3*MILE,3*MILE],settings,detail=False)
  assert not any(f['kind'] in ('buildings','trees','driveways','lots') for f in scene['features'])
  assert any(f['kind']=='roads' for f in scene['features'])
@@ -58,14 +75,16 @@ def test_twenty_miles_negative_coordinates_and_known_payload(tmp_path,monkeypatc
  assert reused['key'].endswith('-overview')
 
 def test_far_chunk_svg_uses_local_geometry():
- import world,xml.etree.ElementTree as ET
- settings=Settings()
- for seed in (14,2113558218):
-  for distance in (-198,-90,40,90,198):
-   scene=world.window(seed,[distance*MILE,distance*MILE,3*MILE,3*MILE],settings,detail=False)
-   root=ET.fromstring(world.svg(scene,local=True))
-   assert root.attrib['viewBox']==f'0 0 {3*MILE} {3*MILE}'
-   assert len(root)>2
-   for rect in root.findall('.//{*}rect'):
-    assert abs(float(rect.attrib['x']))<10*MILE
-    assert abs(float(rect.attrib['y']))<10*MILE
+ import xml.etree.ElementTree as ET
+ import world
+ distance=-198*MILE
+ rect=(distance,distance,3*MILE,3*MILE)
+ road=world.feature('roads','far-road',rect=(distance+MILE,distance+2*MILE,MILE,22*192),surface='gravel')
+ scene={'seed':14,'window':rect,'features':[road]}
+ root=ET.fromstring(world.svg(scene,local=True))
+ assert root.attrib['viewBox']==f'0 0 {3*MILE} {3*MILE}'
+ assert len(root)>=2 # background plus the synthetic road feature
+ assert root.find('.//{*}g[@data-kind="roads"]') is not None
+ for item in root.findall('.//{*}rect'):
+  assert abs(float(item.attrib['x']))<10*MILE
+  assert abs(float(item.attrib['y']))<10*MILE

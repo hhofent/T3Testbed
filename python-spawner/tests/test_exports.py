@@ -2,7 +2,13 @@ import io
 from PIL import Image,ImageChops
 from cli import main
 
-def test_cli_world_png_and_region_framing(tmp_path):
+def test_cli_world_png_and_region_framing(tmp_path,monkeypatch):
+ import world
+ from world import feature,MILE,FT
+ def smoke_window(seed,rect,settings=None,detail=True):
+  x,y,w,h=rect
+  return {'seed':seed,'window':rect,'features':[feature('rivers','smoke-diagonal',points=[(x,y),(x+w,y+h)],width=FT(100),stream_order=3)]}
+ monkeypatch.setattr(world,'window',smoke_window)
  for world in (False,True):
   png=tmp_path/('world.png' if world else 'region.png')
   args=['--seed','31','--output',str(tmp_path/'scene.json'),'--png',str(png)]

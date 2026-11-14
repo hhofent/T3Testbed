@@ -1,3 +1,38 @@
+# Item A WIP: basin rivers and check harness, 2026-11-14
+
+Starting head confirmed as `b2ee52f`. The old `drainage_*` templates and their
+lane-bend test are removed. Rivers now use rotated 32-mi Voronoi basin cells,
+seeded outlet routing and terrain potential, local acyclic headwater graphs,
+Strahler order, area-based widths, pinned meanders and seeded junction angles.
+Outlet-route widths propagate through downstream joins. `crossing_point` handles
+collinear overlap. Chunk-order, topology, bridge, metric and lattice checks live
+in `checks/`; `py checks/run_all.py`, `--quick` and `--quick --seeds 13` all
+completed successfully.
+`check-results/` is ignored; `checks/example-summary.md` is the committed sample.
+
+Fresh normal suite: `py -m pytest -q` — 111 passed in 54.97s. The finished-map
+smoke was measured on b2ee52f at seed 13, 4x4 mi: bearing entropy 0.701,
+sinuosity median 1.0 and spread 0.0, so it fails the new-map thresholds.
+
+Full checks (`check-results/20261114-140501-467000/summary.md`): mean density
+1.427 stream-mi/sq-mi; pooled sinuosity median 1.736, p10-p90 spread 0.463;
+pooled N3/N4 3.471; per-basin N3/N4 mean 4.896 (range 2.40-10.00); junction
+mean/SD 65.26/24.87 degrees, 7.69% under 25 degrees, largest 10-degree bin
+17.16%; copy rate 0/397; order-1 widths 12.39-15 ft and largest trunk 150 ft;
+zero measured confluence-width violations. Per-seed density ranged 0.948-1.771.
+Five-seed topology/crossing checks passed; 276/276 bridge decks matched; shuffled
+3-mi chunks matched under both PYTHONHASHSEED values (12 features); 20/20 outlet
+crossing positions were unique and minimum regional bearing SD was 28.67 degrees.
+
+Still open in A: individual basin N3/N4 values exceed the 3-5 range even though
+their mean passes; seed 13's 100-sq-mi density is 1.771. The 20/70/10 growth
+labels do not yet control branch topology. Channelized reaches, minimum spacing
+between neighboring river limbs, road/rail clearance and crossing bends, and
+zoom-based meander hiding remain unimplemented or unmeasured. Continue tuning
+and measuring these before calling A complete.
+
+---
+
 # Final handoff: drainage-first rebuild, 2026-11-14
 
 Items 1-7 are implemented and pushed in order. Important item-6 limitation:

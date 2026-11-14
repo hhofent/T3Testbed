@@ -2,7 +2,7 @@
 World y increases southward. Queries return full canonical features, never clipped
 geometry; SVG clips at the viewport. Settings and seed define the entire world.
 """
-import math,json,copy
+import math,json,copy,itertools
 from functools import lru_cache
 from settings import Settings,applied,option,DEFAULTS
 from presets import document,apply_document
@@ -303,121 +303,621 @@ def _tile(seed,tx,ty,serialized,detail=True):
   share_farm_lanes(seed,out,farm_sites,water_hits,ox,oy)
   return out
 
-RIVER_SAMPLES=64
-
-def drainage_phase(seed):
- return H(seed,'river-watershed')%10000/10000*2*math.pi
-
-def drainage_omega():
- return 2*math.pi/(option('world.tributary_spacing_miles')*MILE*option('world.river_wave_steps')/4)
-
-def drainage_y(seed,s):
- # Compress the neck of each hairpin without closing or crossing the channel.
- # dy/ds >= .1: downstream order is strict even at the tightest bend.
- omega=drainage_omega()
- return s+.45/omega*math.sin(2*(s*omega+drainage_phase(seed)))
-
-def drainage_station(seed,y):
- omega=drainage_omega(); lo=y-.45/omega; hi=y+.45/omega
- for _ in range(40):
-  mid=(lo+hi)/2
-  if drainage_y(seed,mid)<y: lo=mid
-  else: hi=mid
- return (lo+hi)/2
-
-def drainage_x(seed,y,lane=0):
- return drainage_offset(seed,drainage_station(seed,y),lane)
-
-def drainage_offset(seed,station,lane):
- phase=station*drainage_omega()+drainage_phase(H(seed,'channel',lane))
- # Incommensurate long waves change bend phase and amplitude without tile resets.
- phase+=.7*math.sin(station/MILE*.173+lane*1.91)
- amplitude=.8+.2*math.sin(station/MILE*.311+lane*2.37)
- return math.sin(phase)*amplitude*MILE*option('world.river_wander_miles')
+BASIN_MILES=32
+BASIN_TICKS=BASIN_MILES*MILE
+BASIN_NODES=23
+NODE_STEP=BASIN_TICKS/BASIN_NODES
 
 def _drainage_options():
+ # Kept as a stable cache key for callers; river spacing/width now comes from
+ # the basin network, not the old parallel trunk settings.
  return tuple(option('world.'+k) for k in ('river_spacing_miles','tributary_spacing_miles','river_width_ft','river_wander_miles'))
 
-def basin_axis(seed,lane,y,spacing,step):
- # Shared boundary anchors, independent region interiors, and a southwest datum.
- row=math.floor(y/step); t=(y-row*step)/step
- jitter=lambda r:(H(seed,'basin',lane,r)%10001/10000-.5)*spacing*.22
- smooth=t*t*(3-2*t)
- return lane*spacing-.12*y+jitter(row)*(1-smooth)+jitter(row+1)*smooth
+def _basin_angle(seed):
+ return math.radians(10+(H(seed,'basin-angle')%25001)/1000)
 
-@lru_cache(maxsize=4096)
-def basin(seed,lane,row,options):
- spacing,step,width,wander=options
- spacing*=MILE; step*=MILE; width=FT(width)
- owner=H(seed,'basin',lane,row); count=RIVER_SAMPLES
- phase=owner%10000/10000*2*math.pi
- cycles=2+(owner//10000)%2
- amplitude=MILE*wander*1.6*(1.1+(owner//100000)%401/1000)
- def trunk(t,phase=phase,cycles=cycles):
-  y=(row+t)*step
-  # The envelope shares both position and tangent with the next coarse region.
-  x=basin_axis(seed,lane,y,spacing,step)+amplitude*math.sin(cycles*2*math.pi*t+phase)*math.sin(math.pi*t)**2
-  return x,y
- points=[trunk(i/count) for i in range(count+1)]
+def _rot(x,y,a):
+ return x*math.cos(a)+y*math.sin(a),-x*math.sin(a)+y*math.cos(a)
+
+def _unrot(x,y,a):
+ return x*math.cos(a)-y*math.sin(a),x*math.sin(a)+y*math.cos(a)
+
+def _bearing(seed,sx,sy):
+ base=(H(seed,'bearing-base')%12001)/100-60
+ key=H(seed,'bearing',sx,sy)
+ sign=1 if (sx+sy+H(seed,'bearing-phase')%2)%2==0 else -1
+ # Balanced alternating regional flow keeps a broad bearing distribution;
+ # the magnitude is still independently keyed per super-region.
+ perturb=sign*(27+(key%3001)/1000)
+ return math.radians(base+perturb)
+
+def _terrain_potential(seed,x,y):
+ """Low-frequency terrain potential; x/y are world ticks."""
+ angle=_basin_angle(seed); rx,ry=_rot(x,y,angle)
+ super_span=4*BASIN_TICKS
+ gx=rx/super_span; gy=ry/super_span; sx=math.floor(gx); sy=math.floor(gy); tx=gx-sx; ty=gy-sy
+ # Blend neighboring super-region bearings so potential stays continuous at
+ # the 4x4-cell boundaries while retaining each region's seeded flow direction.
+ vectors=[]
+ for ix,iy,weight in ((sx,sy,(1-tx)*(1-ty)),(sx+1,sy,tx*(1-ty)),(sx,sy+1,(1-tx)*ty),(sx+1,sy+1,tx*ty)):
+  theta=_bearing(seed,ix,iy); vectors.append((math.sin(theta)*weight,math.cos(theta)*weight))
+ ux=sum(v[0] for v in vectors); uy=sum(v[1] for v in vectors); norm=max(1e-9,math.hypot(ux,uy)); ux/=norm; uy/=norm
+ # A gentle N/S and W/E grade dominates the bounded low-frequency noise, so
+ # every outlet has a lower-potential neighbor and the coarse route graph is a DAG.
+ trend=-(x*ux+y*uy)/MILE*8.0
+ gx=rx/(64*MILE); gy=ry/(64*MILE); ix=math.floor(gx); iy=math.floor(gy); tx=gx-ix; ty=gy-iy
+ def noise(a,b): return (H(seed,'terrain',a,b)%20001)/1000-10
+ n0=noise(ix,iy)*(1-tx)+noise(ix+1,iy)*tx
+ n1=noise(ix,iy+1)*(1-tx)+noise(ix+1,iy+1)*tx
+ return trend+n0*(1-ty)+n1*ty
+
+def _outlet(seed,cx,cy):
+ angle=_basin_angle(seed); key=H(seed,'basin',cx,cy)
+ jx=((key%10001)/10000-.5)*.2*BASIN_TICKS
+ jy=(((key//10001)%10001)/10000-.5)*.2*BASIN_TICKS
+ theta=_bearing(seed,math.floor(cx/4),math.floor(cy/4)); along=_rot(math.sin(theta),math.cos(theta),angle)
+ jx+=along[0]*.28*BASIN_TICKS; jy+=along[1]*.28*BASIN_TICKS
+ return _unrot(cx*BASIN_TICKS+jx,cy*BASIN_TICKS+jy,angle)
+
+def _cell_owner(seed,x,y,cx,cy,outlets=None):
+ outlets=outlets or {(a,b):_outlet(seed,a,b) for a in range(cx-1,cx+2) for b in range(cy-1,cy+2)}
+ return min(outlets,key=lambda k:(math.dist((x,y),outlets[k]),H(seed,'voronoi-tie',k[0],k[1])))
+
+@lru_cache(maxsize=65536)
+def _next_outlet(seed,cx,cy):
+ x,y=_outlet(seed,cx,cy); p=_terrain_potential(seed,x,y)
+ neighbors=[]
+ for dx in (-1,0,1):
+  for dy in (-1,0,1):
+   if dx==dy==0: continue
+   nx,ny=cx+dx,cy+dy; q=_outlet(seed,nx,ny)
+   neighbors.append((_terrain_potential(seed,*q),H(seed,'outlet-route',cx,cy,nx,ny),nx,ny,q))
+ lowest=min(neighbors,key=lambda v:(v[0],v[1]))
+ return lowest[2],lowest[3],lowest[4]
+
+@lru_cache(maxsize=65536)
+def _upstream_outlets(seed,cx,cy):
+ return tuple((x,y) for x in range(cx-1,cx+2) for y in range(cy-1,cy+2)
+  if (x,y)!=(cx,cy) and _next_outlet(seed,x,y)[:2]==(cx,cy))[:3]
+
+@lru_cache(maxsize=65536)
+def _route_curve_raw(seed,cx,cy):
+ ident=f'river:outlet:{cx}:{cy}'; start=_outlet(seed,cx,cy); nx,ny,end=_next_outlet(seed,cx,cy)
+ pts=_edge_curve(seed,ident,start,end,FT(100),'outlet')
+ return ident,pts
+
+@lru_cache(maxsize=65536)
+def _route_curve(seed,cx,cy):
+ ident,pts=_route_curve_raw(seed,cx,cy); nx,ny,_=_next_outlet(seed,cx,cy)
+ _,downstream=_route_curve_raw(seed,nx,ny); join=pts[-1]; a,b=join,downstream[1]
+ vx,vy=b[0]-a[0],b[1]-a[1]; old=(join[0]-pts[-2][0],join[1]-pts[-2][1])
+ length=min(math.dist(join,pts[-2]),FT(30))
+ if length and math.hypot(vx,vy):
+  side=1 if vx*old[1]-vy*old[0]>=0 else -1
+  u=(H(seed,'junction-angle',ident)%10001)/10000
+  theta=math.radians(25+60*u); direction=math.atan2(vy,vx)+side*theta
+  pts=list(pts); pts[-2]=(join[0]-length*math.cos(direction),join[1]-length*math.sin(direction))
+ return ident,pts
+
+@lru_cache(maxsize=65536)
+def _route_geometry(seed,cx,cy):
+ ident,pts=_route_curve(seed,cx,cy); nx,ny,_=_next_outlet(seed,cx,cy)
+ # Canonical <=200-ft samples support width interpolation, junction attachment,
+ # and the same river shape at every display zoom.
+ sampled=[]
+ for a,b in zip(pts,pts[1:]):
+  n=max(1,math.ceil(math.dist(a,b)/FT(200)))
+  sampled.extend((a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n) for i in range(n))
+ sampled.append(pts[-1])
+ return feature('rivers',ident,points=sampled,width=FT(100),widths=[FT(100)]*len(sampled),stream_order=3,flow='regional',source=not _upstream_outlets(seed,cx,cy),downstream=f'river:outlet:{nx}:{ny}',basin=(cx,cy),area=3*MILE)
+
+def _route_targets(seed,cx,cy):
+ # Local headwater edges drain to their own basin outlet reach. Upstream
+ # outlet reaches remain separate links which join at basin outlets. Reserve
+ # the immediate outlet junction for those coarse links; local branches join
+ # the trunk after a short channel-length buffer.
+ ident,points=_route_curve(seed,cx,cy); cut=.75*NODE_STEP; distance=0; start=0
+ for i,(a,b) in enumerate(zip(points,points[1:])):
+  distance+=math.dist(a,b)
+  if distance>=cut: start=i+1; break
+ return ((ident,tuple(points[start:] or points[-2:])),)
+
+def _nearest_route(p,routes,barriers=()):
+ candidates=[]; best=None
+ for ident,points in routes:
+  lengths=[math.dist(a,b) for a,b in zip(points,points[1:])]; total=sum(lengths); before=0
+  for i,(a,b,length) in enumerate(zip(points,points[1:],lengths)):
+   dx,dy=b[0]-a[0],b[1]-a[1]; t=max(0,min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy)))
+   q=(a[0]+t*dx,a[1]+t*dy); d=math.dist(p,q); sample=a if t<.5 else b
+   station=(before+t*length)/total if total else 0
+   candidate=(d,ident,station,sample)
+   if barriers: candidates.append(candidate)
+   elif best is None or candidate[:3]<best[:3]: best=candidate
+   before+=length
+ if barriers:
+  local_barriers=tuple(r for r in barriers if r[0] not in {route[0] for route in routes})
+  for candidate in sorted(candidates)[:32]:
+   if not _crosses_owned_route(p,candidate[3],local_barriers): best=candidate; break
+ if best is None:
+  fallback=_nearest_route(p,routes)
+  _,origin,_,end=fallback; hits=[]
+  for rid,points,*_ in barriers:
+   if rid==origin: continue
+   lengths=[math.dist(a,b) for a,b in zip(points,points[1:])]; total=sum(lengths); before=0
+   for a,b,length in zip(points,points[1:],lengths):
+    hit=crossing_point(p,end,a,b)
+    if hit is not None and 1e-6<hit[1]<1-1e-6:
+     q=min(points,key=lambda v:math.dist(v,hit[0])); station=(before+hit[2]*length)/total if total else 0
+     hits.append((hit[1],rid,station,q))
+    before+=length
+  if hits:
+   t,ident,station,q=min(hits,key=lambda h:(h[0],h[1],h[2]))
+   return math.dist(p,q),ident,station,q
+  return fallback
+ d,ident,station,q=best
+ return d,ident,station,q
+
+def _network_potential(seed,p,routes):
+ d,ident,station,_=_nearest_route(p,routes)
+ route_id=ident.split(':'); cx,cy=int(route_id[-2]),int(route_id[-1])
+ nx,ny,_=_next_outlet(seed,cx,cy)
+ a=_terrain_potential(seed,*_outlet(seed,cx,cy)); b=_terrain_potential(seed,*_outlet(seed,nx,ny))
+ return d/MILE*3+(.02*((1-station)*a+station*b))
+
+def _crosses_owned_route(a,b,routes):
+ bounds=(min(a[0],b[0]),min(a[1],b[1]),abs(b[0]-a[0]),abs(b[1]-a[1]))
+ for route in routes:
+  _,points,*cached_bounds=route; route_bounds=cached_bounds[0] if cached_bounds else box(points)
+  if not intersects(bounds,route_bounds): continue
+  for c,d in zip(points,points[1:]):
+   if max(a[0],b[0])<min(c[0],d[0]) or max(c[0],d[0])<min(a[0],b[0]) or max(a[1],b[1])<min(c[1],d[1]) or max(c[1],d[1])<min(a[1],b[1]): continue
+   hit=crossing_point(a,b,c,d)
+   if hit is None: continue
+   _,t,s,_=hit
+   if t<1e-6 or t>1-1e-6: continue
+   return True
+ return False
+
+def _node_point(seed,gx,gy):
+ jitter=.08*NODE_STEP
+ ox=((H(seed,'node-x',gx,gy)%10001)/5000-1)*jitter
+ oy=((H(seed,'node-y',gx,gy)%10001)/5000-1)*jitter
+ return _unrot(gx*NODE_STEP+ox,gy*NODE_STEP+oy,_basin_angle(seed))
+
+def _basin_polygon(seed,cx,cy):
+ """Voronoi polygon clipped against this outlet's bounded 3x3 neighborhood."""
+ own=_rot(*_outlet(seed,cx,cy),_basin_angle(seed))
+ extent=1.4*BASIN_TICKS; mx=cx*BASIN_TICKS; my=cy*BASIN_TICKS
+ poly=[(mx-extent,my-extent),(mx+extent,my-extent),(mx+extent,my+extent),(mx-extent,my+extent)]
+ for (nx,ny),world in sorted({(x,y):_outlet(seed,x,y) for x in range(cx-1,cx+2) for y in range(cy-1,cy+2) if (x,y)!=(cx,cy)}.items()):
+  other=_rot(*world,_basin_angle(seed)); vx=other[0]-own[0]; vy=other[1]-own[1]
+  limit=(other[0]**2+other[1]**2-own[0]**2-own[1]**2)/2
+  if not poly: break
+  clipped=[]
+  for a,b in zip(poly,poly[1:]+poly[:1]):
+   da=vx*a[0]+vy*a[1]-limit; db=vx*b[0]+vy*b[1]-limit
+   ina=da<=1e-6; inb=db<=1e-6
+   if ina: clipped.append(a)
+   if ina!=inb:
+    t=da/(da-db); clipped.append((a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])))
+  poly=clipped
+ return poly
+
+def _point_in_polygon(p,poly):
+ inside=False; x,y=p
+ for a,b in zip(poly,poly[1:]+poly[:1]):
+  if (a[1]>y)!=(b[1]>y) and x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]: inside=not inside
+ return inside
+
+def _angle_reaches(seed,features):
+ by_id={f['id']:f for f in features}; incoming={}
+ for f in features:
+  if f.get('downstream') in by_id:
+   key=(f['downstream'],tuple(f['points'][-1])); incoming.setdefault(key,[]).append(f)
+ for f in features:
+  if f['id'].startswith('river:outlet:') or len(f['points'])<3: continue
+  receiver=by_id.get(f.get('downstream'))
+  if receiver is None: continue
+  join=f['points'][-1]
+  group=incoming.get((receiver['id'],tuple(join)),())
+  if len(group)<2 and f.get('stream_order',3)>=receiver.get('stream_order',3): continue
+  idx=min(range(len(receiver['points'])),key=lambda i:math.dist(receiver['points'][i],join))
+  if math.dist(receiver['points'][idx],join)>.01: continue
+  if idx+1<len(receiver['points']): a,b=join,receiver['points'][idx+1]
+  else: continue
+  vx,vy=b[0]-a[0],b[1]-a[1]; length=min(math.dist(join,f['points'][-2]),FT(30))
+  if not length or not math.hypot(vx,vy): continue
+  uneven=f.get('stream_order')!=receiver.get('stream_order')
+  normal=sum((H(seed,'junction-normal',f['id'],receiver['id'],i)%100000)/100000 for i in range(12))-6
+  angle_deg=65+30*normal
+  angle_deg+=.25*((90 if uneven else 58)-angle_deg)
+  angle=math.radians(max(25,min(110,angle_deg)))
+  old=(join[0]-f['points'][-2][0],join[1]-f['points'][-2][1])
+  side=1 if vx*old[1]-vy*old[0]>=0 else -1
+  direction=math.atan2(vy,vx)+side*angle
+  f['points'][-2]=(join[0]-length*math.cos(direction),join[1]-length*math.sin(direction))
+
+def _curve_collision(a,b,allowed=()):
+ allowed=tuple(allowed); cell=FT(200); buckets={}; segments=list(zip(b,b[1:]))
+ for j,(r,s) in enumerate(segments):
+  for ix in range(math.floor(min(r[0],s[0])/cell),math.floor(max(r[0],s[0])/cell)+1):
+   for iy in range(math.floor(min(r[1],s[1])/cell),math.floor(max(r[1],s[1])/cell)+1): buckets.setdefault((ix,iy),[]).append(j)
+ for i,(p,q) in enumerate(zip(a,a[1:])):
+  possible=set()
+  for ix in range(math.floor(min(p[0],q[0])/cell),math.floor(max(p[0],q[0])/cell)+1):
+   for iy in range(math.floor(min(p[1],q[1])/cell),math.floor(max(p[1],q[1])/cell)+1): possible.update(buckets.get((ix,iy),()))
+  for j in possible:
+   r,s=segments[j]
+   if a is b and abs(i-j)<=1: continue
+   if max(p[0],q[0])<min(r[0],s[0]) or max(r[0],s[0])<min(p[0],q[0]) or max(p[1],q[1])<min(r[1],s[1]) or max(r[1],s[1])<min(p[1],q[1]): continue
+   hit=crossing_point(p,q,r,s)
+   if hit is None: continue
+   point=hit[0]
+   if any(math.dist(point,junction)<=tolerance for junction,tolerance in allowed): continue
+   _,t,u,_=hit
+   if (t<1e-7 or t>1-1e-7) and (u<1e-7 or u>1-1e-7): continue
+   return True
+ return False
+
+def _untangle_reaches(seed,features):
+ from collections import defaultdict
+ channels=sorted((f for f in features if not f['id'].startswith('river:outlet:')),key=lambda f:f['id'])
+ cell=FT(200)
+ buckets=defaultdict(set); segments={}
+ def cells(a,b):
+  return ((ix,iy) for ix in range(math.floor(min(a[0],b[0])/cell),math.floor(max(a[0],b[0])/cell)+1)
+   for iy in range(math.floor(min(a[1],b[1])/cell),math.floor(max(a[1],b[1])/cell)+1))
+ def add_segments(f):
+  for j,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
+   key=(f['id'],j); segments[key]=(f,a,b)
+   for cell_key in cells(a,b): buckets[cell_key].add(key)
+ def remove_segments(f):
+  for j,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
+   key=(f['id'],j); segments.pop(key,None)
+   for cell_key in cells(a,b):
+    bucket=buckets.get(cell_key)
+    if bucket is not None:
+     bucket.discard(key)
+     if not bucket: buckets.pop(cell_key,None)
+ for other in features: add_segments(other)
+ def collision(f,buckets,segments):
+  for i,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
+   possible=set()
+   for cell_key in cells(a,b): possible.update(buckets.get(cell_key,()))
+   for key in possible:
+    other,c,d=segments[key]
+    if other is f: continue
+    if max(a[0],b[0])<min(c[0],d[0]) or max(c[0],d[0])<min(a[0],b[0]) or max(a[1],b[1])<min(c[1],d[1]) or max(c[1],d[1])<min(a[1],b[1]): continue
+    hit=crossing_point(a,b,c,d)
+    if hit is None: continue
+    point,t,u,_=hit
+    if (t<1e-7 or t>1-1e-7) and (u<1e-7 or u>1-1e-7): continue
+    if f.get('downstream')==other['id'] and math.dist(point,f['points'][-1])<=max(f['width'],other['width'])+FT(20): continue
+    if other.get('downstream')==f['id'] and math.dist(point,other['points'][-1])<=max(f['width'],other['width'])+FT(20): continue
+    return True
+  return False
+ for f in channels:
+  original_widths=list(f['widths'])
+  remove_segments(f)
+  end=f['points'][-1]; previous=f['points'][-2]; length=math.dist(previous,end)
+  direction=math.atan2(end[1]-previous[1],end[0]-previous[0])
+  collides=False
+  # Rephase around local junction pockets before falling back to a straight
+  # chord; straight fallbacks are topologically safe but create copied
+  # tributary silhouettes in otherwise varied networks.
+  for attempt in range(24):
+   collides=collision(f,buckets,segments)
+   if not collides: break
+   group=(f['downstream'],'phase',attempt+1)
+   pts=_edge_curve(seed,f['id'],f['points'][0],end,f['width'],group)
+   pts[-2]=(end[0]-length*math.cos(direction),end[1]-length*math.sin(direction))
+   f['points']=pts
+   f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
+   f['bounds']=box(pts,max(f['widths'])/2)
+  if collides: collides=collision(f,buckets,segments)
+  if collides:
+   # Keep a topological edge instead of leaving a self-crossing spline when
+   # every meander phase collides in a tight junction pocket. Try pinned,
+   # seeded midpoint-displacement shapes bounded to 0.12 of the reach chord
+   # before accepting a straight fallback.
+   start=f['points'][0]; dx=end[0]-start[0]; dy=end[1]-start[1]; chord=math.hypot(dx,dy)
+   normal=(-dy/max(1,chord),dx/max(1,chord)); found=False
+   for phase in range(32):
+    pts=[start]
+    for i in range(1,5):
+     t=i/5; displacement=((H(seed,'fallback-edge',f['id'],phase,i)%20001)/10000-1)*.12*chord
+     pts.append((start[0]+t*dx+normal[0]*displacement,start[1]+t*dy+normal[1]*displacement))
+    pts.append(end); f['points']=pts
+    f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
+    f['bounds']=box(pts,max(f['widths'])/2)
+    if not collision(f,buckets,segments): found=True; break
+   if not found:
+    f['points']=[start,end]; f['widths']=[original_widths[0],original_widths[-1]]; f['bounds']=box(f['points'],max(f['widths'])/2)
+  add_segments(f)
+
+def _edge_curve(seed,ident,a,b,width,phase_id=None):
+ # Four pinned midpoint-displacement rounds seed each reach's individual
+ # shape. Langbein-style direction oscillation adds width-scaled meanders.
+ pts=[a,b]
+ for level in range(4):
+  out=[pts[0]]
+  for i,(p,q) in enumerate(zip(pts,pts[1:])):
+   dx=q[0]-p[0]; dy=q[1]-p[1]; length=math.hypot(dx,dy)
+   key=H(seed,'edge',ident,level,i)
+   offset=((key%20001)/10000-1)*.0003*length
+   out.extend([((p[0]+q[0])/2-dy/length*offset,(p[1]+q[1])/2+dx/length*offset),q])
+  pts=out
+ length=sum(math.dist(p,q) for p,q in zip(pts,pts[1:])); chord=math.dist(a,b)
+ if length<=0 or chord<=0: return [a,b]
+ k=1.6+(H(seed,'meander-k',ident)%9001)/10000
+ lam=10.9*max(width,FT(8)); waves=max(1,round(length/(k*lam))); period=length/waves
+ omega=min(math.radians(110),2.2*math.sqrt((k-1)/k)); step=min(FT(200),period/4)
+ # The display samples are no farther apart than the meander half-wave. Use
+ # finer internal integration so phase does not alias against the samples and
+ # inflate the endpoint pinning scale on individual reaches.
+ n=max(2,math.ceil(length/step)); ux=(b[0]-a[0])/chord; uy=(b[1]-a[1])/chord
+ nx,ny=-uy,ux; phase=0.0 if phase_id=='outlet' else (H(seed,'meander-phase',ident if phase_id is None else phase_id)%100000/100000*2*math.pi)+(H(seed,'meander-offset',ident)%100000/100000*2*math.pi)
+ walked=[a]; x=y=0; walks=[]
+ for j in range(waves+1):
+  walk=(walks[-1] if walks else 0)+((H(seed,'meander-jitter',ident,j)%10001)/10000-.5)*.004
+  walks.append(max(-.04,min(.04,walk)))
+ for i in range(1,n+1):
+  end_s=length*i/n; start_s=length*(i-1)/n; ds=end_s-start_s
+  pieces=max(1,math.ceil(ds/(period/8))); fine=ds/pieces
+  for j in range(pieces):
+   s=start_s+(j+.5)*fine
+   walk=walks[min(waves,round(s/length*waves))]
+   transition=.6*MILE if phase_id=='outlet' else min(.15*MILE,length/4)
+   taper=min(1.0,s/transition,(length-s)/transition)
+   phi=taper*(omega*math.sin(2*math.pi*waves*s/length+phase)+walk)
+   x+=fine*math.cos(phi); y+=fine*math.sin(phi)
+  walked.append((x,y))
+ end=walked[-1]; scale=chord/max(1,math.hypot(*end)); rotation=math.atan2(b[1]-a[1],b[0]-a[0])-math.atan2(end[1],end[0])
+ c=math.cos(rotation); sn=math.sin(rotation); output=[]
+ for i,(x,y) in enumerate(walked):
+  px=a[0]+scale*(x*c-y*sn); py=a[1]+scale*(x*sn+y*c)
+  t=i/n; base=(a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t)
+  # Retain a small trace of the recursively displaced seed curve after the
+  # larger width-scaled meander is pinned to both endpoints.
+  ref=min(len(pts)-1,round(t*(len(pts)-1)))
+  disp=(pts[ref][0]-base[0],pts[ref][1]-base[1])
+  output.append((px+.05*disp[0],py+.05*disp[1]))
+ output[0]=a; output[-1]=b
+ return output
+
+def _diagonal_allowed(seed,gx,gy,nx,ny):
+ if abs(nx-gx)!=1 or abs(ny-gy)!=1: return True
+ lo_x=min(gx,nx); lo_y=min(gy,ny)
+ rising=(nx-gx)==(ny-gy)
+ return (H(seed,'diagonal',lo_x,lo_y)%2==0)==rising
+
+@lru_cache(maxsize=256)
+def basin(seed,cx,cy,options):
+ """Generate one rotated Voronoi basin as a deterministic headward tree."""
+ outlets={(x,y):_outlet(seed,x,y) for x in range(cx-1,cx+2) for y in range(cy-1,cy+2)}
+ candidates={}; polygon=_basin_polygon(seed,cx,cy); angle=_basin_angle(seed)
+ outlet=_outlet(seed,cx,cy); routes=_route_targets(seed,cx,cy)
+ barriers=tuple((rid,points,box(points)) for rid,points in (_route_curve(seed,x,y) for x in range(cx-1,cx+2) for y in range(cy-1,cy+2)))
+ distance_barriers=tuple((rid,tuple(points[i] for i in range(0,len(points),8))+(points[-1],)) for rid,points,_ in barriers)
+ # Clip to the exact local Voronoi envelope before visiting lattice nodes.
+ lo_x=math.floor(min(p[0] for p in polygon)/NODE_STEP)-1; hi_x=math.ceil(max(p[0] for p in polygon)/NODE_STEP)+1
+ lo_y=math.floor(min(p[1] for p in polygon)/NODE_STEP)-1; hi_y=math.ceil(max(p[1] for p in polygon)/NODE_STEP)+1
+ for gx in range(lo_x,hi_x+1):
+  for gy in range(lo_y,hi_y+1):
+   p=_node_point(seed,gx,gy)
+   basin_point=_rot(*p,angle)
+   if not _point_in_polygon(basin_point,polygon): continue
+   if min((_distance_to_segment(*basin_point,a,b) for a,b in zip(polygon,polygon[1:]+polygon[:1])),default=math.inf)<.75*NODE_STEP: continue
+   # Keep headwater nodes away from neighboring trunk reaches. Nodes may still
+   # drain to their own outlet reach, which is the intended basin confluence.
+   if any(rid!=f'river:outlet:{cx}:{cy}' and min((_distance_to_segment(*p,a,b) for a,b in zip(points,points[1:])),default=math.inf)<.75*NODE_STEP for rid,points in distance_barriers): continue
+   candidates[(gx,gy)]=p
+ potential={key:_network_potential(seed,p,routes) for key,p in candidates.items()}
+ downstream={}; owned_edges=[]; growth_type={}
+ for key in candidates:
+  draw=H(seed,'headward-event',cx,cy,key[0],key[1])%1000
+  if draw<200: growth_type[key]='continue'
+  elif draw<900: growth_type[key]='symmetric'
+  else: growth_type[key]='asymmetric'
+ for key in sorted(candidates,key=lambda k:potential[k],reverse=True):
+  gx,gy=key; p=candidates[key]; own=potential[key]; options2=[]
+  for dx in (-1,0,1):
+   for dy in (-1,0,1):
+    if dx==dy==0: continue
+    other=(gx+dx,gy+dy)
+    if other not in candidates or not _diagonal_allowed(seed,gx,gy,*other): continue
+    q=candidates[other]
+    op=potential[other]
+    if op<own: options2.append((op,H(seed,'path',gx,gy,gx+dx,gy+dy),other))
+  target=None
+  for _,_,other in sorted(options2):
+   q=candidates[other]
+   if _crosses_owned_route(p,q,barriers): continue
+   crosses=False
+   for a,b,src,dst in owned_edges:
+    hit=crossing_point(p,q,a,b)
+    if hit is not None and hit[0] not in (p,q,a,b): crosses=True; break
+   if not crosses: target=other; break
+  # A local Voronoi edge can end at a small sink where all eight immediate
+  # lower neighbors are blocked by an already-owned channel. Search only a
+  # bounded 2.2-edge neighborhood for a lower, clear receiver before falling
+  # back to a long outlet connector across the basin.
+  if target is None:
+   distant=[]
+   for other,q in candidates.items():
+    if other==key or potential[other]>=own: continue
+    distance=math.dist(p,q)
+    if distance>2.2*NODE_STEP: continue
+    distant.append((potential[other],H(seed,'path-fallback',gx,gy,other[0],other[1]),distance,other))
+   for _,_,_,other in sorted(distant):
+    q=candidates[other]
+    if _crosses_owned_route(p,q,barriers): continue
+    crosses=False
+    for a,b,src,dst in owned_edges:
+     hit=crossing_point(p,q,a,b)
+     if hit is not None and hit[0] not in (p,q,a,b): crosses=True; break
+    if not crosses: target=other; break
+  downstream[key]=target
+  if target is not None:
+   owned_edges.append((p,candidates[target],key,target))
+ # Source-to-outlet paths form a directed acyclic graph because each local edge
+ # strictly lowers its potential. Accumulation and Strahler order are computed
+ # headward-first, then converted into channel widths.
+ incoming={k:[] for k in candidates}
+ for k,v in downstream.items():
+  if v is not None: incoming[v].append(k)
+ order={}; area={}; widths={}
+ for key in sorted(candidates,key=lambda k:potential[k],reverse=True):
+  ins=incoming[key]
+  orders=sorted((order[v] for v in ins),reverse=True)
+  order[key]=(orders[0]+1 if len(orders)>1 and orders[0]==orders[1] else (orders[0] if orders else 1))
+  area[key]=NODE_STEP/MILE+sum(area[v] for v in ins)
+  wref=FT(10.5)*math.sqrt(max(.01,area[key]))
+  if order[key]==1: wref=min(FT(15),wref)
+  iw=sorted((widths[v] for v in ins),reverse=True)
+  widths[key]=max(iw[0] if iw else 0,min(FT(150),wref))
+ # Width constraint at every actual confluence, applied downstream of its two
+ # largest tributaries. The total upstream length supplies the area term.
+ for key in sorted(candidates,key=lambda k:potential[k],reverse=True):
+  iw=sorted((widths[v] for v in incoming[key]),reverse=True)
+  if len(iw)>=2:
+   widths[key]=min(max(widths[key],iw[0]),1.05*math.sqrt(iw[0]**2+iw[1]**2))
  out=[]
- for i in range(count):
-  station=row*count+i
-  out.append(feature('rivers',f'river:{lane}:{station}',points=points[i:i+2],width=width,stream_order=3,flow='southwest',source=False,downstream=f'river:{lane}:{station+1}',basin=(lane,row)))
- for side in (-1,1):
-  # Disjoint tributary catchments on each bank. Every reach owns its random bends.
-  ident=f'river:branch:{lane}:{row}:{side}'
-  key=H(seed,ident)
-  join=(52+key%13) if side==1 else (34+key%15)
-  n=join-(2+(key//17)%9)
-  key=H(seed,ident); phase=key%10000/10000*2*math.pi
-  cycles=2+(key//10000)%3
-  distance=spacing*(.27+(key//100000)%61/1000)
-  branch=[]
-  for i in range(n+1):
-   t=i/n; y=(row+(join-n+i)/count)*step
-   center=trunk((join-n+i)/count)[0]
-   offset=distance*(1-t)*(1+.38*math.sin(cycles*2*math.pi*t+phase)*math.sin(math.pi*t))
-   branch.append((center+side*offset,y))
-  branch[-1]=points[join]
-  widths=[width*(.025+.375*(i/n)**.7) for i in range(n+1)]
-  out.append(feature('rivers',ident,points=branch,width=width*.4,widths=widths,stream_order=2,flow='southwest',source=True,downstream=f'river:{lane}:{row*count+join}',basin=(lane,row)))
-  # A second branching level, confined to the outer bank of its receiving reach.
-  end=round(n*(.45+(key//23)%16/100)); start=(key//41)%max(1,end//4); child=[]; child_id=ident+':headwater'
-  key=H(seed,child_id); phase=key%10000/10000*2*math.pi
-  for i in range(end-start+1):
-   t=i/(end-start); x,y=branch[start+i]
-   offset=spacing*.1*(1-t)*(1+.38*math.sin(6*math.pi*t+phase)*math.sin(math.pi*t))
-   child.append((x+side*offset,y))
-  child[-1]=branch[end]
-  widths=[width*(.006+.114*(i/(end-start))**.7) for i in range(end-start+1)]
-  out.append(feature('rivers',child_id,points=child,width=width*.12,widths=widths,stream_order=1,flow='southwest',source=True,downstream=ident,basin=(lane,row)))
+ # Keep each headward edge as its own reach. At this grid spacing an edge is
+ # about 1.4 mi long, which preserves the intended growth scale and lets local
+ # collision repair work without flattening a whole many-mile chain.
+ edge_ids={key:f"river:{cx}:{cy}:edge:{key[0]}:{key[1]}" for key in candidates}
+ route_points_by_id={rid:points for rid,points,_ in barriers}
+ def connector_clear(a,b):
+  if _crosses_owned_route(a,b,barriers): return False
+  for c,d,_,_ in owned_edges:
+   hit=crossing_point(a,b,c,d)
+   if hit is None: continue
+   _,t,u,_=hit
+   if t<=1e-6 or t>=1-1e-6: continue
+   return False
+  return True
+ for key in sorted(candidates):
+  ident=edge_ids[key]; p=candidates[key]; target=downstream[key]
+  if target in candidates:
+   receiver=edge_ids[target]; end=candidates[target]
+   next_node=downstream[target]
+   if next_node in candidates:
+    qnext=candidates[next_node]
+   else:
+    _,rid,_,rq=_nearest_route(end,routes,barriers)
+    route_points=route_points_by_id[rid]
+    qi=min(range(len(route_points)),key=lambda i:math.dist(route_points[i],rq))
+    qnext=route_points[min(qi+1,len(route_points)-1)]
+   end_width=widths[key] if len(incoming[target])>1 else widths[target]
+  else:
+   _,receiver,_,end=_nearest_route(p,routes,barriers)
+   route_points=route_points_by_id[receiver]
+   qi=min(range(len(route_points)),key=lambda i:math.dist(route_points[i],end))
+   if not connector_clear(p,end):
+    chosen=None
+    for radius in (8,32,128):
+     options3=[]
+     for delta in range(-radius,radius+1):
+      j=qi+delta
+      if 0<=j<len(route_points) and connector_clear(p,route_points[j]):
+       options3.append((abs(delta),H(seed,'route-contact',cx,cy,key[0],key[1],j),j))
+     if options3:
+      _,_,qi=min(options3); end=route_points[qi]; chosen=qi; break
+    if chosen is None:
+     # If every nearby route vertex is obstructed, terminate at the first
+     # route contact on the candidate chord and keep its segment very short.
+     for j,(a,b) in enumerate(zip(route_points,route_points[1:])):
+      hit=crossing_point(p,end,a,b)
+      if hit is not None and 1e-6<hit[1]<1-1e-6:
+       qi=j if math.dist(hit[0],a)<=math.dist(hit[0],b) else j+1
+       end=route_points[qi]; break
+   qnext=route_points[min(qi+1,len(route_points)-1)]
+   end_width=widths[key]
+   distance=math.dist(p,end)
+   if distance>NODE_STEP*1.05:
+    count=math.ceil(distance/NODE_STEP)
+    line=[(p[0]+(end[0]-p[0])*i/count,p[1]+(end[1]-p[1])*i/count) for i in range(count+1)]
+    ids=[ident]+[f'river:{cx}:{cy}:link:{key[0]}:{key[1]}:{i}' for i in range(1,count)]
+    for i,(a,b) in enumerate(zip(line,line[1:])):
+     next_id=ids[i+1] if i+1<count else receiver
+     c=line[i+2] if i+2<len(line) else qnext
+     direction=(c[0]-b[0],c[1]-b[1])
+     side=1 if direction[0]*(a[1]-b[1])-direction[1]*(a[0]-b[0])>=0 else -1
+     pts=_edge_curve(seed,ids[i],a,b,widths[key],(receiver,side))
+     profile=[widths[key]]*len(pts)
+     out.append(feature('rivers',ids[i],points=pts,width=widths[key],widths=profile,
+      stream_order=order[key],flow='regional',source=(i==0 and not incoming[key]),downstream=next_id,
+      basin=(cx,cy),area=area[key],growth_events=[growth_type[key]]))
+     owned_edges.append((a,b,key,None))
+    continue
+  v=(qnext[0]-end[0],qnext[1]-end[1])
+  side=1 if v[0]*(p[1]-end[1])-v[1]*(p[0]-end[0])>=0 else -1
+  pts=_edge_curve(seed,ident,p,end,widths[key],(receiver,side))
+  span=max(1,len(pts)-1)
+  profile=[widths[key]+(end_width-widths[key])*i/span for i in range(span+1)]
+  out.append(feature('rivers',ident,points=pts,width=max(profile,default=widths[key]),widths=profile,
+   stream_order=order[key],flow='regional',source=not incoming[key],downstream=receiver,
+   basin=(cx,cy),area=area[key],growth_events=[growth_type[key]]))
+ out.extend(_route_geometry(seed,x,y) for x in range(cx-1,cx+2) for y in range(cy-1,cy+2))
+ route_features=[f for f in out if f['id'].startswith('river:outlet:')]
+ for route in route_features:
+  groups={}
+  for reach in out:
+   if reach is route or reach.get('downstream')!=route['id']: continue
+   groups.setdefault(tuple(reach['points'][-1]),[]).append(reach)
+  profile=route['widths']
+  for point,group in groups.items():
+   idx=min(range(len(route['points'])),key=lambda i:math.dist(route['points'][i],point))
+   if len(group)<1: continue
+   incoming=[reach.get('widths',[reach['width']])[-1] for reach in group]
+   incoming.append(profile[max(0,idx-1)])
+   upper_values=sorted(incoming,reverse=True)
+   if len(upper_values)<2: continue
+   lower=max(incoming); upper=1.05*math.sqrt(upper_values[0]**2+upper_values[1]**2)
+   if profile[idx]<lower:
+    profile[idx]=min(lower,upper)
+    for j in range(idx+1,len(profile)): profile[j]=max(profile[j],profile[idx])
+  route['width']=max(profile,default=route['width'])
+ route_ids={f['id'] for f in route_features}; route_order={}
+ for route in sorted(route_features,key=lambda f:_terrain_potential(seed,*_outlet(seed,*map(int,f['id'].split(':')[-2:])),),reverse=True):
+  profile=route['widths']; upstream_routes=[g for g in route_features if g.get('downstream')==route['id'] and g['id'] in route_order]
+  if upstream_routes:
+   upstream=sorted((g.get('widths',[g['width']])[-1] for g in upstream_routes),reverse=True)
+   target=max(profile[0],upstream[0])
+   if len(upstream)>=2: target=min(target,1.05*math.sqrt(upstream[0]**2+upstream[1]**2))
+   for i in range(len(profile)): profile[i]=max(profile[i],target)
+   route['width']=max(profile)
+  joins=[]
+  for g in route_features:
+   if g['id'] in route_order and g.get('downstream')==route['id']: joins.append((0,g['id'],route_order[g['id']]))
+  for g in out:
+   if g['id'].startswith('river:outlet:') or g.get('downstream')!=route['id']: continue
+   j=min(range(len(route['points'])),key=lambda i:math.dist(route['points'][i],g['points'][-1]))
+   joins.append((j,g['id'],g['stream_order']))
+  order=3
+  for _,group in itertools.groupby(sorted(joins),key=lambda item:item[0]):
+   incoming=[item[2] for item in group]; highest=max(incoming)
+   if highest>order: order=highest
+   elif highest==order: order+=1
+  route_order[route['id']]=order; route['stream_order']=order
+ _angle_reaches(seed,out)
+ _untangle_reaches(seed,out)
  return out
 
 def _distance_to_segment(x,y,a,b):
  dx,dy=b[0]-a[0],b[1]-a[1]
+ if dx==0 and dy==0: return math.hypot(x-a[0],y-a[1])
  t=max(0,min(1,((x-a[0])*dx+(y-a[1])*dy)/(dx*dx+dy*dy)))
  return math.hypot(x-a[0]-t*dx,y-a[1]-t*dy)
 
-@lru_cache(maxsize=512)
-def _valley_cells(seed,lane,row,options):
- cells={}
- for k in (lane-1,lane,lane+1):
-  for r in (row-1,row,row+1):
-   for f in basin(seed,k,r,options):
-    for a,b in zip(f['points'],f['points'][1:]):
-     for ix in range(math.floor(min(a[0],b[0])/MILE),math.floor(max(a[0],b[0])/MILE)+1):
-      for iy in range(math.floor(a[1]/MILE),math.floor(b[1]/MILE)+1):
-       cells.setdefault((ix,iy),[]).append((a,b))
- return cells
-
 def elevation(seed,x,y):
- options=_drainage_options(); spacing,step=options[0]*MILE,options[1]*MILE
- lane=round((x+.12*y)/spacing); row=math.floor(y/step)
- cells=_valley_cells(seed,lane,row,options); ix,iy=math.floor(x/MILE),math.floor(y/MILE)
- distance=min([3*MILE]+[_distance_to_segment(x,y,a,b) for dx in range(-3,4) for dy in range(-3,4) for a,b in cells.get((ix+dx,iy+dy),())])
- # All streams are at the south-sloping valley datum, including every tributary.
+ options=_drainage_options(); rx,ry=_rot(x,y,_basin_angle(seed))
+ lane=math.floor(rx/BASIN_TICKS); row=math.floor(ry/BASIN_TICKS)
+ cx,cy=_cell_owner(seed,x,y,lane,row); routes=_route_targets(seed,cx,cy)
+ distance,_,_,_=_nearest_route((x,y),routes)
  relief=option('world.relief_ft')*(1-math.exp(-distance/(MILE*.8)))**2
- return -y/MILE*option('world.south_drop_ft')+relief
+ return _network_potential(seed,(x,y),routes)+relief
 
 def terrain(seed,rect):
  cell=FT(option('world.contour_cell_ft')); interval=option('world.contour_interval_ft')
@@ -433,12 +933,17 @@ def terrain(seed,rect):
     for i in range(0,len(points)-1,2): yield feature('contours',f'contour:{ix}:{iy}:{level}:{i}',points=points[i:i+2],height=level)
 
 def rivers(seed,rect):
- options=_drainage_options(); spacing,step=options[0]*MILE,options[1]*MILE
- # Undo the southwest shear before choosing owners. Halo covers whole tributaries.
- left=rect[0]+.12*rect[1]; right=rect[0]+rect[2]+.12*(rect[1]+rect[3])
- for lane in range(math.floor(left/spacing)-1,math.ceil(right/spacing)+2):
-  for row in range(math.floor(rect[1]/step)-1,math.ceil((rect[1]+rect[3])/step)+1):
-   yield from basin(seed,lane,row,options)
+ options=_drainage_options(); angle=_basin_angle(seed)
+ corners=[_rot(x,y,angle) for x,y in ((rect[0],rect[1]),(rect[0]+rect[2],rect[1]),(rect[0]+rect[2],rect[1]+rect[3]),(rect[0],rect[1]+rect[3]))]
+ minx,maxx=min(p[0] for p in corners),max(p[0] for p in corners); miny,maxy=min(p[1] for p in corners),max(p[1] for p in corners)
+ seen=set()
+ for cx in range(math.floor((minx-1.5*BASIN_TICKS)/BASIN_TICKS),math.ceil((maxx+1.5*BASIN_TICKS)/BASIN_TICKS)+1):
+  for cy in range(math.floor((miny-1.5*BASIN_TICKS)/BASIN_TICKS),math.ceil((maxy+1.5*BASIN_TICKS)/BASIN_TICKS)+1):
+   poly=_basin_polygon(seed,cx,cy)
+   if not poly or max(p[0] for p in poly)<minx or min(p[0] for p in poly)>maxx or max(p[1] for p in poly)<miny or min(p[1] for p in poly)>maxy: continue
+   for f in basin(seed,cx,cy,options):
+    if f['id'] not in seen and intersects(f['bounds'],rect):
+     seen.add(f['id']); yield f
 
 def share_farm_lanes(seed,features,sites,water_hits=lambda r:False,ox=0,oy=0):
  # A few adjacent yards share a single road entrance and a short front connector.
@@ -481,7 +986,17 @@ def feature_points(f):
 
 def crossing_point(a,b,c,d):
  u=(b[0]-a[0],b[1]-a[1]); v=(d[0]-c[0],d[1]-c[1]); det=u[0]*v[1]-u[1]*v[0]
- if abs(det)<1e-8: return None
+ if abs(det)<1e-8:
+  q=(c[0]-a[0],c[1]-a[1]); scale=max(1,math.hypot(*u)*math.hypot(*q))
+  if abs(q[0]*u[1]-q[1]*u[0])>1e-10*scale: return None
+  length=u[0]**2+u[1]**2
+  if not length: return (a,0,0,0) if a==c or a==d else None
+  t0=(q[0]*u[0]+q[1]*u[1])/length; qd=(d[0]-a[0],d[1]-a[1]); t1=(qd[0]*u[0]+qd[1]*u[1])/length
+  lo=max(0,min(t0,t1)); hi=min(1,max(t0,t1))
+  if hi<lo: return None
+  point=(a[0]+lo*u[0],a[1]+lo*u[1]); vlength=v[0]**2+v[1]**2
+  s=0 if not vlength else max(0,min(1,((point[0]-c[0])*v[0]+(point[1]-c[1])*v[1])/vlength))
+  return point,lo,s,0
  q=(c[0]-a[0],c[1]-a[1]); t=(q[0]*v[1]-q[1]*v[0])/det; s=(q[0]*u[1]-q[1]*u[0])/det
  if not (0<=t<=1 and 0<=s<=1): return None
  return (a[0]+t*u[0],a[1]+t*u[1]),t,s,abs(det)/(math.hypot(*u)*math.hypot(*v))
@@ -506,7 +1021,9 @@ def bridges(features):
    for water_id in sorted(candidates):
     stream,i,c,d=segments[water_id]; hit=crossing_point(a,b,c,d)
     if hit is None: continue
-    p,t,s,sine=hit; length=math.dist(a,b)
+    p,t,s,sine=hit
+    if sine<1e-6: continue
+    length=math.dist(a,b)
     widths=stream.get('widths'); water_width=(widths[i]*(1-s)+widths[i+1]*s) if widths else stream['width']
     half=(water_width/2+FT(20))/max(sine,.01)
     ux,uy=(b[0]-a[0])/length,(b[1]-a[1])/length

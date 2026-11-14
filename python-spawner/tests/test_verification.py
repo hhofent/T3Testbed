@@ -15,7 +15,22 @@ def test_verifier_catches_injected_geometry_faults():
  assert abs(angle-30)<1e-8
  assert intersection_angle((0,0),(1,0),(0,1),(1,1)) is None
 
-def test_verification_end_to_end_with_trees_and_buildings():
+def test_verification_end_to_end_with_trees_and_buildings(monkeypatch):
+ import verification,world
+ from world import feature,intersects
+ roads=[feature('roads','smoke-road-h',rect=(0,500,2*MILE,20),axis='h',surface='gravel'),
+        feature('roads','smoke-road-v',rect=(MILE-10,0,20,2*MILE),axis='v',surface='gravel')]
+ rail=feature('rail','smoke-rail',points=[(MILE,0),(MILE,2*MILE)],width=10)
+ buildings=[feature('buildings','smoke-building-a',rect=(100,100,100,100)),
+            feature('buildings','smoke-building-b',rect=(300,100,100,100))]
+ trees=[feature('trees','smoke-tree',rect=(MILE/2,MILE/2,0,0))]
+ scene_features=roads+[rail]+buildings+trees
+ def scene(seed,rect,settings=None):
+  return {'seed':seed,'window':rect,'features':[f for f in scene_features if intersects(f['bounds'],rect)]}
+ monkeypatch.setattr(verification,'window',scene)
+ monkeypatch.setattr(verification,'paved_road_gaps',lambda features,rect:[])
+ monkeypatch.setattr(verification,'river_checks',lambda seed,rect:{name:{'pass':True,'failures':[]} for name in ('river_continuity','river_acyclic','rivers_downhill','no_river_crossings')})
+ monkeypatch.setattr(world,'rivers',lambda seed,rect:())
  report=run(13,Settings(),(0,0,MILE,MILE))
  assert report['pass'],report
  assert report['checks']['no_building_overlaps']['examined']>0

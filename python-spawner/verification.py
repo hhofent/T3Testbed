@@ -1,5 +1,5 @@
 """Geometric verification. Failures return nonzero exit status through cli.py."""
-import math,json
+import math,json,statistics
 from collections import defaultdict
 from settings import Settings,applied,option
 from world import window,intersects,MILE
@@ -106,23 +106,184 @@ def drainage_topology_checks(streams,selected=None):
 
 
 def river_checks(seed,rect):
- from world import rivers,elevation
- step=option('world.tributary_spacing_miles')*MILE
- expanded=(rect[0]-step,rect[1]-step,rect[2]+2*step,rect[3]+2*step)
- streams=list(rivers(seed,expanded))
- selected=[f for f in streams if intersects(f['bounds'],rect)]
+ from world import rivers,elevation,crossing_point,basin,_drainage_options
+ selected=list(rivers(seed,rect)); streams=list(selected); by_id={f['id']:f for f in streams}; options=_drainage_options()
+ for f in selected:
+  cx,cy=f.get('basin',(0,0))
+  for related in basin(seed,cx,cy,options):
+   if related['id'] not in by_id: streams.append(related); by_id[related['id']]=related
+ pending={f['downstream'] for f in selected}-by_id.keys()
+ # Resolve only the bounded receiver closure needed for continuity and cycles.
+ for _ in range(4):
+  if not pending: break
+  requested=set(pending); pending.clear()
+  for ident in requested:
+   parts=ident.split(':')
+   if len(parts)<4 or parts[0]!='river': continue
+   try:
+    cx,cy=(int(parts[2]),int(parts[3])) if parts[1]=='outlet' else (int(parts[1]),int(parts[2]))
+   except ValueError: continue
+   for f in basin(seed,cx,cy,options):
+    if f['id'] not in by_id:
+     streams.append(f); by_id[f['id']]=f
+    if f['id'] in requested: pending.add(f['downstream'])
+   pending.discard(ident)
  uphill=[]; crossings=[]
  close=lambda a,b:math.dist(a,b)<.001
  for f in selected:
-  if any(elevation(seed,*b)>elevation(seed,*a)+1e-7 for a,b in zip(f['points'],f['points'][1:])): uphill.append(f['id'])
- for i,f in enumerate(selected):
-  for g in selected[i+1:]:
-   if not intersects(f['bounds'],g['bounds']): continue
-   for a,b in zip(f['points'],f['points'][1:]):
-    for c,d in zip(g['points'],g['points'][1:]):
-     if any(close(p,q) for p in (a,b) for q in (c,d)): continue
-     if intersection_angle(a,b,c,d) is not None: crossings.append((f['id'],g['id']))
+  # Elevation is a node potential. Meander samples can rise and fall within one
+  # reach; every reach endpoint must still descend to its downstream node.
+  if elevation(seed,*f['points'][-1])>elevation(seed,*f['points'][0])+1e-7: uphill.append(f['id'])
+ # Index individual sampled segments, so dense 200-ft meanders do not trigger
+ # an all-pairs scan over every point in a 40-mile window.
+ cell=MILE; buckets=defaultdict(list); segments=[]
+ for f in selected:
+  for i,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
+   bounds=(min(a[0],b[0]),min(a[1],b[1]),abs(b[0]-a[0]),abs(b[1]-a[1]))
+   sid=len(segments); segments.append((f['id'],i,a,b))
+   for ix in range(math.floor(bounds[0]/cell),math.floor((bounds[0]+bounds[2])/cell)+1):
+    for iy in range(math.floor(bounds[1]/cell),math.floor((bounds[1]+bounds[3])/cell)+1): buckets[ix,iy].append(sid)
+ checked=set()
+ for ids in buckets.values():
+  for pos,sid in enumerate(ids):
+   f_id,i,a,b=segments[sid]
+   for other in ids[pos+1:]:
+    if sid==other: continue
+    pair=(min(sid,other),max(sid,other))
+    if pair in checked: continue
+    checked.add(pair); g_id,j,c,d=segments[other]
+    if f_id==g_id and abs(i-j)<=1: continue
+    if f_id!=g_id and not intersects((min(a[0],b[0]),min(a[1],b[1]),abs(b[0]-a[0]),abs(b[1]-a[1])),(min(c[0],d[0]),min(c[1],d[1]),abs(d[0]-c[0]),abs(d[1]-c[1]))): continue
+    hit=crossing_point(a,b,c,d)
+    if hit is None: continue
+    point,t,s,_=hit
+    if (t<1e-7 or t>1-1e-7) and (s<1e-7 or s>1-1e-7): continue
+    # Tributaries terminate on the interior of their downstream channel. This
+    # endpoint-to-interior touch is the intended confluence, not a crossing.
+    if f_id in by_id and by_id[f_id].get('downstream')==g_id and math.dist(point,by_id[f_id]['points'][-1])<=max(by_id[f_id]['width'],by_id[g_id]['width'])+FT(20): continue
+    if g_id in by_id and by_id[g_id].get('downstream')==f_id and math.dist(point,by_id[g_id]['points'][-1])<=max(by_id[f_id]['width'],by_id[g_id]['width'])+FT(20): continue
+    fa=by_id.get(f_id); ga=by_id.get(g_id)
+    if fa and ga and fa.get('downstream') and fa.get('downstream')==ga.get('downstream'):
+     target=fa['downstream']; parts=target.split(':')
+     if len(parts)==4 and parts[:2]==['river','outlet']:
+      try:
+       from world import _outlet
+       node=_outlet(seed,int(parts[2]),int(parts[3]))
+      except ValueError: node=None
+     else: node=by_id.get(target,{}).get('points',[None])[0]
+     tolerance=max(fa.get('width',0),ga.get('width',0))+FT(50)
+     if node is not None and math.dist(point,node)<=tolerance: continue
+    crossings.append((f_id,g_id))
  return {**drainage_topology_checks(streams,selected),'rivers_downhill':{'pass':not uphill,'failures':uphill[:10]},'no_river_crossings':{'pass':not crossings,'failures':crossings[:10]}}
+
+def river_length_in_rect(streams,rect):
+ """Measure finished channel geometry clipped to the requested map window."""
+ x,y,w,h=rect; total=0.0
+ for f in streams:
+  if f['kind']!='rivers' or not intersects(f['bounds'],rect): continue
+  for a,b in zip(f['points'],f['points'][1:]):
+   dx,dy=b[0]-a[0],b[1]-a[1]; lo,hi=0.0,1.0
+   for p,q in ((-dx,a[0]-x),(dx,x+w-a[0]),(-dy,a[1]-y),(dy,y+h-a[1])):
+    if p==0:
+     if q<0: lo,hi=1,0; break
+    t=q/p
+    if p<0: lo=max(lo,t)
+    else: hi=min(hi,t)
+   if hi>lo: total+=math.hypot(dx,dy)*(hi-lo)
+ return total/MILE
+
+def river_geometry_metrics(seed,rect):
+ """Measurements from the canonical, finished river features in a window."""
+ from world import rivers
+ streams={f['id']:f for f in rivers(seed,rect)}; streams=list(streams.values())
+ lengths=[]; bearings=[]; bins=[0]*16; ewest=0; bearing_total=0; source_curves=[]
+ for f in streams:
+  p=f['points']; straight=math.dist(p[0],p[-1]); length=sum(math.dist(a,b) for a,b in zip(p,p[1:]))
+  if straight>0: lengths.append(length/straight)
+  if f.get('stream_order',3)<3:
+   angles=[math.atan2(b[0]-a[0],b[1]-a[1]) for a,b in zip(p,p[1:])]
+  else: angles=[math.atan2(p[-1][0]-p[0][0],p[-1][1]-p[0][1])]
+  for angle in angles:
+   bearings.append(angle); bearing_total+=1
+   b=int((angle+math.pi)/(2*math.pi)*16)%16; bins[b]+=1
+   if abs(abs(angle)-math.pi/2)<=math.radians(15): ewest+=1
+  if f.get('source') and f.get('stream_order',99)<=2: source_curves.append(f)
+ entropy=-sum((n/bearing_total)*math.log(n/bearing_total,2) for n in bins if n)/4 if bearing_total else 0
+ basin_cells={tuple(f.get('basin',(0,0))) for f in streams}
+ from world import basin,_drainage_options
+ options=_drainage_options(); full_features={}
+ for cell in basin_cells:
+  for f in basin(seed,*cell,options): full_features[f['id']]=f
+ network=list(full_features.values())
+ by_id={f['id']:f for f in network}; join_groups={}
+ x0,y0,w0,h0=rect
+ for f in network:
+  if f.get('downstream') in by_id: join_groups.setdefault((f['downstream'],tuple(f['points'][-1])),[]).append(f)
+ joins=[]; angle_bins=[0]*10; below=0; width_violations=[]
+ for (rid,point),group in join_groups.items():
+  if not (x0<=point[0]<=x0+w0 and y0<=point[1]<=y0+h0): continue
+  receiver=by_id[rid]
+  idx=min(range(len(receiver['points'])),key=lambda i:math.dist(receiver['points'][i],point))
+  receiver_width=receiver.get('widths',[receiver['width']]*len(receiver['points']))[idx]
+  upstream=sorted((f.get('widths',[f['width']])[-1] for f in group),reverse=True)
+  if rid.startswith('river:outlet:'):
+   profile=receiver.get('widths',[receiver['width']]*len(receiver['points']))
+   upstream.append(profile[max(0,idx-1)]); upstream.sort(reverse=True)
+  if len(upstream)>=2:
+   low=max(upstream); high=1.05*math.sqrt(upstream[0]**2+upstream[1]**2)
+   if not low-1e-6<=receiver_width<=high+1e-6: width_violations.append((rid,low,receiver_width,high))
+  if len(group)<2 and not any(f.get('stream_order',3)<receiver.get('stream_order',3) for f in group): continue
+  if math.dist(receiver['points'][idx],point)>.01: continue
+  if idx+1<len(receiver['points']): a,b=point,receiver['points'][idx+1]
+  else:
+   nxt=by_id.get(receiver.get('downstream'))
+   if nxt is None: continue
+   a,b=point,nxt['points'][1]
+  for f in group:
+   u=(point[0]-f['points'][-2][0],point[1]-f['points'][-2][1]); v=(b[0]-a[0],b[1]-a[1])
+   den=math.hypot(*u)*math.hypot(*v)
+   if not den: continue
+   angle=math.degrees(math.acos(max(-1,min(1,(u[0]*v[0]+u[1]*v[1])/den))))
+   joins.append(angle); angle_bins[min(9,int(angle//10))]+=1; below+=angle<25
+ # Unit-normalized turning-function signatures; remove starting bearing and
+ # compare source reaches at 32 equal arc-length stations.
+ signatures=[]
+ for f in source_curves:
+  p=f['points']; total=sum(math.dist(a,b) for a,b in zip(p,p[1:])); turns=[]
+  headings=[math.atan2(b[1]-a[1],b[0]-a[0]) for a,b in zip(p,p[1:])]
+  for i in range(32):
+   j=min(len(headings)-1,int(i/32*len(headings)))
+   turns.append((headings[j]-headings[0]+math.pi)%(2*math.pi)-math.pi)
+  signatures.append(turns)
+ close=0; pairs=0; eps=.02; copy_distances=[]
+ for i,a in enumerate(signatures):
+  for b in signatures[i+1:]:
+   pairs+=1; d=math.sqrt(sum((x-y)**2 for x,y in zip(a,b))/len(a))
+   copy_distances.append(d); close+=d<eps
+ ordered=sorted(lengths)
+ p10=ordered[round(.10*(len(ordered)-1))] if ordered else 0; p90=ordered[round(.90*(len(ordered)-1))] if ordered else 0
+ from collections import Counter
+ order_counts=dict(Counter(f.get('stream_order',0) for f in streams))
+ basin_orders=defaultdict(Counter); basin_trunks=[]
+ for cell in basin_cells:
+  for f in network:
+   if tuple(f.get('basin',(0,0)))==cell:
+    basin_orders[cell][f.get('stream_order',0)]+=1
+    if f['id'].startswith('river:outlet:'): basin_trunks.append(f['width']/FT(1))
+ order_counts_by_basin={f'{cx}:{cy}':dict(counts) for (cx,cy),counts in sorted(basin_orders.items())}
+ bifurcation_by_basin={cell:sum(v for k,v in counts.items() if int(k)>=2)/sum(v for k,v in counts.items() if int(k)>=3)
+  for cell,counts in order_counts_by_basin.items() if sum(v for k,v in counts.items() if int(k)>=3)}
+ order3_order4_by_basin={cell:counts[3]/counts[4] for cell,counts in order_counts_by_basin.items() if counts.get(3,0) and counts.get(4,0)}
+ return {'streams':len(streams),'density':river_length_in_rect(streams,rect)/(rect[2]*rect[3]/MILE**2),
+  'sinuosity_values':lengths,
+  'sinuosity_median':statistics.median(lengths) if lengths else 0,'sinuosity_p10':p10,'sinuosity_p90':p90,'sinuosity_spread':p90-p10,'bearing_entropy':entropy,
+  'ewest_fraction':ewest/bearing_total if bearing_total else 0,'order1_width_ft':[f['width']/FT(1) for f in streams if f.get('stream_order')==1],
+  'trunk_width_ft':basin_trunks,'order_counts':order_counts,'width_rule_violations':width_violations,
+  'junction_angles':joins,'junction_mean':statistics.mean(joins) if joins else 0,
+  'junction_sd':statistics.pstdev(joins) if joins else 0,'junction_below25_fraction':below/len(joins) if joins else 0,
+  'junction_bin_max_fraction':max(angle_bins)/len(joins) if joins else 0,'copy_fraction':close/pairs if pairs else 0,'copy_close':close,'copy_pairs':pairs,'copy_epsilon':eps,'copy_distances':copy_distances,
+  'order_counts_by_basin':order_counts_by_basin,'bifurcation_ratio_by_basin':bifurcation_by_basin,
+  'order3_order4_ratio_by_basin':order3_order4_by_basin}
 
 def paved_road_gaps(features,rect):
  # Inspect canonical route geometry, including missing whole route sections.
