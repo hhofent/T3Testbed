@@ -1,0 +1,302 @@
+[
+  {
+    "seed": 13,
+    "pass": true,
+    "checks": {
+      "paved_roads_no_gaps": {
+        "pass": true,
+        "failures": []
+      },
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 740
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 81
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 4,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 278
+      },
+      "river_continuity": {
+        "pass": true,
+        "failures": [],
+        "examined": 27
+      },
+      "river_acyclic": {
+        "pass": true,
+        "failures": []
+      },
+      "rivers_downhill": {
+        "pass": true,
+        "failures": []
+      },
+      "no_river_crossings": {
+        "pass": true,
+        "failures": []
+      }
+    }
+  },
+  {
+    "seed": 14,
+    "pass": true,
+    "checks": {
+      "paved_roads_no_gaps": {
+        "pass": true,
+        "failures": []
+      },
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 728
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 85
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 26,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 209
+      },
+      "river_continuity": {
+        "pass": true,
+        "failures": [],
+        "examined": 24
+      },
+      "river_acyclic": {
+        "pass": true,
+        "failures": []
+      },
+      "rivers_downhill": {
+        "pass": true,
+        "failures": []
+      },
+      "no_river_crossings": {
+        "pass": true,
+        "failures": []
+      }
+    }
+  },
+  {
+    "seed": 30,
+    "pass": true,
+    "checks": {
+      "paved_roads_no_gaps": {
+        "pass": true,
+        "failures": []
+      },
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 3318
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 115
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 17,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 175
+      },
+      "river_continuity": {
+        "pass": true,
+        "failures": [],
+        "examined": 29
+      },
+      "river_acyclic": {
+        "pass": true,
+        "failures": []
+      },
+      "rivers_downhill": {
+        "pass": true,
+        "failures": []
+      },
+      "no_river_crossings": {
+        "pass": true,
+        "failures": []
+      }
+    }
+  },
+  {
+    "seed": 31,
+    "pass": true,
+    "checks": {
+      "paved_roads_no_gaps": {
+        "pass": true,
+        "failures": []
+      },
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 1356
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 94
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 21,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 569
+      },
+      "river_continuity": {
+        "pass": true,
+        "failures": [],
+        "examined": 3
+      },
+      "river_acyclic": {
+        "pass": true,
+        "failures": []
+      },
+      "rivers_downhill": {
+        "pass": true,
+        "failures": []
+      },
+      "no_river_crossings": {
+        "pass": true,
+        "failures": []
+      }
+    }
+  },
+  {
+    "seed": 46,
+    "pass": true,
+    "checks": {
+      "paved_roads_no_gaps": {
+        "pass": true,
+        "failures": []
+      },
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 1685
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 96
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 22,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 334
+      },
+      "river_continuity": {
+        "pass": true,
+        "failures": [],
+        "examined": 29
+      },
+      "river_acyclic": {
+        "pass": true,
+        "failures": []
+      },
+      "rivers_downhill": {
+        "pass": true,
+        "failures": []
+      },
+      "no_river_crossings": {
+        "pass": true,
+        "failures": []
+      }
+    }
+  }
+]

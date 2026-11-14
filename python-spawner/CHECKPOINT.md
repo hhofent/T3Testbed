@@ -1,3 +1,54 @@
+# Final handoff: drainage-first rebuild, 2026-11-14
+
+Items 1-7 are implemented and pushed in order. Important item-6 limitation:
+6-10 mi is the candidate rail-station spacing; floodplains / junction competition
+can omit stations and leave larger gaps between ACCEPTED towns. Do not describe
+that upper bound as guaranteed for every accepted pair. All requested screenshot,
+shared-style and baseline work is complete. This section supersedes WIP below.
+
+Implementation commits: 1 e7f582d (checkpoint edc4b44), 2 f0164fd, 3 b94b173,
+4 f834d61, 5 2d14e32, 6 95f48f5, 7 840b56b. Shared style and review fixes ac2e682;
+this final commit adds round water caps (removes antialias seams between reaches),
+final baselines and real-browser evidence. Cache lod-v25-channel-joins.
+
+Fresh full test run: py -3.11 -m pytest python-spawner/tests -q --tb=short
+109 passed in 59.93s. Five-seed geometric verifier (13,14,30,31,46) all passes;
+artifacts/final-verification.json and final-validation.txt record results.
+Real Chromium same-rectangle SVG vs PNG: seed31 (-4,-3,10,10) mi, 800px:
+RGB MAE 0.583765/255, severe-pixel fraction 0.0001078125 (0.0108%). Exact palettes
+and stroke coverage also checked in pytest. Browser minimum strokes remain
+water 1.498px and rail/paved 1.2px at 24/80/256px chunk raster sizes. No far-zoom
+palette or visibility-rule change: gravel still drops above 48 mi; simple tree
+markers and in-block trailers stay, no trailer parks. Rural lot shape rules stay.
+
+Parity: tools/check_images.py freshly regenerated all five byte-identical LEGACY
+pairs and five NEW world baselines. World changes are intentional: branching basin
+geometry/valleys, drainage-informed continuous highways, 24-mi corrections,
+bridges, two rail directions, route-owned towns and trackside industry, and farm
+density/access. WORLD_STYLE supplies the shared export/browser palette, screen
+minima and layer order. World exporter snapping was disabled to match browser
+subpixel positions. Five world PNG checksums match world-baselines.json; a separate
+fresh seed31 regeneration matches. Legacy parity does not test the changed world.
+
+All seven final screenshots are from the real browser, seed31, Ready and loaded:
+- artifacts/final-seed31-x-4.5-y-1.5-3mi.png
+- artifacts/final-seed31-x-4-y-3-10mi.png
+- artifacts/final-seed31-x-15-y-15-30mi.png
+- artifacts/final-seed31-x-48-y-48-96mi.png
+- artifacts/final-seed31-x0.85-y0.6-rail-road-crossing.png
+- artifacts/final-seed31-x-1.5-y22.5-paved-correction-jog.png
+- artifacts/final-seed31-x-3.4-y-0.3-bridge.png
+96 mi: 1,024 loaded visible chunks, zero transparent center pixels, no server errors;
+see browser-overview-seed31-x-48-y-48-96mi.json. Cold 96-mi generation still takes
+minutes; no speedup is claimed. Screenshot checksums: final-screenshots.json.
+Full human-readable report: artifacts/final-report.md. Temporary servers and the
+owned browser tab were closed after capture. Restart cli.py --serve to inspect.
+
+No PR, merge, force push or history rewrite. Only python-test/spawner was pushed.
+Unrelated root newprompts/ and reference/ left untouched. Read only the files
+named in the original resume allowlist below if continuing work.
+
+--- Prior checkpoint ---
 # Final verification WIP, 2026-11-14
 
 Numbered stages 1-7 are implemented and pushed in the commits listed below.

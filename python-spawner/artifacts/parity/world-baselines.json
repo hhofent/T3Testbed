@@ -1,0 +1,152 @@
+{
+  "reason": "Drainage-first basins, continuous highways, 24-mile corrections, bridges, bidirectional rail, route towns and farm access; shared SVG/PNG palette and LOD minima.",
+  "style": {
+    "background": "#f2f1e6",
+    "colors": {
+      "contours": "#b5ba9b",
+      "rivers": "#509bc6",
+      "creeks": "#67a9cc",
+      "rail": "#685553",
+      "roads": "#b9a17a",
+      "buildings": "#d6dfc4",
+      "driveways": "#c8bea9",
+      "trees": "#3c6946",
+      "towns": "none",
+      "lots": "none",
+      "farms": "#8b7655",
+      "bridges": "#525954"
+    },
+    "roads": {
+      "paved": "#525954",
+      "gravel": "#b9a17a",
+      "dirt": "#9a784c"
+    },
+    "minimum_px": {
+      "paved": 1.2,
+      "gravel": 0.65,
+      "dirt": 0.65,
+      "rail": 1.2,
+      "river": 1.5,
+      "tributary": 0.8,
+      "towns": 0.8
+    },
+    "gravel_hide_above_mi": 48,
+    "outline": "#687060",
+    "parcel_outline": "#b5c0ab",
+    "outline_px": 0.3,
+    "order": [
+      "contours",
+      "rivers",
+      "creeks",
+      "towns",
+      "lots",
+      "roads",
+      "rail",
+      "bridges",
+      "driveways",
+      "buildings",
+      "trees",
+      "farms"
+    ]
+  },
+  "scenes": {
+    "13": {
+      "file": "world-seed13-x-4-y-3-10mi.png",
+      "sha256": "def87fd09686f372bd87bb963b07adaf428aa1d3b3f420f704c0fa1fcf4e66d8",
+      "window_mi": [
+        -4,
+        -3,
+        10,
+        10
+      ],
+      "detail": false,
+      "width": 600,
+      "features": {
+        "bridges": 93,
+        "farms": 198,
+        "rivers": 87,
+        "roads": 253
+      }
+    },
+    "14": {
+      "file": "world-seed14-x-4-y-3-10mi.png",
+      "sha256": "525429aaad75aa34d1f32f67746d36e461e45f78375a865cfb54b76a482550c2",
+      "window_mi": [
+        -4,
+        -3,
+        10,
+        10
+      ],
+      "detail": false,
+      "width": 600,
+      "features": {
+        "bridges": 94,
+        "farms": 217,
+        "rail": 23,
+        "rivers": 88,
+        "roads": 260,
+        "towns": 1
+      }
+    },
+    "30": {
+      "file": "world-seed30-x-4-y-3-10mi.png",
+      "sha256": "8007ed50a154659038e84c9b8b020cbccc0bba63ba282c7322aedd3e8e4825ce",
+      "window_mi": [
+        -4,
+        -3,
+        10,
+        10
+      ],
+      "detail": false,
+      "width": 600,
+      "features": {
+        "bridges": 92,
+        "farms": 199,
+        "rail": 11,
+        "rivers": 88,
+        "roads": 289,
+        "towns": 1
+      }
+    },
+    "31": {
+      "file": "world-seed31-x-4-y-3-10mi.png",
+      "sha256": "057f42fb714f646f0fd2d86edaca6ad17a5c969c750eb2450077955451b15bd1",
+      "window_mi": [
+        -4,
+        -3,
+        10,
+        10
+      ],
+      "detail": false,
+      "width": 600,
+      "features": {
+        "bridges": 113,
+        "farms": 196,
+        "rail": 12,
+        "rivers": 86,
+        "roads": 271,
+        "towns": 1
+      }
+    },
+    "46": {
+      "file": "world-seed46-x-4-y-3-10mi.png",
+      "sha256": "b2c66a31a0d811bb3c4a04bef482242399d562e663f00d249b2b13e69fca861d",
+      "window_mi": [
+        -4,
+        -3,
+        10,
+        10
+      ],
+      "detail": false,
+      "width": 600,
+      "features": {
+        "bridges": 87,
+        "farms": 195,
+        "rail": 11,
+        "rivers": 87,
+        "roads": 270,
+        "towns": 1
+      }
+    }
+  }
+}

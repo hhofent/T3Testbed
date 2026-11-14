@@ -1,0 +1,7 @@
+py -3.11 -m pytest python-spawner/tests -q --tb=short
+109 passed in 59.93s
+
+Fresh geometric verifier seeds 13,14,30,31,46: all pass.
+Real browser same-rectangle PNG/SVG, seed31 (-4,-3,10,10) mi, 800 px: RGB MAE 0.583765, severe pixel fraction 0.0001078125.
+Browser stroke regression: water 1.498px; rail and paved roads 1.2px at 24/80/256px raster sizes.
+Farmstead densities per sq mi: seed14 1.58; seed31 1.4575; seed46 1.4975.

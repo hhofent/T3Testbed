@@ -628,6 +628,7 @@ def svg(scene,local=False):
      for a,b,wa,wb in zip(f['points'],f['points'][1:],f['widths'],f['widths'][1:]):
       out.append(f'<polyline points="{a[0]},{a[1]} {b[0]},{b[1]}" fill="none" stroke="{color}" stroke-width="{(wa+wb)/2}" stroke-linecap="round"/>')
     else:
-     out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}"/>')
+     cap='round' if kind in ('rivers','creeks') else 'butt'
+     out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}" stroke-linecap="{cap}"/>')
    out.append('</g>')
  out.append('</svg>'); return ''.join(out).encode()

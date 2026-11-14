@@ -118,7 +118,7 @@ def world_png(scene,width=1440):
                     if widths:
                         segments=list(zip(points,points[1:])); strokes=[max(minimum,(a+b)/2/w*width)*.72 for a,b in zip(widths,widths[1:])]
                     else: segments=[points]; strokes=[max(minimum,raw/w*width)*.72]
-                    ax.add_collection(LineCollection(segments,colors=color,linewidths=strokes,capstyle='round' if widths else 'butt',snap=False,zorder=layer+1))
+                    ax.add_collection(LineCollection(segments,colors=color,linewidths=strokes,capstyle='round' if widths or kind in ('rivers','creeks') else 'butt',snap=False,zorder=layer+1))
         ax.set_xlim(x,x+w); ax.set_ylim(y+h,y); ax.set_aspect('equal',adjustable='box');ax.set_axis_off()
         buf=io.BytesIO();fig.savefig(buf,format='png',dpi=100,facecolor=fig.get_facecolor(),metadata={'Software':'Python spawner'});return buf.getvalue()
     finally: plt.close(fig)
