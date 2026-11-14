@@ -1,0 +1,1160 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='690' height='992' viewBox='0 0 690 992' font-family='Georgia, serif'>
+<style>
+.floor{fill:#e9e4d2}
+.wall{stroke:#3a332b;fill:none}
+.thin{stroke:#3a332b;stroke-width:1.3;fill:none}
+.dash{stroke:#8a7f70;stroke-width:1.3;fill:none;stroke-dasharray:7 5}
+.txt{fill:#3a332b;font-size:13px;text-anchor:middle}
+.small{fill:#57503f;font-size:11px}
+.title{fill:#3a332b;font-size:19px;font-weight:bold}
+.roadlabel{fill:#57503f;font-size:13px;letter-spacing:3px;text-anchor:middle}
+</style>
+<rect x='0' y='0' width='690' height='992' fill='#f0efe0'/>
+<rect class='dash' x='177.03' y='633.28' width='52.64' height='87.24'/>
+<rect class='dash' x='229.67' y='633.28' width='41.83' height='87.24'/>
+<rect class='dash' x='271.49' y='633.28' width='47.61' height='87.24'/>
+<rect class='dash' x='177.03' y='431.79' width='52.64' height='87.24'/>
+<rect class='dash' x='229.67' y='431.79' width='41.83' height='87.24'/>
+<rect class='dash' x='271.49' y='431.79' width='47.61' height='87.24'/>
+<rect class='dash' x='177.03' y='546.04' width='52.64' height='87.24'/>
+<rect class='dash' x='229.67' y='546.04' width='41.83' height='87.24'/>
+<rect class='dash' x='271.49' y='546.04' width='47.61' height='87.24'/>
+<rect class='dash' x='117.02' y='671.01' width='60.01' height='47.27'/>
+<rect class='dash' x='117.02' y='625.08' width='60.01' height='45.93'/>
+<rect class='dash' x='117.02' y='571.29' width='60.01' height='53.79'/>
+<rect class='dash' x='319.1' y='671.23' width='60.01' height='47.04'/>
+<rect class='dash' x='319.1' y='617.92' width='60.01' height='53.31'/>
+<rect class='dash' x='319.1' y='561.2' width='60.01' height='56.72'/>
+<rect class='dash' x='190.74' y='288.32' width='46.51' height='72.01'/>
+<rect class='dash' x='139.73' y='213.3' width='46.51' height='72.01'/>
+<rect class='dash' x='268.75' y='288.32' width='46.51' height='72.01'/>
+<rect class='dash' x='319.76' y='213.3' width='46.51' height='72.01'/>
+<rect class='dash' x='30' y='827.61' width='60.01' height='48.94'/>
+<rect class='dash' x='30' y='768.39' width='60.01' height='54.72'/>
+<rect class='dash' x='30' y='719.77' width='60.01' height='44.12'/>
+<rect class='dash' x='30' y='656.28' width='60.01' height='58.99'/>
+<rect class='dash' x='30' y='609.09' width='60.01' height='42.69'/>
+<rect class='dash' x='30' y='553.35' width='60.01' height='51.23'/>
+<rect class='dash' x='30' y='491.06' width='60.01' height='57.79'/>
+<rect class='dash' x='30' y='430.53' width='60.01' height='56.03'/>
+<rect class='dash' x='30' y='376.08' width='60.01' height='49.95'/>
+<rect class='dash' x='117.02' y='837.52' width='60.01' height='39.03'/>
+<rect class='dash' x='117.02' y='474.07' width='60.01' height='42.33'/>
+<rect class='dash' x='117.02' y='425.42' width='60.01' height='44.14'/>
+<rect class='dash' x='319.1' y='759.49' width='60.01' height='53.58'/>
+<rect class='dash' x='319.1' y='462.9' width='60.01' height='49.47'/>
+<rect class='dash' x='406.12' y='821.79' width='60.01' height='54.76'/>
+<rect class='dash' x='406.12' y='759.04' width='60.01' height='58.25'/>
+<rect class='dash' x='406.12' y='692.25' width='60.01' height='62.29'/>
+<rect class='dash' x='406.12' y='635.53' width='60.01' height='52.22'/>
+<rect class='dash' x='406.12' y='585.16' width='60.01' height='45.87'/>
+<rect class='dash' x='406.12' y='528.33' width='60.01' height='52.33'/>
+<rect class='dash' x='406.12' y='471.1' width='60.01' height='52.73'/>
+<rect class='dash' x='406.12' y='402.8' width='60.01' height='63.79'/>
+<rect class='dash' x='406.12' y='338.61' width='60.01' height='59.69'/>
+<rect class='dash' x='91.51' y='286.59' width='46.03' height='87.24'/>
+<rect class='dash' x='140.54' y='286.59' width='47.19' height='87.24'/>
+<rect x='90.01' y='878.8' width='316.1' height='49.51' fill='#8f8b83'/>
+<line x1='96.01' y1='903.55' x2='400.12' y2='903.55' stroke='#e8d44d' stroke-width='2' stroke-dasharray='14 12'/>
+<rect x='90.01' y='720.52' width='316.1' height='27' fill='#8f8b83'/>
+<rect x='90.01' y='519.03' width='316.1' height='27' fill='#8f8b83'/>
+<rect x='90.01' y='373.83' width='27' height='504.97' fill='#8f8b83'/>
+<rect x='379.11' y='316.63' width='27' height='562.17' fill='#8f8b83'/>
+<rect x='90.01' y='373.83' width='316.1' height='27' fill='#8f8b83'/>
+<rect x='379.11' y='316.63' width='27' height='27' fill='#8f8b83'/>
+<rect x='237.25' y='195.82' width='27' height='178.01' fill='#8f8b83'/>
+<rect x='206.73' y='66' width='27' height='307.83' fill='#8f8b83'/>
+<circle cx='250.75' cy='203.33' r='33.01' fill='#8f8b83'/>
+<polyline points='186.78,722.21 186.78,671.77' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='239.42,722.21 239.42,676.4' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='281.25,722.21 281.25,672.02' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='186.78,520.72 186.78,480' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='261.74,520.72 261.74,475.61' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='281.25,520.72 281.25,470.77' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='115.33,578.05 98.28,578.05' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,865.41 90.33,865.41 99.33,865.41' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,811.32 87.45,811.32 96.45,811.32' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,712.96 105.26,712.96 96.26,712.96' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,579.16 91.04,579.16 100.04,579.16' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,424.14 106.82,424.14 97.82,424.14' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,363.42 105.36,363.42 96.36,363.42' fill='none' stroke='#dcd9d2' stroke-width='12.75' stroke-linecap='butt' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='277.93,930 277.93,944.13' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='538.03,722.21 538.03,707.96' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='658.91,722.21 658.91,711.05' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='337.43,722.21 337.43,711.35' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='333.43,520.72 333.43,511.58' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='245.89,520.72 245.89,510.49' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='362.6,520.72 362.6,507.99' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='203.35,546.04 203.35,589.66' fill='none' stroke='#e3e0d8' stroke-width='3.75' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='335.65,544.35 335.65,553.31' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='483.86,544.35 483.86,558.69' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='115.33,662.36 650.6,662.36' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='115.33,618.32 325.07,618.32' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='380.8,708.06 575.58,708.06' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='380.8,655.79 436.75,655.79' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='380.8,598.97 335.67,598.97' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='90.01,745.84 406.12,745.84' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='90.01,722.21 406.12,722.21' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='90.01,544.35 406.12,544.35' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='90.01,520.72 406.12,520.72' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='91.7,878.8 91.7,373.83' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='115.33,878.8 115.33,373.83' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='380.8,878.8 380.8,316.63' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,878.8 404.43,316.63' fill='none' stroke='#e3e0d8' stroke-width='3.38' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='115.33,457.43 363.14,457.43' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,854.15 269.43,854.15' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,798.43 573.38,798.43' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,746.33 408.13,746.33' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,673.36 467.98,673.36' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,559.09 317.15,559.09' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,460.88 542.86,460.88' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='404.43,386.19 214.21,386.19' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='640.91,375.52 640.91,364.04' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<polyline points='459.98,375.52 459.98,362.44' fill='none' stroke='#e3e0d8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' stroke-opacity='0.95'/>
+<path class='floor' fill-rule='evenodd' d='M189.3 944.13L215.08 944.13L215.08 965.25L189.3 965.25Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='189.3' y1='944.13' x2='215.08' y2='944.13' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='193.26' y1='944.13' x2='195.51' y2='944.13' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='193.26' y1='944.13' x2='193.26' y2='946.38' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 195.51 944.13 A 2.25 2.25 0 0 0 193.26 946.38' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='199.79' y1='944.13' x2='202.04' y2='944.13' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='199.79' y1='943.79' x2='202.04' y2='943.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='199.79' y1='944.13' x2='202.04' y2='944.13' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='199.79' y1='944.47' x2='202.04' y2='944.47' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='206.79' y1='944.13' x2='209.04' y2='944.13' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='206.79' y1='943.79' x2='209.04' y2='943.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='206.79' y1='944.13' x2='209.04' y2='944.13' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='206.79' y1='944.47' x2='209.04' y2='944.47' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='215.08' y1='944.13' x2='215.08' y2='965.25' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='215.08' y1='948.57' x2='215.08' y2='950.82' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='215.42' y1='948.57' x2='215.42' y2='950.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='215.08' y1='948.57' x2='215.08' y2='950.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='214.74' y1='948.57' x2='214.74' y2='950.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='215.08' y1='957.3' x2='215.08' y2='959.55' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='215.42' y1='957.3' x2='215.42' y2='959.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='215.08' y1='957.3' x2='215.08' y2='959.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='214.74' y1='957.3' x2='214.74' y2='959.55' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='215.08' y1='965.25' x2='189.3' y2='965.25' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='210.95' y1='965.25' x2='208.7' y2='965.25' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='210.95' y1='965.59' x2='208.7' y2='965.59' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='210.95' y1='965.25' x2='208.7' y2='965.25' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='210.95' y1='964.91' x2='208.7' y2='964.91' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='203.06' y1='965.25' x2='200.81' y2='965.25' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='203.06' y1='965.59' x2='200.81' y2='965.59' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='203.06' y1='965.25' x2='200.81' y2='965.25' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='203.06' y1='964.91' x2='200.81' y2='964.91' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='197.05' y1='965.25' x2='194.8' y2='965.25' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='197.05' y1='965.59' x2='194.8' y2='965.59' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='197.05' y1='965.25' x2='194.8' y2='965.25' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='197.05' y1='964.91' x2='194.8' y2='964.91' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='189.3' y1='965.25' x2='189.3' y2='944.13' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='189.3' y1='960.39' x2='189.3' y2='958.14' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='188.95' y1='960.39' x2='188.95' y2='958.14' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='189.3' y1='960.39' x2='189.3' y2='958.14' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='189.64' y1='960.39' x2='189.64' y2='958.14' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='189.3' y1='952.49' x2='189.3' y2='950.24' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='188.95' y1='952.49' x2='188.95' y2='950.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='189.3' y1='952.49' x2='189.3' y2='950.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='189.64' y1='952.49' x2='189.64' y2='950.24' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M191.78 707.96L217.34 707.96L217.34 680.77L191.78 680.77Z'/>
+<rect class='dash' x='197.07' y='707.96' width='14.97' height='4.14'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='191.78' y1='707.96' x2='217.34' y2='707.96' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='203.43' y1='707.96' x2='205.68' y2='707.96' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='203.43' y1='707.96' x2='203.43' y2='705.71' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 205.68 707.96 A 2.25 2.25 0 0 1 203.43 705.71' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='210.35' y1='707.96' x2='212.6' y2='707.96' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='210.35' y1='707.61' x2='212.6' y2='707.61' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='210.35' y1='707.96' x2='212.6' y2='707.96' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='210.35' y1='708.3' x2='212.6' y2='708.3' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='217.34' y1='707.96' x2='217.34' y2='680.77' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='217.34' y1='704.09' x2='217.34' y2='701.84' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='216.99' y1='704.09' x2='216.99' y2='701.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.34' y1='704.09' x2='217.34' y2='701.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.68' y1='704.09' x2='217.68' y2='701.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.34' y1='695.18' x2='217.34' y2='692.93' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='216.99' y1='695.18' x2='216.99' y2='692.93' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.34' y1='695.18' x2='217.34' y2='692.93' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.68' y1='695.18' x2='217.68' y2='692.93' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.34' y1='687.3' x2='217.34' y2='685.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='216.99' y1='687.3' x2='216.99' y2='685.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.34' y1='687.3' x2='217.34' y2='685.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='217.68' y1='687.3' x2='217.68' y2='685.05' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='217.34' y1='680.77' x2='191.78' y2='680.77' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='213.25' y1='680.77' x2='211' y2='680.77' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='213.25' y1='681.12' x2='211' y2='681.12' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='213.25' y1='680.77' x2='211' y2='680.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='213.25' y1='680.43' x2='211' y2='680.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='206.72' y1='680.77' x2='204.47' y2='680.77' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='206.72' y1='681.12' x2='204.47' y2='681.12' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='206.72' y1='680.77' x2='204.47' y2='680.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='206.72' y1='680.43' x2='204.47' y2='680.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='199.16' y1='680.77' x2='196.91' y2='680.77' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='199.16' y1='681.12' x2='196.91' y2='681.12' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='199.16' y1='680.77' x2='196.91' y2='680.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='199.16' y1='680.43' x2='196.91' y2='680.43' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='191.78' y1='680.77' x2='191.78' y2='707.96' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='191.78' y1='685.38' x2='191.78' y2='687.63' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='192.12' y1='685.38' x2='192.12' y2='687.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.78' y1='685.38' x2='191.78' y2='687.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.44' y1='685.38' x2='191.44' y2='687.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.78' y1='692.54' x2='191.78' y2='694.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='192.12' y1='692.54' x2='192.12' y2='694.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.78' y1='692.54' x2='191.78' y2='694.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.44' y1='692.54' x2='191.44' y2='694.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.78' y1='699.68' x2='191.78' y2='701.93' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='192.12' y1='699.68' x2='192.12' y2='701.93' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.78' y1='699.68' x2='191.78' y2='701.93' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='191.44' y1='699.68' x2='191.44' y2='701.93' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M235.96 711.05L264.8 711.05L264.8 685.4L235.96 685.4Z'/>
+<rect class='dash' x='240.76' y='711.05' width='19.24' height='6.77'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='235.96' y1='711.05' x2='264.8' y2='711.05' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='249.26' y1='711.05' x2='251.51' y2='711.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='249.26' y1='711.05' x2='249.26' y2='708.8' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 251.51 711.05 A 2.25 2.25 0 0 1 249.26 708.8' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='256.87' y1='711.05' x2='259.12' y2='711.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='256.87' y1='710.71' x2='259.12' y2='710.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='256.87' y1='711.05' x2='259.12' y2='711.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='256.87' y1='711.39' x2='259.12' y2='711.39' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='264.8' y1='711.05' x2='264.8' y2='685.4' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='264.8' y1='705.4' x2='264.8' y2='703.15' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='264.46' y1='705.4' x2='264.46' y2='703.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='264.8' y1='705.4' x2='264.8' y2='703.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='265.14' y1='705.4' x2='265.14' y2='703.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='264.8' y1='699.88' x2='264.8' y2='697.63' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='264.46' y1='699.88' x2='264.46' y2='697.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='264.8' y1='699.88' x2='264.8' y2='697.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='265.14' y1='699.88' x2='265.14' y2='697.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='264.8' y1='692.3' x2='264.8' y2='690.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='264.46' y1='692.3' x2='264.46' y2='690.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='264.8' y1='692.3' x2='264.8' y2='690.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='265.14' y1='692.3' x2='265.14' y2='690.05' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='264.8' y1='685.4' x2='235.96' y2='685.4' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='258.43' y1='685.4' x2='256.18' y2='685.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='258.43' y1='685.75' x2='256.18' y2='685.75' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='258.43' y1='685.4' x2='256.18' y2='685.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='258.43' y1='685.06' x2='256.18' y2='685.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='250.84' y1='685.4' x2='248.59' y2='685.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='250.84' y1='685.75' x2='248.59' y2='685.75' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='250.84' y1='685.4' x2='248.59' y2='685.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='250.84' y1='685.06' x2='248.59' y2='685.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='244.4' y1='685.4' x2='242.15' y2='685.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='244.4' y1='685.75' x2='242.15' y2='685.75' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='244.4' y1='685.4' x2='242.15' y2='685.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='244.4' y1='685.06' x2='242.15' y2='685.06' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='235.96' y1='685.4' x2='235.96' y2='711.05' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='235.96' y1='690.31' x2='235.96' y2='692.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='236.3' y1='690.31' x2='236.3' y2='692.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.96' y1='690.31' x2='235.96' y2='692.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.62' y1='690.31' x2='235.62' y2='692.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.96' y1='697.51' x2='235.96' y2='699.77' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='236.3' y1='697.51' x2='236.3' y2='699.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.96' y1='697.51' x2='235.96' y2='699.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.62' y1='697.51' x2='235.62' y2='699.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.96' y1='703.31' x2='235.96' y2='705.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='236.3' y1='703.31' x2='236.3' y2='705.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.96' y1='703.31' x2='235.96' y2='705.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='235.62' y1='703.31' x2='235.62' y2='705.56' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M286.74 711.35L305.63 711.35L305.63 681.03L286.74 681.03Z'/>
+<rect class='dash' x='288.97' y='711.35' width='14.43' height='3.85'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='286.74' y1='711.35' x2='305.63' y2='711.35' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='295.06' y1='711.35' x2='297.31' y2='711.35' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='295.06' y1='711.35' x2='295.06' y2='709.1' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 297.31 711.35 A 2.25 2.25 0 0 1 295.06 709.1' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='305.63' y1='711.35' x2='305.63' y2='681.03' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='305.63' y1='705' x2='305.63' y2='702.75' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='305.29' y1='705' x2='305.29' y2='702.75' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.63' y1='705' x2='305.63' y2='702.75' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.98' y1='705' x2='305.98' y2='702.75' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.63' y1='696.32' x2='305.63' y2='694.06' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='305.29' y1='696.32' x2='305.29' y2='694.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.63' y1='696.32' x2='305.63' y2='694.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.98' y1='696.32' x2='305.98' y2='694.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.63' y1='687.96' x2='305.63' y2='685.71' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='305.29' y1='687.96' x2='305.29' y2='685.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.63' y1='687.96' x2='305.63' y2='685.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.98' y1='687.96' x2='305.98' y2='685.71' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='305.63' y1='681.03' x2='286.74' y2='681.03' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='301.52' y1='681.03' x2='299.27' y2='681.03' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='301.52' y1='681.37' x2='299.27' y2='681.37' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='301.52' y1='681.03' x2='299.27' y2='681.03' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='301.52' y1='680.68' x2='299.27' y2='680.68' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='293.52' y1='681.03' x2='291.27' y2='681.03' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='293.52' y1='681.37' x2='291.27' y2='681.37' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='293.52' y1='681.03' x2='291.27' y2='681.03' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='293.52' y1='680.68' x2='291.27' y2='680.68' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='286.74' y1='681.03' x2='286.74' y2='711.35' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='286.74' y1='687.81' x2='286.74' y2='690.06' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='287.08' y1='687.81' x2='287.08' y2='690.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.74' y1='687.81' x2='286.74' y2='690.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.4' y1='687.81' x2='286.4' y2='690.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.74' y1='696.15' x2='286.74' y2='698.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='287.08' y1='696.15' x2='287.08' y2='698.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.74' y1='696.15' x2='286.74' y2='698.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.4' y1='696.15' x2='286.4' y2='698.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.74' y1='704.1' x2='286.74' y2='706.35' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='287.08' y1='704.1' x2='287.08' y2='706.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.74' y1='704.1' x2='286.74' y2='706.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='286.4' y1='704.1' x2='286.4' y2='706.35' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M193.67 511.58L212.41 511.58L212.41 489L193.67 489Z'/>
+<rect class='dash' x='196.51' y='511.58' width='13.06' height='6.15'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='193.67' y1='511.58' x2='212.41' y2='511.58' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='201.91' y1='511.58' x2='204.16' y2='511.58' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='201.91' y1='511.58' x2='201.91' y2='509.33' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 204.16 511.58 A 2.25 2.25 0 0 1 201.91 509.33' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='212.41' y1='511.58' x2='212.41' y2='489' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='212.41' y1='506.99' x2='212.41' y2='504.74' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='212.06' y1='506.99' x2='212.06' y2='504.74' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='212.41' y1='506.99' x2='212.41' y2='504.74' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='212.75' y1='506.99' x2='212.75' y2='504.74' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='212.41' y1='497.65' x2='212.41' y2='495.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='212.06' y1='497.65' x2='212.06' y2='495.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='212.41' y1='497.65' x2='212.41' y2='495.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='212.75' y1='497.65' x2='212.75' y2='495.4' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='212.41' y1='489' x2='193.67' y2='489' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='207.95' y1='489' x2='205.7' y2='489' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='207.95' y1='489.35' x2='205.7' y2='489.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='207.95' y1='489' x2='205.7' y2='489' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='207.95' y1='488.66' x2='205.7' y2='488.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='200.95' y1='489' x2='198.7' y2='489' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='200.95' y1='489.35' x2='198.7' y2='489.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='200.95' y1='489' x2='198.7' y2='489' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='200.95' y1='488.66' x2='198.7' y2='488.66' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='193.67' y1='489' x2='193.67' y2='511.58' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='193.67' y1='494.3' x2='193.67' y2='496.55' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='194.01' y1='494.3' x2='194.01' y2='496.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.67' y1='494.3' x2='193.67' y2='496.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.33' y1='494.3' x2='193.33' y2='496.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.67' y1='503.75' x2='193.67' y2='506' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='194.01' y1='503.75' x2='194.01' y2='506' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.67' y1='503.75' x2='193.67' y2='506' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='193.33' y1='503.75' x2='193.33' y2='506' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M237.65 510.49L262.07 510.49L262.07 484.61L237.65 484.61Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='237.65' y1='510.49' x2='262.07' y2='510.49' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='240.94' y1='510.49' x2='243.19' y2='510.49' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='240.94' y1='510.49' x2='240.94' y2='508.24' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 243.19 510.49 A 2.25 2.25 0 0 1 240.94 508.24' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='246.45' y1='510.49' x2='248.7' y2='510.49' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='246.45' y1='510.15' x2='248.7' y2='510.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='246.45' y1='510.49' x2='248.7' y2='510.49' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='246.45' y1='510.83' x2='248.7' y2='510.83' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='254.49' y1='510.49' x2='256.74' y2='510.49' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='254.49' y1='510.15' x2='256.74' y2='510.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='254.49' y1='510.49' x2='256.74' y2='510.49' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='254.49' y1='510.83' x2='256.74' y2='510.83' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='262.07' y1='510.49' x2='262.07' y2='484.61' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='262.07' y1='505.01' x2='262.07' y2='502.76' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='261.73' y1='505.01' x2='261.73' y2='502.76' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.07' y1='505.01' x2='262.07' y2='502.76' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.41' y1='505.01' x2='262.41' y2='502.76' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.07' y1='498.57' x2='262.07' y2='496.32' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='261.73' y1='498.57' x2='261.73' y2='496.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.07' y1='498.57' x2='262.07' y2='496.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.41' y1='498.57' x2='262.41' y2='496.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.07' y1='492.76' x2='262.07' y2='490.51' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='261.73' y1='492.76' x2='261.73' y2='490.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.07' y1='492.76' x2='262.07' y2='490.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='262.41' y1='492.76' x2='262.41' y2='490.51' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='262.07' y1='484.61' x2='237.65' y2='484.61' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='258.49' y1='484.61' x2='256.24' y2='484.61' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='258.49' y1='484.95' x2='256.24' y2='484.95' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='258.49' y1='484.61' x2='256.24' y2='484.61' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='258.49' y1='484.27' x2='256.24' y2='484.27' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='251.69' y1='484.61' x2='249.44' y2='484.61' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='251.69' y1='484.95' x2='249.44' y2='484.95' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='251.69' y1='484.61' x2='249.44' y2='484.61' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='251.69' y1='484.27' x2='249.44' y2='484.27' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='244.21' y1='484.61' x2='241.96' y2='484.61' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='244.21' y1='484.95' x2='241.96' y2='484.95' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='244.21' y1='484.61' x2='241.96' y2='484.61' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='244.21' y1='484.27' x2='241.96' y2='484.27' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='237.65' y1='484.61' x2='237.65' y2='510.49' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='237.65' y1='490.18' x2='237.65' y2='492.43' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='238' y1='490.18' x2='238' y2='492.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.65' y1='490.18' x2='237.65' y2='492.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.31' y1='490.18' x2='237.31' y2='492.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.65' y1='495.28' x2='237.65' y2='497.53' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='238' y1='495.28' x2='238' y2='497.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.65' y1='495.28' x2='237.65' y2='497.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.31' y1='495.28' x2='237.31' y2='497.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.65' y1='502.57' x2='237.65' y2='504.82' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='238' y1='502.57' x2='238' y2='504.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.65' y1='502.57' x2='237.65' y2='504.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='237.31' y1='502.57' x2='237.31' y2='504.82' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M284.83 507.99L304.68 507.99L304.68 479.77L284.83 479.77Z'/>
+<rect class='dash' x='289.46' y='507.99' width='10.58' height='5.15'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='284.83' y1='507.99' x2='304.68' y2='507.99' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='293.63' y1='507.99' x2='295.88' y2='507.99' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='293.63' y1='507.99' x2='293.63' y2='505.74' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 295.88 507.99 A 2.25 2.25 0 0 1 293.63 505.74' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='304.68' y1='507.99' x2='304.68' y2='479.77' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='304.68' y1='502.4' x2='304.68' y2='500.15' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='304.34' y1='502.4' x2='304.34' y2='500.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='304.68' y1='502.4' x2='304.68' y2='500.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.02' y1='502.4' x2='305.02' y2='500.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='304.68' y1='494.81' x2='304.68' y2='492.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='304.34' y1='494.81' x2='304.34' y2='492.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='304.68' y1='494.81' x2='304.68' y2='492.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.02' y1='494.81' x2='305.02' y2='492.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='304.68' y1='486.86' x2='304.68' y2='484.61' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='304.34' y1='486.86' x2='304.34' y2='484.61' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='304.68' y1='486.86' x2='304.68' y2='484.61' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='305.02' y1='486.86' x2='305.02' y2='484.61' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='304.68' y1='479.77' x2='284.83' y2='479.77' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='300.42' y1='479.77' x2='298.17' y2='479.77' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='300.42' y1='480.11' x2='298.17' y2='480.11' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='300.42' y1='479.77' x2='298.17' y2='479.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='300.42' y1='479.43' x2='298.17' y2='479.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='292' y1='479.77' x2='289.75' y2='479.77' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='292' y1='480.11' x2='289.75' y2='480.11' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='292' y1='479.77' x2='289.75' y2='479.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='292' y1='479.43' x2='289.75' y2='479.43' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='284.83' y1='479.77' x2='284.83' y2='507.99' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='284.83' y1='484.38' x2='284.83' y2='486.63' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='285.17' y1='484.38' x2='285.17' y2='486.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.83' y1='484.38' x2='284.83' y2='486.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.49' y1='484.38' x2='284.49' y2='486.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.83' y1='491.93' x2='284.83' y2='494.18' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='285.17' y1='491.93' x2='285.17' y2='494.18' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.83' y1='491.93' x2='284.83' y2='494.18' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.49' y1='491.93' x2='284.49' y2='494.18' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.83' y1='500.69' x2='284.83' y2='502.94' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='285.17' y1='500.69' x2='285.17' y2='502.94' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.83' y1='500.69' x2='284.83' y2='502.94' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='284.49' y1='500.69' x2='284.49' y2='502.94' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M241.5 553.31L260.33 553.31L260.33 574.5L241.5 574.5Z'/>
+<rect class='dash' x='244.56' y='547.7' width='12.72' height='5.61'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='241.5' y1='553.31' x2='260.33' y2='553.31' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='249.79' y1='553.31' x2='252.04' y2='553.31' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='249.79' y1='553.31' x2='249.79' y2='555.56' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 252.04 553.31 A 2.25 2.25 0 0 0 249.79 555.56' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='260.33' y1='553.31' x2='260.33' y2='574.5' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='260.33' y1='558.54' x2='260.33' y2='560.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='260.67' y1='558.54' x2='260.67' y2='560.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='260.33' y1='558.54' x2='260.33' y2='560.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='259.99' y1='558.54' x2='259.99' y2='560.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='260.33' y1='567.28' x2='260.33' y2='569.53' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='260.67' y1='567.28' x2='260.67' y2='569.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='260.33' y1='567.28' x2='260.33' y2='569.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='259.99' y1='567.28' x2='259.99' y2='569.53' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='260.33' y1='574.5' x2='241.5' y2='574.5' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='255.81' y1='574.5' x2='253.56' y2='574.5' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='255.81' y1='574.84' x2='253.56' y2='574.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='255.81' y1='574.5' x2='253.56' y2='574.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='255.81' y1='574.16' x2='253.56' y2='574.16' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='248.03' y1='574.5' x2='245.78' y2='574.5' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='248.03' y1='574.84' x2='245.78' y2='574.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='248.03' y1='574.5' x2='245.78' y2='574.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='248.03' y1='574.16' x2='245.78' y2='574.16' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='241.5' y1='574.5' x2='241.5' y2='553.31' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='241.5' y1='569.26' x2='241.5' y2='567.01' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='241.16' y1='569.26' x2='241.16' y2='567.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='241.5' y1='569.26' x2='241.5' y2='567.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='241.85' y1='569.26' x2='241.85' y2='567.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='241.5' y1='561.68' x2='241.5' y2='559.43' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='241.16' y1='561.68' x2='241.16' y2='559.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='241.5' y1='561.68' x2='241.5' y2='559.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='241.85' y1='561.68' x2='241.85' y2='559.43' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M283.02 558.69L306.96 558.69L306.96 578.25L283.02 578.25Z'/>
+<rect class='dash' x='287.32' y='552.74' width='15.33' height='5.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='283.02' y1='558.69' x2='306.96' y2='558.69' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='293.86' y1='558.69' x2='296.11' y2='558.69' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='293.86' y1='558.69' x2='293.86' y2='560.94' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 296.11 558.69 A 2.25 2.25 0 0 0 293.86 560.94' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='300.12' y1='558.69' x2='302.37' y2='558.69' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='300.12' y1='558.34' x2='302.37' y2='558.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='300.12' y1='558.69' x2='302.37' y2='558.69' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='300.12' y1='559.03' x2='302.37' y2='559.03' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='306.96' y1='558.69' x2='306.96' y2='578.25' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='306.96' y1='562.94' x2='306.96' y2='565.19' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='307.3' y1='562.94' x2='307.3' y2='565.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='306.96' y1='562.94' x2='306.96' y2='565.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='306.61' y1='562.94' x2='306.61' y2='565.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='306.96' y1='571.94' x2='306.96' y2='574.19' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='307.3' y1='571.94' x2='307.3' y2='574.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='306.96' y1='571.94' x2='306.96' y2='574.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='306.61' y1='571.94' x2='306.61' y2='574.19' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='306.96' y1='578.25' x2='283.02' y2='578.25' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='301.6' y1='578.25' x2='299.35' y2='578.25' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='301.6' y1='578.6' x2='299.35' y2='578.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='301.6' y1='578.25' x2='299.35' y2='578.25' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='301.6' y1='577.91' x2='299.35' y2='577.91' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='290.9' y1='578.25' x2='288.65' y2='578.25' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='290.9' y1='578.6' x2='288.65' y2='578.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='290.9' y1='578.25' x2='288.65' y2='578.25' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='290.9' y1='577.91' x2='288.65' y2='577.91' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='283.02' y1='578.25' x2='283.02' y2='558.69' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='283.02' y1='572.64' x2='283.02' y2='570.39' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='282.68' y1='572.64' x2='282.68' y2='570.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='283.02' y1='572.64' x2='283.02' y2='570.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='283.36' y1='572.64' x2='283.36' y2='570.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='283.02' y1='565.03' x2='283.02' y2='562.78' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='282.68' y1='565.03' x2='282.68' y2='562.78' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='283.02' y1='565.03' x2='283.02' y2='562.78' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='283.36' y1='565.03' x2='283.36' y2='562.78' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M128.21 633.73L128.21 662.36L158.99 662.36L158.99 633.73Z'/>
+<rect class='dash' x='121.42' y='637.77' width='6.78' height='20.55'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='128.21' y1='633.73' x2='128.21' y2='662.36' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='128.21' y1='646.92' x2='128.21' y2='649.17' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='128.21' y1='646.92' x2='128.21' y2='644.67' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 128.21 649.17 A 2.25 2.25 0 0 1 128.21 644.67' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='128.21' y1='654.45' x2='128.21' y2='656.71' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='128.55' y1='654.45' x2='128.55' y2='656.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='128.21' y1='654.45' x2='128.21' y2='656.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='127.87' y1='654.45' x2='127.87' y2='656.71' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='128.21' y1='662.36' x2='158.99' y2='662.36' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='134.06' y1='662.36' x2='136.31' y2='662.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='134.06' y1='662.02' x2='136.31' y2='662.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='134.06' y1='662.36' x2='136.31' y2='662.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='134.06' y1='662.7' x2='136.31' y2='662.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='142.66' y1='662.36' x2='144.91' y2='662.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='142.66' y1='662.02' x2='144.91' y2='662.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='142.66' y1='662.36' x2='144.91' y2='662.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='142.66' y1='662.7' x2='144.91' y2='662.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='151.53' y1='662.36' x2='153.78' y2='662.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='151.53' y1='662.02' x2='153.78' y2='662.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='151.53' y1='662.36' x2='153.78' y2='662.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='151.53' y1='662.7' x2='153.78' y2='662.7' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='158.99' y1='662.36' x2='158.99' y2='633.73' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='158.99' y1='657.52' x2='158.99' y2='655.27' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='158.65' y1='657.52' x2='158.65' y2='655.27' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='158.99' y1='657.52' x2='158.99' y2='655.27' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.33' y1='657.52' x2='159.33' y2='655.27' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='158.99' y1='648.29' x2='158.99' y2='646.04' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='158.65' y1='648.29' x2='158.65' y2='646.04' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='158.99' y1='648.29' x2='158.99' y2='646.04' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.33' y1='648.29' x2='159.33' y2='646.04' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='158.99' y1='640.09' x2='158.99' y2='637.84' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='158.65' y1='640.09' x2='158.65' y2='637.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='158.99' y1='640.09' x2='158.99' y2='637.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.33' y1='640.09' x2='159.33' y2='637.84' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='158.99' y1='633.73' x2='128.21' y2='633.73' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='152.32' y1='633.73' x2='150.07' y2='633.73' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='152.32' y1='634.07' x2='150.07' y2='634.07' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.32' y1='633.73' x2='150.07' y2='633.73' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.32' y1='633.39' x2='150.07' y2='633.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='144.42' y1='633.73' x2='142.17' y2='633.73' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='144.42' y1='634.07' x2='142.17' y2='634.07' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='144.42' y1='633.73' x2='142.17' y2='633.73' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='144.42' y1='633.39' x2='142.17' y2='633.39' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.81' y1='633.73' x2='133.56' y2='633.73' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='135.81' y1='634.07' x2='133.56' y2='634.07' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.81' y1='633.73' x2='133.56' y2='633.73' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.81' y1='633.39' x2='133.56' y2='633.39' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M129.61 618.32L129.61 592.51L129.61 578.05L146.15 578.05L146.15 592.51L156.02 592.51L156.02 618.32Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='129.61' y1='618.32' x2='129.61' y2='592.51' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='129.61' y1='612.99' x2='129.61' y2='610.74' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='129.61' y1='612.99' x2='129.61' y2='610.74' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 129.61 610.74 A 2.25 2.25 0 0 1 129.61 610.74' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='129.61' y1='605.73' x2='129.61' y2='603.47' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='129.26' y1='605.73' x2='129.26' y2='603.47' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.61' y1='605.73' x2='129.61' y2='603.47' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.95' y1='605.73' x2='129.95' y2='603.47' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.61' y1='600.26' x2='129.61' y2='598.01' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='129.26' y1='600.26' x2='129.26' y2='598.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.61' y1='600.26' x2='129.61' y2='598.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.95' y1='600.26' x2='129.95' y2='598.01' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='129.61' y1='592.51' x2='129.61' y2='578.05' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='129.61' y1='578.05' x2='146.15' y2='578.05' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='134.5' y1='578.05' x2='141.25' y2='578.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='146.15' y1='578.05' x2='146.15' y2='592.51' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='146.15' y1='592.51' x2='156.02' y2='592.51' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='149.94' y1='592.51' x2='152.19' y2='592.51' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='149.94' y1='592.17' x2='152.19' y2='592.17' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='149.94' y1='592.51' x2='152.19' y2='592.51' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='149.94' y1='592.85' x2='152.19' y2='592.85' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='156.02' y1='592.51' x2='156.02' y2='618.32' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='156.02' y1='599.82' x2='156.02' y2='602.07' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='156.36' y1='599.82' x2='156.36' y2='602.07' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='156.02' y1='599.82' x2='156.02' y2='602.07' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='155.67' y1='599.82' x2='155.67' y2='602.07' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='156.02' y1='609.46' x2='156.02' y2='611.71' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='156.36' y1='609.46' x2='156.36' y2='611.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='156.02' y1='609.46' x2='156.02' y2='611.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='155.67' y1='609.46' x2='155.67' y2='611.71' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='156.02' y1='618.32' x2='129.61' y2='618.32' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='148.92' y1='618.32' x2='146.67' y2='618.32' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='148.92' y1='618.66' x2='146.67' y2='618.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='148.92' y1='618.32' x2='146.67' y2='618.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='148.92' y1='617.98' x2='146.67' y2='617.98' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.12' y1='618.32' x2='136.87' y2='618.32' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='139.12' y1='618.66' x2='136.87' y2='618.66' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.12' y1='618.32' x2='136.87' y2='618.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='139.12' y1='617.98' x2='136.87' y2='617.98' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M370.66 708.06L370.66 681.44L345.1 681.44L345.1 708.06Z'/>
+<rect class='dash' x='370.66' y='685.15' width='5.77' height='19.2'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='370.66' y1='708.06' x2='370.66' y2='681.44' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='370.66' y1='695.88' x2='370.66' y2='693.62' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='370.66' y1='695.88' x2='370.66' y2='693.62' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 370.66 693.62 A 2.25 2.25 0 0 1 370.66 693.62' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='370.66' y1='689.23' x2='370.66' y2='686.98' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='370.32' y1='689.23' x2='370.32' y2='686.98' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='370.66' y1='689.23' x2='370.66' y2='686.98' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='371' y1='689.23' x2='371' y2='686.98' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='370.66' y1='681.44' x2='345.1' y2='681.44' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='367.11' y1='681.44' x2='364.86' y2='681.44' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='367.11' y1='681.78' x2='364.86' y2='681.78' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='367.11' y1='681.44' x2='364.86' y2='681.44' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='367.11' y1='681.1' x2='364.86' y2='681.1' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='359.92' y1='681.44' x2='357.67' y2='681.44' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='359.92' y1='681.78' x2='357.67' y2='681.78' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='359.92' y1='681.44' x2='357.67' y2='681.44' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='359.92' y1='681.1' x2='357.67' y2='681.1' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='350.97' y1='681.44' x2='348.72' y2='681.44' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='350.97' y1='681.78' x2='348.72' y2='681.78' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='350.97' y1='681.44' x2='348.72' y2='681.44' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='350.97' y1='681.1' x2='348.72' y2='681.1' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='345.1' y1='681.44' x2='345.1' y2='708.06' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='345.1' y1='685.47' x2='345.1' y2='687.72' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='685.47' x2='345.44' y2='687.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.1' y1='685.47' x2='345.1' y2='687.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='344.76' y1='685.47' x2='344.76' y2='687.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.1' y1='694.35' x2='345.1' y2='696.6' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='694.35' x2='345.44' y2='696.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.1' y1='694.35' x2='345.1' y2='696.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='344.76' y1='694.35' x2='344.76' y2='696.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.1' y1='701.09' x2='345.1' y2='703.34' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='701.09' x2='345.44' y2='703.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.1' y1='701.09' x2='345.1' y2='703.34' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='344.76' y1='701.09' x2='344.76' y2='703.34' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='345.1' y1='708.06' x2='370.66' y2='708.06' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='349.67' y1='708.06' x2='351.92' y2='708.06' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='349.67' y1='707.72' x2='351.92' y2='707.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='349.67' y1='708.06' x2='351.92' y2='708.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='349.67' y1='708.4' x2='351.92' y2='708.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='356.19' y1='708.06' x2='358.44' y2='708.06' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='356.19' y1='707.72' x2='358.44' y2='707.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='356.19' y1='708.06' x2='358.44' y2='708.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='356.19' y1='708.4' x2='358.44' y2='708.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.44' y1='708.06' x2='366.69' y2='708.06' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='364.44' y1='707.72' x2='366.69' y2='707.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.44' y1='708.06' x2='366.69' y2='708.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.44' y1='708.4' x2='366.69' y2='708.4' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M367.37 655.79L367.37 633.36L336.57 633.36L336.57 655.79Z'/>
+<rect class='dash' x='367.37' y='637.9' width='6.73' height='13.36'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='367.37' y1='655.79' x2='367.37' y2='633.36' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='367.37' y1='645.7' x2='367.37' y2='643.45' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='367.37' y1='645.7' x2='367.37' y2='643.45' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 367.37 643.45 A 2.25 2.25 0 0 1 367.37 643.45' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='367.37' y1='640.06' x2='367.37' y2='637.81' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='367.03' y1='640.06' x2='367.03' y2='637.81' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='367.37' y1='640.06' x2='367.37' y2='637.81' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='367.72' y1='640.06' x2='367.72' y2='637.81' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='367.37' y1='633.36' x2='336.57' y2='633.36' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='361.59' y1='633.36' x2='359.34' y2='633.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='361.59' y1='633.7' x2='359.34' y2='633.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='361.59' y1='633.36' x2='359.34' y2='633.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='361.59' y1='633.01' x2='359.34' y2='633.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='354.05' y1='633.36' x2='351.79' y2='633.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='354.05' y1='633.7' x2='351.79' y2='633.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='354.05' y1='633.36' x2='351.79' y2='633.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='354.05' y1='633.01' x2='351.79' y2='633.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='633.36' x2='343.19' y2='633.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='633.7' x2='343.19' y2='633.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='633.36' x2='343.19' y2='633.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='345.44' y1='633.01' x2='343.19' y2='633.01' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='336.57' y1='633.36' x2='336.57' y2='655.79' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='336.57' y1='638.3' x2='336.57' y2='640.55' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='336.92' y1='638.3' x2='336.92' y2='640.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.57' y1='638.3' x2='336.57' y2='640.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.23' y1='638.3' x2='336.23' y2='640.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.57' y1='647.61' x2='336.57' y2='649.86' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='336.92' y1='647.61' x2='336.92' y2='649.86' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.57' y1='647.61' x2='336.57' y2='649.86' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='336.23' y1='647.61' x2='336.23' y2='649.86' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='336.57' y1='655.79' x2='367.37' y2='655.79' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='343.59' y1='655.79' x2='345.84' y2='655.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='343.59' y1='655.45' x2='345.84' y2='655.45' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.59' y1='655.79' x2='345.84' y2='655.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.59' y1='656.13' x2='345.84' y2='656.13' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='350.11' y1='655.79' x2='352.36' y2='655.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='350.11' y1='655.45' x2='352.36' y2='655.45' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='350.11' y1='655.79' x2='352.36' y2='655.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='350.11' y1='656.13' x2='352.36' y2='656.13' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='359.4' y1='655.79' x2='361.66' y2='655.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='359.4' y1='655.45' x2='361.66' y2='655.45' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='359.4' y1='655.79' x2='361.66' y2='655.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='359.4' y1='656.13' x2='361.66' y2='656.13' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M370.7 598.97L370.7 580.15L343.5 580.15L343.5 598.97Z'/>
+<rect class='dash' x='370.7' y='584.09' width='5.29' height='10.94'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='370.7' y1='598.97' x2='370.7' y2='580.15' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='370.7' y1='590.69' x2='370.7' y2='588.44' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='370.7' y1='590.69' x2='370.7' y2='588.44' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 370.7 588.44 A 2.25 2.25 0 0 1 370.7 588.44' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='370.7' y1='580.15' x2='343.5' y2='580.15' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='364.75' y1='580.15' x2='362.5' y2='580.15' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='364.75' y1='580.49' x2='362.5' y2='580.49' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.75' y1='580.15' x2='362.5' y2='580.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.75' y1='579.81' x2='362.5' y2='579.81' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='356.96' y1='580.15' x2='354.71' y2='580.15' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='356.96' y1='580.49' x2='354.71' y2='580.49' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='356.96' y1='580.15' x2='354.71' y2='580.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='356.96' y1='579.81' x2='354.71' y2='579.81' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='351.38' y1='580.15' x2='349.13' y2='580.15' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='351.38' y1='580.49' x2='349.13' y2='580.49' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='351.38' y1='580.15' x2='349.13' y2='580.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='351.38' y1='579.81' x2='349.13' y2='579.81' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='343.5' y1='580.15' x2='343.5' y2='598.97' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='343.5' y1='584.99' x2='343.5' y2='587.24' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='343.84' y1='584.99' x2='343.84' y2='587.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.5' y1='584.99' x2='343.5' y2='587.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.16' y1='584.99' x2='343.16' y2='587.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.5' y1='592.27' x2='343.5' y2='594.52' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='343.84' y1='592.27' x2='343.84' y2='594.52' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.5' y1='592.27' x2='343.5' y2='594.52' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='343.16' y1='592.27' x2='343.16' y2='594.52' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='343.5' y1='598.97' x2='370.7' y2='598.97' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='349.33' y1='598.97' x2='351.58' y2='598.97' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='349.33' y1='598.63' x2='351.58' y2='598.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='349.33' y1='598.97' x2='351.58' y2='598.97' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='349.33' y1='599.32' x2='351.58' y2='599.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='355.45' y1='598.97' x2='357.7' y2='598.97' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='355.45' y1='598.63' x2='357.7' y2='598.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='355.45' y1='598.97' x2='357.7' y2='598.97' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='355.45' y1='599.32' x2='357.7' y2='599.32' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.52' y1='598.97' x2='366.77' y2='598.97' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='364.52' y1='598.63' x2='366.77' y2='598.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.52' y1='598.97' x2='366.77' y2='598.97' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='364.52' y1='599.32' x2='366.77' y2='599.32' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M165.51 457.43L165.51 437.56L135.45 437.56L135.45 457.43Z'/>
+<rect class='dash' x='165.51' y='442.14' width='6.2' height='10.71'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='165.51' y1='457.43' x2='165.51' y2='437.56' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='165.51' y1='448.62' x2='165.51' y2='446.37' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='165.51' y1='448.62' x2='165.51' y2='446.37' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 165.51 446.37 A 2.25 2.25 0 0 1 165.51 446.37' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='165.51' y1='437.56' x2='135.45' y2='437.56' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='159.65' y1='437.56' x2='157.4' y2='437.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='159.65' y1='437.9' x2='157.4' y2='437.9' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.65' y1='437.56' x2='157.4' y2='437.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.65' y1='437.22' x2='157.4' y2='437.22' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='150.77' y1='437.56' x2='148.52' y2='437.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='150.77' y1='437.9' x2='148.52' y2='437.9' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='150.77' y1='437.56' x2='148.52' y2='437.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='150.77' y1='437.22' x2='148.52' y2='437.22' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='143.21' y1='437.56' x2='140.96' y2='437.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='143.21' y1='437.9' x2='140.96' y2='437.9' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='143.21' y1='437.56' x2='140.96' y2='437.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='143.21' y1='437.22' x2='140.96' y2='437.22' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='135.45' y1='437.56' x2='135.45' y2='457.43' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='135.45' y1='442.83' x2='135.45' y2='445.08' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='135.79' y1='442.83' x2='135.79' y2='445.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.45' y1='442.83' x2='135.45' y2='445.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.1' y1='442.83' x2='135.1' y2='445.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.45' y1='450.77' x2='135.45' y2='453.02' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='135.79' y1='450.77' x2='135.79' y2='453.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.45' y1='450.77' x2='135.45' y2='453.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='135.1' y1='450.77' x2='135.1' y2='453.02' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='135.45' y1='457.43' x2='165.51' y2='457.43' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='141.05' y1='457.43' x2='143.3' y2='457.43' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='141.05' y1='457.09' x2='143.3' y2='457.09' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='141.05' y1='457.43' x2='143.3' y2='457.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='141.05' y1='457.77' x2='143.3' y2='457.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='148.95' y1='457.43' x2='151.2' y2='457.43' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='148.95' y1='457.09' x2='151.2' y2='457.09' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='148.95' y1='457.43' x2='151.2' y2='457.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='148.95' y1='457.77' x2='151.2' y2='457.77' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.39' y1='457.43' x2='161.64' y2='457.43' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='159.39' y1='457.09' x2='161.64' y2='457.09' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.39' y1='457.43' x2='161.64' y2='457.43' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.39' y1='457.77' x2='161.64' y2='457.77' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M458.69 832.92L458.69 854.15L458.69 865.41L440.04 865.41L440.04 854.15L430.69 854.15L430.69 832.92Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.69' y1='832.92' x2='458.69' y2='854.15' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.69' y1='837.76' x2='458.69' y2='840.01' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.69' y1='837.76' x2='458.69' y2='835.51' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 458.69 840.01 A 2.25 2.25 0 0 1 458.69 835.51' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='458.69' y1='846.55' x2='458.69' y2='848.8' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='459.03' y1='846.55' x2='459.03' y2='848.8' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.69' y1='846.55' x2='458.69' y2='848.8' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.35' y1='846.55' x2='458.35' y2='848.8' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.69' y1='854.15' x2='458.69' y2='865.41' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.69' y1='865.41' x2='440.04' y2='865.41' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='452.74' y1='865.41' x2='445.99' y2='865.41' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='440.04' y1='865.41' x2='440.04' y2='854.15' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='440.04' y1='854.15' x2='430.69' y2='854.15' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='436.2' y1='854.15' x2='433.95' y2='854.15' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='436.2' y1='854.49' x2='433.95' y2='854.49' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='436.2' y1='854.15' x2='433.95' y2='854.15' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='436.2' y1='853.81' x2='433.95' y2='853.81' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='430.69' y1='854.15' x2='430.69' y2='832.92' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='430.69' y1='849.71' x2='430.69' y2='847.46' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='430.35' y1='849.71' x2='430.35' y2='847.46' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.69' y1='849.71' x2='430.69' y2='847.46' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='431.03' y1='849.71' x2='431.03' y2='847.46' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.69' y1='839.93' x2='430.69' y2='837.68' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='430.35' y1='839.93' x2='430.35' y2='837.68' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.69' y1='839.93' x2='430.69' y2='837.68' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='431.03' y1='839.93' x2='431.03' y2='837.68' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='430.69' y1='832.92' x2='458.69' y2='832.92' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='437.66' y1='832.92' x2='439.91' y2='832.92' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='437.66' y1='832.58' x2='439.91' y2='832.58' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='437.66' y1='832.92' x2='439.91' y2='832.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='437.66' y1='833.26' x2='439.91' y2='833.26' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='450.34' y1='832.92' x2='452.59' y2='832.92' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='450.34' y1='832.58' x2='452.59' y2='832.58' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='450.34' y1='832.92' x2='452.59' y2='832.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='450.34' y1='833.26' x2='452.59' y2='833.26' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M458.17 765.01L458.17 798.43L458.17 811.32L444.42 811.32L444.42 798.43L439.99 798.43L439.99 765.01Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.17' y1='765.01' x2='458.17' y2='798.43' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='774.36' x2='458.17' y2='776.61' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='774.36' x2='458.17' y2='772.1' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 458.17 776.61 A 2.25 2.25 0 0 1 458.17 772.1' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='782.59' x2='458.17' y2='784.84' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.51' y1='782.59' x2='458.51' y2='784.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='782.59' x2='458.17' y2='784.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='457.83' y1='782.59' x2='457.83' y2='784.84' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='789.47' x2='458.17' y2='791.72' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.51' y1='789.47' x2='458.51' y2='791.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='789.47' x2='458.17' y2='791.72' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='457.83' y1='789.47' x2='457.83' y2='791.72' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.17' y1='798.43' x2='458.17' y2='811.32' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.17' y1='801.5' x2='458.17' y2='808.25' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.17' y1='811.32' x2='444.42' y2='811.32' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='444.42' y1='811.32' x2='444.42' y2='798.43' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='444.42' y1='798.43' x2='439.99' y2='798.43' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='439.99' y1='798.43' x2='439.99' y2='765.01' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='439.99' y1='794.05' x2='439.99' y2='791.8' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='439.65' y1='794.05' x2='439.65' y2='791.8' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='439.99' y1='794.05' x2='439.99' y2='791.8' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='440.33' y1='794.05' x2='440.33' y2='791.8' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='439.99' y1='781.13' x2='439.99' y2='778.88' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='439.65' y1='781.13' x2='439.65' y2='778.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='439.99' y1='781.13' x2='439.99' y2='778.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='440.33' y1='781.13' x2='440.33' y2='778.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='439.99' y1='773.82' x2='439.99' y2='771.57' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='439.65' y1='773.82' x2='439.65' y2='771.57' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='439.99' y1='773.82' x2='439.99' y2='771.57' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='440.33' y1='773.82' x2='440.33' y2='771.57' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='439.99' y1='765.01' x2='458.17' y2='765.01' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='445.11' y1='765.01' x2='447.36' y2='765.01' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='445.11' y1='764.67' x2='447.36' y2='764.67' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='445.11' y1='765.01' x2='447.36' y2='765.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='445.11' y1='765.35' x2='447.36' y2='765.35' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='451.75' y1='765.01' x2='454' y2='765.01' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='451.75' y1='764.67' x2='454' y2='764.67' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='451.75' y1='765.01' x2='454' y2='765.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='451.75' y1='765.35' x2='454' y2='765.35' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M455.02 746.33L455.02 712.96L455.02 700.46L435.65 700.46L435.65 712.96L432.44 712.96L432.44 746.33Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='455.02' y1='746.33' x2='455.02' y2='712.96' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='740.68' x2='455.02' y2='738.43' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='740.68' x2='455.02' y2='738.43' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 455.02 738.43 A 2.25 2.25 0 0 1 455.02 738.43' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='732.1' x2='455.02' y2='729.85' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='454.68' y1='732.1' x2='454.68' y2='729.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='732.1' x2='455.02' y2='729.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.36' y1='732.1' x2='455.36' y2='729.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='719.75' x2='455.02' y2='717.5' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='454.68' y1='719.75' x2='454.68' y2='717.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='719.75' x2='455.02' y2='717.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.36' y1='719.75' x2='455.36' y2='717.5' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='455.02' y1='712.96' x2='455.02' y2='700.46' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='455.02' y1='706.71' x2='455.02' y2='706.71' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='455.02' y1='700.46' x2='435.65' y2='700.46' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='435.65' y1='700.46' x2='435.65' y2='712.96' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='435.65' y1='712.96' x2='432.44' y2='712.96' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='432.44' y1='712.96' x2='432.44' y2='746.33' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='432.44' y1='719.8' x2='432.44' y2='722.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='432.78' y1='719.8' x2='432.78' y2='722.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.44' y1='719.8' x2='432.44' y2='722.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.1' y1='719.8' x2='432.1' y2='722.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.44' y1='729.8' x2='432.44' y2='732.05' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='432.78' y1='729.8' x2='432.78' y2='732.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.44' y1='729.8' x2='432.44' y2='732.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.1' y1='729.8' x2='432.1' y2='732.05' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.44' y1='736.6' x2='432.44' y2='738.85' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='432.78' y1='736.6' x2='432.78' y2='738.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.44' y1='736.6' x2='432.44' y2='738.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='432.1' y1='736.6' x2='432.1' y2='738.85' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='432.44' y1='746.33' x2='455.02' y2='746.33' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='437.37' y1='746.33' x2='439.62' y2='746.33' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='437.37' y1='745.99' x2='439.62' y2='745.99' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='437.37' y1='746.33' x2='439.62' y2='746.33' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='437.37' y1='746.67' x2='439.62' y2='746.67' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='447.94' y1='746.33' x2='450.19' y2='746.33' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='447.94' y1='745.99' x2='450.19' y2='745.99' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='447.94' y1='746.33' x2='450.19' y2='746.33' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='447.94' y1='746.67' x2='450.19' y2='746.67' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M459.27 673.36L459.27 649.92L435.99 649.92L435.99 673.36Z'/>
+<rect class='dash' x='459.27' y='655.25' width='6.95' height='12.79'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='459.27' y1='673.36' x2='459.27' y2='649.92' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='459.27' y1='662.77' x2='459.27' y2='660.52' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='459.27' y1='662.77' x2='459.27' y2='660.52' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 459.27 660.52 A 2.25 2.25 0 0 1 459.27 660.52' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='459.27' y1='656.7' x2='459.27' y2='654.45' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.93' y1='656.7' x2='458.93' y2='654.45' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='459.27' y1='656.7' x2='459.27' y2='654.45' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='459.61' y1='656.7' x2='459.61' y2='654.45' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='459.27' y1='649.92' x2='435.99' y2='649.92' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='453.49' y1='649.92' x2='451.24' y2='649.92' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='453.49' y1='650.26' x2='451.24' y2='650.26' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='453.49' y1='649.92' x2='451.24' y2='649.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='453.49' y1='649.58' x2='451.24' y2='649.58' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='444.5' y1='649.92' x2='442.25' y2='649.92' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='444.5' y1='650.26' x2='442.25' y2='650.26' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='444.5' y1='649.92' x2='442.25' y2='649.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='444.5' y1='649.58' x2='442.25' y2='649.58' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='435.99' y1='649.92' x2='435.99' y2='673.36' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='654.74' x2='435.99' y2='656.99' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='436.33' y1='654.74' x2='436.33' y2='656.99' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='654.74' x2='435.99' y2='656.99' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.64' y1='654.74' x2='435.64' y2='656.99' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='665.46' x2='435.99' y2='667.71' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='436.33' y1='665.46' x2='436.33' y2='667.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='665.46' x2='435.99' y2='667.71' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.64' y1='665.46' x2='435.64' y2='667.71' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='435.99' y1='673.36' x2='459.27' y2='673.36' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='442.8' y1='673.36' x2='445.05' y2='673.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='442.8' y1='673.02' x2='445.05' y2='673.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.8' y1='673.36' x2='445.05' y2='673.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.8' y1='673.7' x2='445.05' y2='673.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='450.72' y1='673.36' x2='452.97' y2='673.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='450.72' y1='673.02' x2='452.97' y2='673.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='450.72' y1='673.36' x2='452.97' y2='673.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='450.72' y1='673.7' x2='452.97' y2='673.7' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M458.6 527.21L458.6 559.09L458.6 579.16L439.43 579.16L439.43 559.09L441.97 559.09L441.97 527.21Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.6' y1='527.21' x2='458.6' y2='559.09' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='531.06' x2='458.6' y2='533.31' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='531.06' x2='458.6' y2='528.81' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 458.6 533.31 A 2.25 2.25 0 0 1 458.6 528.81' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='539.94' x2='458.6' y2='542.19' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.94' y1='539.94' x2='458.94' y2='542.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='539.94' x2='458.6' y2='542.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.26' y1='539.94' x2='458.26' y2='542.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='551.44' x2='458.6' y2='553.69' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.94' y1='551.44' x2='458.94' y2='553.69' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='551.44' x2='458.6' y2='553.69' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.26' y1='551.44' x2='458.26' y2='553.69' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.6' y1='559.09' x2='458.6' y2='579.16' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.6' y1='563.12' x2='458.6' y2='575.12' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.6' y1='579.16' x2='439.43' y2='579.16' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='439.43' y1='579.16' x2='439.43' y2='559.09' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='439.43' y1='559.09' x2='441.97' y2='559.09' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='441.97' y1='559.09' x2='441.97' y2='527.21' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='441.97' y1='552.05' x2='441.97' y2='549.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='441.63' y1='552.05' x2='441.63' y2='549.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='441.97' y1='552.05' x2='441.97' y2='549.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.32' y1='552.05' x2='442.32' y2='549.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='441.97' y1='544.26' x2='441.97' y2='542.01' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='441.63' y1='544.26' x2='441.63' y2='542.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='441.97' y1='544.26' x2='441.97' y2='542.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.32' y1='544.26' x2='442.32' y2='542.01' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='441.97' y1='536.61' x2='441.97' y2='534.36' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='441.63' y1='536.61' x2='441.63' y2='534.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='441.97' y1='536.61' x2='441.97' y2='534.36' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.32' y1='536.61' x2='442.32' y2='534.36' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='441.97' y1='527.21' x2='458.6' y2='527.21' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='446.4' y1='527.21' x2='448.65' y2='527.21' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='446.4' y1='526.87' x2='448.65' y2='526.87' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='446.4' y1='527.21' x2='448.65' y2='527.21' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='446.4' y1='527.55' x2='448.65' y2='527.55' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='452.65' y1='527.21' x2='454.9' y2='527.21' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='452.65' y1='526.87' x2='454.9' y2='526.87' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='452.65' y1='527.21' x2='454.9' y2='527.21' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='452.65' y1='527.55' x2='454.9' y2='527.55' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M458.15 460.88L458.15 424.14L458.15 408.52L440.02 408.52L440.02 424.14L435.99 424.14L435.99 460.88Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.15' y1='460.88' x2='458.15' y2='424.14' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='453.13' x2='458.15' y2='450.88' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='453.13' x2='458.15' y2='450.88' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 458.15 450.88 A 2.25 2.25 0 0 1 458.15 450.88' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='446.44' x2='458.15' y2='444.19' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='457.81' y1='446.44' x2='457.81' y2='444.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='446.44' x2='458.15' y2='444.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.49' y1='446.44' x2='458.49' y2='444.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='432.85' x2='458.15' y2='430.6' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='457.81' y1='432.85' x2='457.81' y2='430.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='432.85' x2='458.15' y2='430.6' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='458.49' y1='432.85' x2='458.49' y2='430.6' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.15' y1='424.14' x2='458.15' y2='408.52' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='458.15' y1='419.71' x2='458.15' y2='412.96' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='458.15' y1='408.52' x2='440.02' y2='408.52' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='440.02' y1='408.52' x2='440.02' y2='424.14' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='440.02' y1='424.14' x2='435.99' y2='424.14' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='435.99' y1='424.14' x2='435.99' y2='460.88' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='429.15' x2='435.99' y2='431.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='436.33' y1='429.15' x2='436.33' y2='431.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='429.15' x2='435.99' y2='431.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.65' y1='429.15' x2='435.65' y2='431.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='442.15' x2='435.99' y2='444.4' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='436.33' y1='442.15' x2='436.33' y2='444.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='442.15' x2='435.99' y2='444.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.65' y1='442.15' x2='435.65' y2='444.4' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='451.31' x2='435.99' y2='453.56' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='436.33' y1='451.31' x2='436.33' y2='453.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.99' y1='451.31' x2='435.99' y2='453.56' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='435.65' y1='451.31' x2='435.65' y2='453.56' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='435.99' y1='460.88' x2='458.15' y2='460.88' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='442.5' y1='460.88' x2='444.75' y2='460.88' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='442.5' y1='460.53' x2='444.75' y2='460.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.5' y1='460.88' x2='444.75' y2='460.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='442.5' y1='461.22' x2='444.75' y2='461.22' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='451.33' y1='460.88' x2='453.58' y2='460.88' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='451.33' y1='460.53' x2='453.58' y2='460.53' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='451.33' y1='460.88' x2='453.58' y2='460.88' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='451.33' y1='461.22' x2='453.58' y2='461.22' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M454.7 386.19L454.7 363.42L454.7 350.72L437.47 350.72L437.47 363.42L430.93 363.42L430.93 386.19Z'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='454.7' y1='386.19' x2='454.7' y2='363.42' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='383.6' x2='454.7' y2='381.35' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='383.6' x2='454.7' y2='381.35' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 454.7 381.35 A 2.25 2.25 0 0 1 454.7 381.35' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='376.27' x2='454.7' y2='374.02' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='454.36' y1='376.27' x2='454.36' y2='374.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='376.27' x2='454.7' y2='374.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.04' y1='376.27' x2='455.04' y2='374.02' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='369.54' x2='454.7' y2='367.28' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='454.36' y1='369.54' x2='454.36' y2='367.28' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='369.54' x2='454.7' y2='367.28' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='455.04' y1='369.54' x2='455.04' y2='367.28' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='454.7' y1='363.42' x2='454.7' y2='350.72' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='454.7' y1='357.07' x2='454.7' y2='357.07' stroke='#f0efe0' stroke-width='1.81'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='454.7' y1='350.72' x2='437.47' y2='350.72' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='437.47' y1='350.72' x2='437.47' y2='363.42' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='437.47' y1='363.42' x2='430.93' y2='363.42' stroke-width='0.95'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='430.93' y1='363.42' x2='430.93' y2='386.19' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='430.93' y1='368.39' x2='430.93' y2='370.64' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='431.27' y1='368.39' x2='431.27' y2='370.64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.93' y1='368.39' x2='430.93' y2='370.64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.59' y1='368.39' x2='430.59' y2='370.64' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.93' y1='378.67' x2='430.93' y2='380.92' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='431.27' y1='378.67' x2='431.27' y2='380.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.93' y1='378.67' x2='430.93' y2='380.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='430.59' y1='378.67' x2='430.59' y2='380.92' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='430.93' y1='386.19' x2='454.7' y2='386.19' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='437.52' y1='386.19' x2='439.77' y2='386.19' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='437.52' y1='385.85' x2='439.77' y2='385.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='437.52' y1='386.19' x2='439.77' y2='386.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='437.52' y1='386.54' x2='439.77' y2='386.54' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='445.53' y1='386.19' x2='447.79' y2='386.19' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='445.53' y1='385.85' x2='447.79' y2='385.85' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='445.53' y1='386.19' x2='447.79' y2='386.19' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='445.53' y1='386.54' x2='447.79' y2='386.54' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M100.34 364.04L128.71 364.04L128.71 341.16L100.34 341.16Z'/>
+<rect class='dash' x='103.4' y='364.04' width='22.24' height='6.96'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='100.34' y1='364.04' x2='128.71' y2='364.04' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='113.4' y1='364.04' x2='115.65' y2='364.04' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='113.4' y1='364.04' x2='113.4' y2='361.79' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 115.65 364.04 A 2.25 2.25 0 0 1 113.4 361.79' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='121.1' y1='364.04' x2='123.35' y2='364.04' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='121.1' y1='363.7' x2='123.35' y2='363.7' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='121.1' y1='364.04' x2='123.35' y2='364.04' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='121.1' y1='364.38' x2='123.35' y2='364.38' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='128.71' y1='364.04' x2='128.71' y2='341.16' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='128.71' y1='358.04' x2='128.71' y2='355.79' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='128.37' y1='358.04' x2='128.37' y2='355.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='128.71' y1='358.04' x2='128.71' y2='355.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.06' y1='358.04' x2='129.06' y2='355.79' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='128.71' y1='350.17' x2='128.71' y2='347.92' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='128.37' y1='350.17' x2='128.37' y2='347.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='128.71' y1='350.17' x2='128.71' y2='347.92' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='129.06' y1='350.17' x2='129.06' y2='347.92' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='128.71' y1='341.16' x2='100.34' y2='341.16' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='122.75' y1='341.16' x2='120.5' y2='341.16' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='122.75' y1='341.5' x2='120.5' y2='341.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='122.75' y1='341.16' x2='120.5' y2='341.16' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='122.75' y1='340.82' x2='120.5' y2='340.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='116.55' y1='341.16' x2='114.3' y2='341.16' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='116.55' y1='341.5' x2='114.3' y2='341.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='116.55' y1='341.16' x2='114.3' y2='341.16' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='116.55' y1='340.82' x2='114.3' y2='340.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='108.21' y1='341.16' x2='105.96' y2='341.16' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='108.21' y1='341.5' x2='105.96' y2='341.5' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='108.21' y1='341.16' x2='105.96' y2='341.16' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='108.21' y1='340.82' x2='105.96' y2='340.82' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='100.34' y1='341.16' x2='100.34' y2='364.04' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='100.34' y1='347.12' x2='100.34' y2='349.37' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='100.68' y1='347.12' x2='100.68' y2='349.37' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='100.34' y1='347.12' x2='100.34' y2='349.37' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='99.99' y1='347.12' x2='99.99' y2='349.37' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='100.34' y1='355.81' x2='100.34' y2='358.06' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='100.68' y1='355.81' x2='100.68' y2='358.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='100.34' y1='355.81' x2='100.34' y2='358.06' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='99.99' y1='355.81' x2='99.99' y2='358.06' stroke='#3a332b' stroke-width='0.52'/>
+<path class='floor' fill-rule='evenodd' d='M152.54 362.44L175.73 362.44L175.73 331.08L152.54 331.08Z'/>
+<rect class='dash' x='154.94' y='362.44' width='18.39' height='6.4'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='152.54' y1='362.44' x2='175.73' y2='362.44' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='163.01' y1='362.44' x2='165.26' y2='362.44' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='163.01' y1='362.44' x2='163.01' y2='360.19' stroke='#3a332b' stroke-width='0.52'/>
+<path vector-effect='non-scaling-stroke' d='M 165.26 362.44 A 2.25 2.25 0 0 1 163.01 360.19' fill='none' stroke='#8a7f70' stroke-width='0.52' stroke-dasharray='7 5'/>
+<line vector-effect='non-scaling-stroke' x1='169.66' y1='362.44' x2='171.91' y2='362.44' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='169.66' y1='362.1' x2='171.91' y2='362.1' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='169.66' y1='362.44' x2='171.91' y2='362.44' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='169.66' y1='362.78' x2='171.91' y2='362.78' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='175.73' y1='362.44' x2='175.73' y2='331.08' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='175.73' y1='356.77' x2='175.73' y2='354.52' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='175.39' y1='356.77' x2='175.39' y2='354.52' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='175.73' y1='356.77' x2='175.73' y2='354.52' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='176.07' y1='356.77' x2='176.07' y2='354.52' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='175.73' y1='347.67' x2='175.73' y2='345.42' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='175.39' y1='347.67' x2='175.39' y2='345.42' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='175.73' y1='347.67' x2='175.73' y2='345.42' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='176.07' y1='347.67' x2='176.07' y2='345.42' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='175.73' y1='337.49' x2='175.73' y2='335.24' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='175.39' y1='337.49' x2='175.39' y2='335.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='175.73' y1='337.49' x2='175.73' y2='335.24' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='176.07' y1='337.49' x2='176.07' y2='335.24' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='175.73' y1='331.08' x2='152.54' y2='331.08' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='170.52' y1='331.08' x2='168.27' y2='331.08' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='170.52' y1='331.42' x2='168.27' y2='331.42' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='170.52' y1='331.08' x2='168.27' y2='331.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='170.52' y1='330.73' x2='168.27' y2='330.73' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.59' y1='331.08' x2='157.34' y2='331.08' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='159.59' y1='331.42' x2='157.34' y2='331.42' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.59' y1='331.08' x2='157.34' y2='331.08' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='159.59' y1='330.73' x2='157.34' y2='330.73' stroke='#3a332b' stroke-width='0.52'/>
+<line class='wall' vector-effect='non-scaling-stroke' x1='152.54' y1='331.08' x2='152.54' y2='362.44' stroke-width='0.95'/>
+<line vector-effect='non-scaling-stroke' x1='152.54' y1='335.38' x2='152.54' y2='337.63' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='152.88' y1='335.38' x2='152.88' y2='337.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.54' y1='335.38' x2='152.54' y2='337.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.2' y1='335.38' x2='152.2' y2='337.63' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.54' y1='347.06' x2='152.54' y2='349.31' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='152.88' y1='347.06' x2='152.88' y2='349.31' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.54' y1='347.06' x2='152.54' y2='349.31' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.2' y1='347.06' x2='152.2' y2='349.31' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.54' y1='355.57' x2='152.54' y2='357.82' stroke='#f0efe0' stroke-width='1.81'/>
+<line vector-effect='non-scaling-stroke' x1='152.88' y1='355.57' x2='152.88' y2='357.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.54' y1='355.57' x2='152.54' y2='357.82' stroke='#3a332b' stroke-width='0.52'/>
+<line vector-effect='non-scaling-stroke' x1='152.2' y1='355.57' x2='152.2' y2='357.82' stroke='#3a332b' stroke-width='0.52'/>
+<rect x='177.24' y='780.16' width='36.01' height='66.01' fill='#8f887a' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='195.25' y1='782.16' x2='195.25' y2='844.17' stroke-dasharray='5 4'/>
+<circle cx='138.99' cy='764.41' r='8.25' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='138.99' cy='764.41' r='1.49' fill='#57503f'/>
+<line class='thin' x1='138.99' y1='764.41' x2='138.99' y2='756.15'/>
+<circle cx='161.49' cy='764.41' r='8.25' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='161.49' cy='764.41' r='1.49' fill='#57503f'/>
+<line class='thin' x1='161.49' y1='764.41' x2='161.49' y2='756.15'/>
+<circle cx='184' cy='764.41' r='8.25' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='184' cy='764.41' r='1.49' fill='#57503f'/>
+<line class='thin' x1='184' y1='764.41' x2='184' y2='756.15'/>
+<circle cx='206.5' cy='764.41' r='8.25' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='206.5' cy='764.41' r='1.49' fill='#57503f'/>
+<line class='thin' x1='206.5' y1='764.41' x2='206.5' y2='756.15'/>
+<circle cx='229' cy='764.41' r='8.25' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='229' cy='764.41' r='1.49' fill='#57503f'/>
+<line class='thin' x1='229' y1='764.41' x2='229' y2='756.15'/>
+<circle cx='251.51' cy='764.41' r='8.25' fill='#c5c0b4' stroke='#57503f' stroke-width='2'/>
+<circle cx='251.51' cy='764.41' r='1.49' fill='#57503f'/>
+<line class='thin' x1='251.51' y1='764.41' x2='251.51' y2='756.15'/>
+<rect x='274.68' y='821.49' width='74.7' height='51.31' fill='#b8b0a0' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='276.68' y1='847.14' x2='347.38' y2='847.14' stroke-dasharray='5 4'/>
+<text class='small' x='312.03' y='884.8' text-anchor='middle'>GAS STATION</text>
+<rect x='179.28' y='655.27' width='15' height='16.5' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='186.78' y1='657.27' x2='186.78' y2='669.77' stroke-dasharray='5 4'/>
+<rect x='231.92' y='659.9' width='15' height='16.5' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='239.42' y1='661.9' x2='239.42' y2='674.4' stroke-dasharray='5 4'/>
+<rect x='309.2' y='637.03' width='6.9' height='7.8' fill='#c4bcab' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='312.65' y1='639.03' x2='312.65' y2='642.83' stroke-dasharray='5 4'/>
+<rect x='273.74' y='655.52' width='15' height='16.5' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='281.25' y1='657.52' x2='281.25' y2='670.02' stroke-dasharray='5 4'/>
+<rect x='179.28' y='463.5' width='15' height='16.5' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='186.78' y1='465.5' x2='186.78' y2='478' stroke-dasharray='5 4'/>
+<rect x='254.24' y='459.11' width='15' height='16.5' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='261.74' y1='461.11' x2='261.74' y2='473.61' stroke-dasharray='5 4'/>
+<rect x='273.74' y='454.26' width='15' height='16.5' fill='#b9b09e' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='281.25' y1='456.26' x2='281.25' y2='468.77' stroke-dasharray='5 4'/>
+<rect x='194.34' y='580.66' width='18' height='18' fill='#c6bcaa' fill-opacity='1' stroke='#3a332b' stroke-width='2.5'/>
+<line class='thin' x1='196.34' y1='589.66' x2='210.35' y2='589.66' stroke-dasharray='5 4'/>
+<text class='roadlabel' x='248.06' y='903.55' text-anchor='middle'>MAIN STREET</text>
+<circle cx='656' cy='40' r='13' fill='none' stroke='#57503f' stroke-width='1.5'/>
+<line x1='656' y1='49' x2='656' y2='31' stroke='#57503f' stroke-width='1.5'/>
+<path d='M 656 30 L 652 38 L 660 38 Z' fill='#57503f'/>
+<text class='small' x='656' y='64' text-anchor='middle'>N</text>
+<text class='title' x='30' y='26'>SMALL TOWN — BRISTOL — SEED 1993 (CROSSROADS)</text>
+<text class='small' x='30' y='45'>seed 1993 · 24 houses · 16 outbuildings · drive aisles and walks shown — placement guide, not construction</text>
+<text class='small' x='30' y='59'>grid: section lines 1 mi · front doors open to walks · garage aprons face the lane (gravel rural / concrete town)</text>
+</svg>

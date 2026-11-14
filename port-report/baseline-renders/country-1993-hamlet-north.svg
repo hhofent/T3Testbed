@@ -1,0 +1,216 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='920' height='981' viewBox='0 0 920 981' font-family='Georgia, serif'>
+<style>
+.floor{fill:#e9e4d2}
+.wall{stroke:#3a332b;fill:none}
+.thin{stroke:#3a332b;stroke-width:1.3;fill:none}
+.dash{stroke:#8a7f70;stroke-width:1.3;fill:none;stroke-dasharray:7 5}
+.txt{fill:#3a332b;font-size:13px;text-anchor:middle}
+.small{fill:#57503f;font-size:11px}
+.title{fill:#3a332b;font-size:19px;font-weight:bold}
+.roadlabel{fill:#57503f;font-size:13px;letter-spacing:3px;text-anchor:middle}
+</style>
+<rect x='0' y='0' width='920' height='981' fill='#f0efe0'/>
+<rect x='30' y='661.96' width='274.76' height='292.57' fill='#dcd6b8'/>
+<rect x='30' y='380.42' width='274.76' height='281.54' fill='#ded9bd'/>
+<rect x='30' y='94.53' width='274.76' height='285.89' fill='#d6d0b4'/>
+<rect x='304.76' y='661.96' width='291.75' height='292.57' fill='#cbc4a2'/>
+<rect x='304.76' y='380.42' width='291.75' height='281.54' fill='#e4e0cb'/>
+<rect x='304.76' y='94.53' width='291.75' height='285.89' fill='#d2cbb0'/>
+<rect x='596.51' y='661.96' width='293.49' height='292.57' fill='#dcd6b8'/>
+<rect x='596.51' y='380.42' width='293.49' height='281.54' fill='#ded9bd'/>
+<rect x='596.51' y='94.53' width='293.49' height='285.89' fill='#d6d0b4'/>
+<circle cx='464.12' cy='658.01' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='464.56' cy='656.09' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='462.39' cy='653.83' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='458.46' cy='654.25' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='457.61' cy='654.69' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='457.23' cy='658.79' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='457.4' cy='659.95' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='458.64' cy='662.48' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='461.87' cy='661.39' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='462.51' cy='661.85' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='455.28' cy='291.92' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='454.34' cy='288.64' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='452.17' cy='287.15' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='450.53' cy='287.97' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='447.33' cy='289.49' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='448.15' cy='290.8' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='448.8' cy='294.15' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='449.31' cy='294.51' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='451.8' cy='296.22' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='453.77' cy='293.5' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='451.56' cy='757.67' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='449.87' cy='754.74' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='448.27' cy='753.97' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='444.63' cy='753.66' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='443.82' cy='754.35' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='442.59' cy='757.22' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='443.61' cy='759.96' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='445.46' cy='762.15' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='447.33' cy='761.16' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='449.2' cy='759.31' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='649.4' cy='509.16' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='649.19' cy='506.86' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='646.23' cy='504.57' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='644.45' cy='504.82' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='642.22' cy='506.64' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='641.96' cy='509.26' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='642.31' cy='511.24' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='643.58' cy='513.64' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='647.24' cy='512.23' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='649.04' cy='511.21' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='231.74' cy='516.72' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='231.5' cy='514.19' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='230.26' cy='512.36' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='227.8' cy='513.1' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='224.81' cy='513.51' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='224.27' cy='517.14' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='225.07' cy='519.86' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='227.65' cy='520.7' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='229.99' cy='520.3' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='232.13' cy='518.07' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='262.28' cy='517.62' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='261.79' cy='515' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='259.37' cy='513.22' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='256.74' cy='513.61' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='254.61' cy='514.89' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='255.08' cy='516.55' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='254.64' cy='519.99' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='256.8' cy='521.91' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='259.47' cy='520.11' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='262.42' cy='518.8' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='120.7' cy='164.65' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='118.86' cy='160.8' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='117.67' cy='160.58' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='116.96' cy='160.31' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='114.38' cy='161.15' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='114.42' cy='162.28' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='111.63' cy='164.28' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='115.08' cy='166.51' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='116.58' cy='168.66' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='117.91' cy='166.62' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='120.02' cy='166.73' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='70.79' cy='415.15' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='69.44' cy='414.23' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='69.45' cy='411.52' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='67.11' cy='410.77' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='64.98' cy='414.14' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='63' cy='415.08' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='65.75' cy='418.62' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='65.05' cy='419.1' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='67.99' cy='417.96' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='69.79' cy='416.95' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='82.15' cy='284.03' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='80.3' cy='283.02' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='78.46' cy='280.28' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='75.51' cy='283.1' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='73.37' cy='284.13' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='73.59' cy='285.71' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='75.51' cy='286.86' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='78.59' cy='287.02' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='79.37' cy='287.65' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='196.09' cy='774.71' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='198.22' cy='771.74' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='196.47' cy='770.59' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='193.98' cy='770.46' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='191.85' cy='771.78' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='189.26' cy='774.58' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='189.77' cy='775.74' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='193.74' cy='779.51' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='194.92' cy='777.88' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='197.03' cy='776.89' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='238.88' cy='280.52' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='239.42' cy='277.24' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='235.78' cy='277.99' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='233.07' cy='280.35' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='233.85' cy='282.16' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='239.01' cy='283.47' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='792.72' cy='696.74' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='792.79' cy='692.75' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='792.8' cy='692.81' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='789.29' cy='691.88' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='788.44' cy='694.1' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='787.25' cy='694.91' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='786.85' cy='697.37' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='786.75' cy='699.27' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='788.05' cy='698.81' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='791.51' cy='698.65' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<circle cx='792.6' cy='697.43' r='3.2' fill='#3f3b34' fill-opacity='0.75'/>
+<rect x='30' y='94.53' width='1.79' height='860' fill='#8f8b83'/>
+<rect x='888.21' y='94.53' width='1.79' height='860' fill='#8f8b83'/>
+<rect x='30' y='952.74' width='860' height='1.79' fill='#8f8b83'/>
+<rect x='30' y='94.53' width='860' height='1.79' fill='#8f8b83'/>
+<rect x='458.21' y='115.45' width='3.58' height='839.08' fill='#8f8b83'/>
+<rect x='30' y='522.74' width='403.41' height='3.58' fill='#8f8b83'/>
+<rect x='486.59' y='522.74' width='403.41' height='3.58' fill='#8f8b83'/>
+<rect x='30' y='111.65' width='403.62' height='3.58' fill='#8f8b83'/>
+<line x1='36' y1='113.44' x2='427.62' y2='113.44' stroke='#e8d44d' stroke-width='2' stroke-dasharray='14 12'/>
+<rect x='486.38' y='111.65' width='403.62' height='3.58' fill='#8f8b83'/>
+<line x1='492.38' y1='113.44' x2='884' y2='113.44' stroke='#e8d44d' stroke-width='2' stroke-dasharray='14 12'/>
+<rect x='433.62' y='111.65' width='52.75' height='3.58' fill='#8f8b83'/>
+<line x1='439.62' y1='113.44' x2='480.38' y2='113.44' stroke='#e8d44d' stroke-width='2' stroke-dasharray='14 12'/>
+<rect x='433.62' y='100.19' width='52.75' height='1.95' fill='#8f8b83'/>
+<rect x='433.62' y='94.53' width='1.95' height='17.12' fill='#8f8b83'/>
+<rect x='453.71' y='94.53' width='1.95' height='17.12' fill='#8f8b83'/>
+<rect x='484.42' y='94.53' width='1.95' height='17.12' fill='#8f8b83'/>
+<path d='M439.31 115.91L441.82 115.91L441.82 117.21L439.31 117.21Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M454.18 116.21L451.7 116.21L450.56 116.21L450.56 117.31L451.7 117.31L451.7 117.76L454.18 117.76Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M464.03 115.98L466.12 115.98L466.12 117.83L464.03 117.83Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M440.46 99.29L442.31 99.29L442.31 97.55L440.46 97.55Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M443.7 99.55L445.06 99.55L445.06 97.92L443.7 97.92Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M449.02 99.72L447.25 99.72L446.13 99.72L446.13 98.42L447.25 98.42L447.25 97.84L449.02 97.84Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M464.89 99.59L466.59 99.59L466.59 98.45L464.89 98.45Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M471.5 99.59L468.69 99.59L467.48 99.59L467.48 98.21L468.69 98.21L468.69 98.46L471.5 98.46Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M473.13 99.63L474.87 99.63L474.87 98.21L473.13 98.21Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M477.44 99.5L478.84 99.5L478.84 98L477.44 98Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M436.37 97.15L436.37 98.94L438.67 98.94L438.67 97.15Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M456.55 99.57L456.55 97.58L456.55 96.48L457.91 96.48L457.91 97.58L458.31 97.58L458.31 99.57Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M483.74 99.17L483.74 97.47L482.05 97.47L482.05 99.17Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M442.02 102.78L443.62 102.78L443.62 104.8L442.02 104.8Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M450.49 102.75L452.17 102.75L452.17 105.02L450.49 105.02Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M490.03 110.68L490.03 109.09L488.54 109.09L488.54 110.68Z' fill='#4c483f' fill-opacity='0.92'/>
+<path d='M489.91 101.34L489.91 98.71L489.91 97.57L488.52 97.57L488.52 98.71L488.28 98.71L488.28 101.34Z' fill='#4c483f' fill-opacity='0.92'/>
+<rect x='444.9' y='104.51' width='2.61' height='4.78' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='445.3' cy='103.45' r='1.6' fill='#3f3b34'/>
+<circle cx='446.93' cy='103.45' r='1.6' fill='#3f3b34'/>
+<rect x='456.43' y='108.36' width='4.73' height='2.86' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='466.25' y='108.17' width='3.74' height='3.04' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='475.69' y='108' width='5.21' height='3.21' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='441.47' y='95.55' width='1' height='1.35' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='442.8' y='96.29' width='0.87' height='0.98' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='461.18' y='95.95' width='1.74' height='2.17' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='464.26' y='96.7' width='1.11' height='1.1' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='474.84' y='96.19' width='1.1' height='1.37' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='476.27' y='95.98' width='1.17' height='1.37' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='459.08' y='656.87' width='2.28' height='2.61' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='461.69' y='653.85' width='1.85' height='2.99' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='463.7' cy='652.96' r='1.6' fill='#3f3b34'/>
+<circle cx='464.89' cy='652.96' r='1.6' fill='#3f3b34'/>
+<rect x='450.05' y='290.05' width='2.28' height='2.61' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='452.66' y='287.03' width='1.85' height='2.99' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='454.67' cy='286.14' r='1.6' fill='#3f3b34'/>
+<circle cx='455.86' cy='286.14' r='1.6' fill='#3f3b34'/>
+<rect x='445.33' y='756.15' width='2.28' height='2.61' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='447.94' y='753.13' width='1.85' height='2.99' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='449.95' cy='752.24' r='1.6' fill='#3f3b34'/>
+<circle cx='451.14' cy='752.24' r='1.6' fill='#3f3b34'/>
+<rect x='644.26' y='508.09' width='2.28' height='2.61' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='646.86' y='505.08' width='1.85' height='2.99' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='648.87' cy='504.19' r='1.6' fill='#3f3b34'/>
+<circle cx='650.07' cy='504.19' r='1.6' fill='#3f3b34'/>
+<rect x='227.49' y='515.25' width='2.28' height='2.61' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='230.1' y='512.24' width='1.85' height='2.99' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='232.1' cy='511.35' r='1.6' fill='#3f3b34'/>
+<circle cx='233.3' cy='511.35' r='1.6' fill='#3f3b34'/>
+<rect x='256.93' y='515.92' width='2.28' height='2.61' fill='#3f3b34' fill-opacity='0.95'/>
+<rect x='259.53' y='512.91' width='1.85' height='2.99' fill='#3f3b34' fill-opacity='0.95'/>
+<circle cx='261.54' cy='512.01' r='1.6' fill='#3f3b34'/>
+<circle cx='262.74' cy='512.01' r='1.6' fill='#3f3b34'/>
+<circle cx='886' cy='40' r='13' fill='none' stroke='#57503f' stroke-width='1.5'/>
+<line x1='886' y1='49' x2='886' y2='31' stroke='#57503f' stroke-width='1.5'/>
+<path d='M 886 30 L 882 38 L 890 38 Z' fill='#57503f'/>
+<text class='small' x='886' y='64' text-anchor='middle'>N</text>
+<text class='title' x='30' y='26'>3 MI CELL — SEED 1993 (HAMLET)</text>
+<text class='small' x='30' y='45'>seed 1993 · 17 houses · 36 outbuildings · drive aisles and walks shown — placement guide, not construction</text>
+<text class='small' x='30' y='59'>grid: section lines 1 mi · front doors open to walks · garage aprons face the lane (gravel rural / concrete town)</text>
+</svg>

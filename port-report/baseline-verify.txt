@@ -1,0 +1,15 @@
+SpawnGuide world verification - seed 1993
+  [PASS] same window twice is byte-identical - 1174484 bytes
+  [PASS] 100 miles out is still reproducible - center 0, 100 mi ú 1 towns ú 9 farms
+  [PASS] overlapping windows agree on every building/tree - 137 shared elements, max drift 0.10 ft
+  [PASS] 3-mile cell equals the same land in the 9-mile view - 27 elements in the cell
+  [PASS] town ladder: 20-mile minimum spacing, big town rare - 12 towns / 330 mi ú min gap 20 mi ú 5 crossroads, 5 hamlet, 1 village, 1 town
+  [PASS] towns tend to be near rail lines - 12 of 12 within 16 mi of rail
+  [PASS] no building overlaps another (towns, farms, outbuildings) - 170 houses ú 273 outbuildings ú 0 overlaps
+  [PASS] rivers run south and tributaries merge into them - trunk rivers every 80 mi, tributary heads every 20 mi
+  [PASS] rail crosses roads square, never almost parallel - 16 rail lines, all off their own road by 40-380 ft, all under 12ø off square
+  [PASS] rail towns get a branch spur and an elevator on it - 5 of 16 towns on a branch spur, 5 with the elevator on it
+  [PASS] the branch spur runs clear of the houses - 2 spur corridors, 0 house fronts in the way
+  [PASS] every town sits on a paved road - 16 of 16 towns on the paved grid
+  [PASS] no town street ends without an exit - 0 dangling street ends
+all checks passed
