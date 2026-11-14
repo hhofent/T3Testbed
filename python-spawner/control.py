@@ -1,5 +1,5 @@
 """Loopback-only control page, served with the Python standard library."""
-import base64,json
+import base64,json,subprocess
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from settings import Settings,CATALOG,applied
@@ -8,6 +8,20 @@ from region import make_region,spawn_region
 from sweep import statistics
 
 PAGE=Path(__file__).with_name('control.html')
+ROOT=Path(__file__).resolve().parent
+
+def version_label():
+ try: version=(ROOT/'VERSION').read_text(encoding='utf-8').strip()
+ except OSError: version='unknown'
+ try:
+  digest=subprocess.check_output(['git','rev-parse','--short','HEAD'],cwd=ROOT,stderr=subprocess.DEVNULL,text=True).strip()
+ except (OSError,subprocess.CalledProcessError): digest=''
+ digest=digest or 'unknown'
+ return f'{version} ({digest})'
+
+def page_bytes():
+ return PAGE.read_text(encoding='utf-8').replace('__VERSION__',version_label()).encode()
+
 def schema(settings=None):
  from ui_schema import presentation
  catalog=plain(CATALOG)
@@ -43,7 +57,7 @@ class Handler(BaseHTTPRequestHandler):
   try: self.wfile.write(body)
   except (BrokenPipeError,ConnectionResetError): pass
  def do_GET(self):
-  if self.path=='/': self.reply(200,PAGE.read_bytes(),'text/html; charset=utf-8')
+  if self.path=='/': self.reply(200,page_bytes(),'text/html; charset=utf-8')
   elif self.path=='/schema': self.reply(200,schema(getattr(self.server,"settings",None)))
   elif self.path.startswith('/preset/'):
    name=self.path.removeprefix('/preset/')
