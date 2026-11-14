@@ -1,3 +1,28 @@
+# Item 7 complete, 2026-11-14
+
+Stable world farm ownership thins the old 2.7/sq-mi placement to about 1.5/sq mi,
+without changing rural lot shapes, field subdivision or acreage placement.
+Farm-only access fractions position the existing yard along a measured 250-830 ft
+road-to-house lane; outbuildings, grove dots and chamfer rules are retained.
+The default rural.layout API keeps historical behavior unless world mode supplies
+an access fraction. A few close same-road yards can share a seeded entrance and
+60-ft front connector; old private road entries are trimmed, water is checked,
+and the resulting complete access paths remain <=830 ft. Overview stays farm dots.
+
+Fresh full run: 108 passed in 53.29s. New tests measure 1-2 farmsteads/sq mi for
+seeds 14/31/46 over 20x20 mi, inspect real generated access polylines against their
+250-830 ft lengths, and test shared entrance/trim ownership. Cache v21.
+
+Numbered implementation stages 1-7 are complete, with the item-6 caveat that
+6-10-mi town stations can be omitted by junction competition or floodplains.
+Commits: 1 e7f582d / edc4b44, 2 f0164fd, 3 b94b173, 4 f834d61, 5 2d14e32,
+6 95f48f5; this commit 7. REMAINING REQUIRED WORK: one shared PNG/browser style
+table and same-rectangle verification; changed world image rebaselines with
+explanation; fresh real-browser 3/10/30/96 mi and rail-road / correction-jog /
+bridge screenshots. Existing server 8002 is stale item-1 code; restart for captures.
+Read only files named below. Push only python-test/spawner, no PR/merge/rewrite.
+
+--- Prior checkpoint ---
 # Item 6 complete, 2026-11-14
 
 Town owners now follow seeded stations along N-S and E-W rail: candidate station

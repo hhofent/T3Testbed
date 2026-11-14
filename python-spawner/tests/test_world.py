@@ -392,3 +392,33 @@ def test_route_town_spacing_and_rail_industrial_frontage():
    buildings=[f for f in fs if f['kind']=='buildings' and f['id'].startswith(prefix)]
    assert any(f.get('use')=='depot' for f in buildings)
    assert any(f.get('use')=='elevator' for f in buildings)
+
+
+def test_farmstead_density_and_world_access_lane_lengths():
+ import math,json
+ from world import _tile,FT,share_farm_lanes,feature
+ from presets import document
+ from settings import applied
+ for seed in (14,31,46):
+  rect=(-10*MILE,-10*MILE,20*MILE,20*MILE)
+  scene=window(seed,rect,Settings({'stages.houses':False}),detail=False)
+  farms=[f for f in scene['features'] if f['kind']=='farms' and f['use']=='farmstead' and rect[0]<=f['rect'][0]<rect[0]+rect[2] and rect[1]<=f['rect'][1]<rect[1]+rect[3]]
+  assert 1<=len(farms)/400<=2
+ with applied(Settings()):
+  features=_tile(31,0,0,json.dumps(document(Settings()),sort_keys=True),True)
+  farms=[f for f in features if 'lane_length_ft' in f]
+  assert len(farms)>3
+  for farm in farms:
+   assert 250<=farm['lane_length_ft']<=830
+   assert abs(sum(math.dist(a,b) for a,b in zip(farm['access'],farm['access'][1:]))/FT(1)-farm['lane_length_ft'])<1e-6
+  # Deterministic shared entrance, with the old private road entrances trimmed.
+  for seed in range(100):
+   out=[feature('lots','a',rect=(0,0,1,1)),feature('lots','b',rect=(0,0,1,1)),feature('driveways','a:entry',rect=(0,0,FT(14),FT(150))),feature('driveways','b:entry',rect=(FT(400),0,FT(14),FT(150)))]
+   sites=[dict(id=id,road='same',access=[(FT(x),0),(FT(x),FT(140)),(FT(x),FT(350))],length=FT(350),entry_id=id+':entry') for id,x in [('a',7),('b',407)]]
+   share_farm_lanes(seed,out,sites)
+   if len(out)>4:
+    assert out[-1]['members']==['a','b']
+    assert out[2]['rect'][1]==out[3]['rect'][1]==FT(60)
+    assert out[0]['shared_lane']==out[1]['shared_lane']
+    break
+  else: assert False,'no seeded shared-lane cluster'

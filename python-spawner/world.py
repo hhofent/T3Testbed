@@ -241,7 +241,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
     off=Settings(settings.values).set('stages.towns',False)
     reg=make_region(tile_seed,road_factory=roads,rail_factory=rail,water_barriers=barriers,settings=off)
   results=spawn_region(reg) if detail and option('stages.houses') else {}
-  out=[]; prefix=f'{tx}:{ty}:'
+  out=[]; farm_sites=[]; prefix=f'{tx}:{ty}:'
   def rect(r): return (r[0]+ox,r[1]+oy,r[2],r[3])
   def add(kind,id,r,**kw): out.append(feature(kind,prefix+id,rect=rect(r),**kw))
   if reg['town']: add('towns','town',reg['town']['box'],size=reg['town']['size'])
@@ -250,6 +250,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
    add('roads','street:'+r['id'],road_rect(r),surface='paved',axis=r['axis'],history=['town plat','paved'])
   for lot in reg['lots']:
    spec=lot['spec']; id=spec['id']; pl=lot['place']
+   if spec['kind']=='farmstead' and H(seed,'farm-density',prefix+id)%10000>=5500: continue
    if water_hits(world_rect(pl,spec['width'],spec['depth'])): continue
    # A rural driveway must terminate on an extant historical section.
    if spec['kind']!='town':
@@ -267,7 +268,13 @@ def _tile(seed,tx,ty,serialized,detail=True):
    rural=None
    if spec['kind']!='town':
     from rural import layout
-    rural=layout(seed,spec,plan)
+    rural=layout(seed,spec,plan,access_fraction=(H(seed,'farm-lane',prefix+id)%10000/10000 if spec['kind']=='farmstead' else None))
+    if spec['kind']=='farmstead':
+     access=[to_world(pl,spec['width'],spec['depth'],a,b) for a,b in rural['access']]
+     access=[(a+ox,b+oy) for a,b in access]
+     farm_sites.append(dict(id=prefix+id,road=lot['road_id'],access=access,length=rural['access_length'],entry_id=prefix+id+':drive:'+str(rural['entry_index'])))
+     for f in out:
+      if f['id']==prefix+id: f.update(lane_length_ft=rural['access_length']/FT(1),access=access)
     for f in out:
      if f['id']==prefix+id and f['kind']=='lots': f['shape']=[to_world(pl,spec['width'],spec['depth'],a,b) for a,b in rural['shape']]; f['shape']=[(a+ox,b+oy) for a,b in f['shape']]
    for i,room in enumerate(plan.rooms):
@@ -287,6 +294,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
     if shop.get('bldg') and not water_hits(shop['lot']):
      r=shop['bldg']
      if r[0]>=0 and r[1]>=0 and r[0]+r[2]<=extent and r[1]+r[3]<=extent: add('buildings','business:'+shop['id'],r,use=shop['type'])
+  share_farm_lanes(seed,out,farm_sites,water_hits,ox,oy)
   return out
 
 RIVER_SAMPLES=64
@@ -424,6 +432,40 @@ def rivers(seed,rect):
  for lane in range(math.floor(left/spacing)-1,math.ceil(right/spacing)+2):
   for row in range(math.floor(rect[1]/step)-1,math.ceil((rect[1]+rect[3])/step)+1):
    yield from basin(seed,lane,row,options)
+
+def share_farm_lanes(seed,features,sites,water_hits=lambda r:False,ox=0,oy=0):
+ # A few adjacent yards share a single road entrance and a short front connector.
+ used=set(); by_id={f['id']:f for f in features}; lane=FT(option('rural.lane_width_ft')); depth=FT(60)
+ for a in sorted(sites,key=lambda s:s['id']):
+  if a['id'] in used: continue
+  for b in sorted(sites,key=lambda s:s['id']):
+   if a['id']>=b['id'] or b['id'] in used or a['road']!=b['road']: continue
+   pa,qa=a['access'][:2]; pb,qb=b['access'][:2]; span=math.dist(pa,pb)
+   if not FT(100)<span<FT(600): continue
+   if H(seed,'shared-lane',a['id'],b['id'])%100>=25: continue
+   if min(math.dist(pa,qa),math.dist(pb,qb))<depth: continue
+   if max(a['length'],b['length'])+span/2>FT(830): continue
+   ua=((qa[0]-pa[0])/math.dist(pa,qa),(qa[1]-pa[1])/math.dist(pa,qa))
+   ub=((qb[0]-pb[0])/math.dist(pb,qb),(qb[1]-pb[1])/math.dist(pb,qb))
+   if ua!=ub: continue
+   c=((pa[0]+pb[0])/2,(pa[1]+pb[1])/2); d=(c[0]+depth*ua[0],c[1]+depth*ua[1])
+   ea=(pa[0]+depth*ua[0],pa[1]+depth*ua[1]); eb=(pb[0]+depth*ua[0],pb[1]+depth*ua[1])
+   bounds=box([c,d,ea,eb],lane)
+   if water_hits((bounds[0]-ox,bounds[1]-oy,bounds[2],bounds[3])): continue
+   id='shared-lane:'+a['id']+'|'+b['id']
+   features.append(feature('driveways',id,points=[c,d,ea,eb],width=lane,members=[a['id'],b['id']]))
+   for site in (a,b):
+    entry=by_id[site['entry_id']]; x,y,w,h=entry['rect']
+    if ua[0]>0: x+=depth; w-=depth
+    elif ua[0]<0: w-=depth
+    elif ua[1]>0: y+=depth; h-=depth
+    else: h-=depth
+    entry['rect']=entry['bounds']=(x,y,w,h)
+    if site['id'] in by_id:
+     entry_point=ea if site is a else eb
+     by_id[site['id']].update(shared_lane=id,lane_length_ft=(site['length']+span/2)/FT(1),access=[c,d,entry_point]+site['access'][1:])
+    used.add(site['id'])
+   break
 
 def feature_points(f):
  if 'points' in f: return f['points']

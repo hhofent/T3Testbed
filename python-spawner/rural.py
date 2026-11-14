@@ -4,7 +4,7 @@ from spawner import H,FT
 from settings import option
 
 TYPES=('machine shed','barn','grain bin','corn crib','hog building','poultry house','quonset')
-def layout(seed,spec,plan):
+def layout(seed,spec,plan,access_fraction=None):
  W,D=spec['width'],spec['depth']; salt=spec['id']
  def rand(tag): return H(seed,'rural',salt,tag)%10000/10000
  rooms=[r.rect() for r in plan.rooms]
@@ -12,7 +12,14 @@ def layout(seed,spec,plan):
  hw=max(r[0]+r[2] for r in rooms)-x0; hd=max(r[1]+r[3] for r in rooms)-y0
  margin=FT(20); lane=FT(option('rural.lane_width_ft'))
  hx=margin+lane+(max(0,W-hw-3*margin-lane))*rand('house-x')
+ bend=rand('bend')*100<option('rural.bent_lanes_pct')
+ entrance=min(W-margin-lane,margin+lane+rand('entrance')*W*.3) if bend else margin
  hy=margin+max(0,min(D*.3,D-hd-2*margin)-margin)*rand('house-y')
+ if access_fraction is not None:
+  lateral=abs(entrance-margin)+abs(hx-margin-lane/2)
+  lo=max(margin,FT(250)-lateral-hd/2)
+  hi=min(D-hd-margin,FT(830)-lateral-hd/2)
+  hy=lo+max(0,hi-lo)*access_fraction
  dx,dy=hx-x0,hy-y0
  buildings=[]; drives=[]; trees=[]
  count=round(option('rural.outbuildings_min')+rand('count')*(option('rural.outbuildings_max')-option('rural.outbuildings_min')))
@@ -27,9 +34,9 @@ def layout(seed,spec,plan):
   buildings.append((typ,(x,y,w,h)))
   # Connected apron and access spur, with a separate front-house connection.
   drives.extend([(margin,y-gap,max(lane,x+w-margin),lane),(x,y-gap,lane,gap+lane)])
- end=max([hy+hd]+[r[1]+r[3] for _,r in buildings]); bend=rand('bend')*100<option('rural.bent_lanes_pct')
- entrance=min(W-margin-lane,margin+lane+rand('entrance')*W*.3) if bend else margin
+ end=max([hy+hd]+[r[1]+r[3] for _,r in buildings])
  turn=max(lane,hy*.45)
+ entry_index=len(drives)
  drives.extend([(entrance,0,lane,turn+lane),(min(entrance,margin),turn,abs(entrance-margin)+lane,lane),(margin,turn,lane,max(lane,end-turn)),(margin,hy+hd/2,hx-margin+lane,lane)])
  if option('stages.trees'):
   side=H(seed,'grove-side',salt)%3
@@ -42,4 +49,5 @@ def layout(seed,spec,plan):
    trees.append((inset,along) if side==0 else (W-inset,along) if side==1 else (along,D-inset))
  chamfer=min(W,D)*option('rural.lot_corner_fraction')*rand('shape')
  shape=[(0,chamfer),(chamfer,0),(W-chamfer,0),(W,chamfer),(W,D-chamfer),(W-chamfer,D),(chamfer,D),(0,D-chamfer)]
- return dict(offset=(dx,dy),buildings=buildings,driveways=drives,trees=trees,shape=shape)
+ access=[(entrance+lane/2,0),(entrance+lane/2,turn+lane/2),(margin+lane/2,turn+lane/2),(margin+lane/2,hy+hd/2),(hx,hy+hd/2)]
+ return dict(access=access,access_length=sum(math.dist(a,b) for a,b in zip(access,access[1:])),entry_index=entry_index,offset=(dx,dy),buildings=buildings,driveways=drives,trees=trees,shape=shape)
