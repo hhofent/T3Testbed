@@ -1,27 +1,27 @@
 {
   "13": {
     "identical_pixels_and_bytes": true,
-    "before_sha256": "71db97365e150d2d35bf5020e5274b4ae17d9a47280a499331d55bded90802f4",
-    "after_sha256": "71db97365e150d2d35bf5020e5274b4ae17d9a47280a499331d55bded90802f4"
+    "before_sha256": "c89d07e07b2cddc6f2a6e47cb6baf444216472445d587dcf033e4b30b46f6011",
+    "after_sha256": "c89d07e07b2cddc6f2a6e47cb6baf444216472445d587dcf033e4b30b46f6011"
   },
   "14": {
     "identical_pixels_and_bytes": true,
-    "before_sha256": "9f4be0408985b1ec35e8c8e7d97163cc19c82e9bf884a2147b13a8392c058e42",
-    "after_sha256": "9f4be0408985b1ec35e8c8e7d97163cc19c82e9bf884a2147b13a8392c058e42"
+    "before_sha256": "f9c398ec18b6003a0dc90d4ff383b894f380751860494992ec49887002f0fe85",
+    "after_sha256": "f9c398ec18b6003a0dc90d4ff383b894f380751860494992ec49887002f0fe85"
   },
   "30": {
     "identical_pixels_and_bytes": true,
-    "before_sha256": "870d598b36ad52884ae8cc02bc2e1472c431696377366890ccb79f120e3b281b",
-    "after_sha256": "870d598b36ad52884ae8cc02bc2e1472c431696377366890ccb79f120e3b281b"
+    "before_sha256": "ae89b0d9fb133fe6b87211b0b1ef329d04f57760741dbbe6f8516d0240d7f86a",
+    "after_sha256": "ae89b0d9fb133fe6b87211b0b1ef329d04f57760741dbbe6f8516d0240d7f86a"
   },
   "31": {
     "identical_pixels_and_bytes": true,
-    "before_sha256": "03b14bd924bc8b96c987e3caa23c19db77efa71784f14172798181b662651503",
-    "after_sha256": "03b14bd924bc8b96c987e3caa23c19db77efa71784f14172798181b662651503"
+    "before_sha256": "3aaa693ae4e3f4d957cdba4aa0b2350838da93aa63d70bcc4393541dd0e39528",
+    "after_sha256": "3aaa693ae4e3f4d957cdba4aa0b2350838da93aa63d70bcc4393541dd0e39528"
   },
   "46": {
     "identical_pixels_and_bytes": true,
-    "before_sha256": "cd45a44479de8b20395274d468e65ea6729b6e93a9cb088b79500a9ddba2d4d9",
-    "after_sha256": "cd45a44479de8b20395274d468e65ea6729b6e93a9cb088b79500a9ddba2d4d9"
+    "before_sha256": "d0bad0200d75aefa76e78b581cf1d98977ac7670e9a9e6845ed2fd176831e8eb",
+    "after_sha256": "d0bad0200d75aefa76e78b581cf1d98977ac7670e9a9e6845ed2fd176831e8eb"
   }
 }

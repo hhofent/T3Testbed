@@ -111,6 +111,7 @@ def make_rail(seed, roads, force=None):
     k = number('region.make_rail_numbers', 'make_rail_110_8') / math.tan(math.radians(RAIL_ANGLE[number('region.make_rail_numbers', 'make_rail_110_45')] + d.int("ang", RAIL_ANGLE[number('region.make_rail_numbers', 'make_rail_110_74')] - RAIL_ANGLE[number('region.make_rail_numbers', 'make_rail_110_90')] + number('region.make_rail_numbers', 'make_rail_110_95'))))
     lean = number('region.make_rail_numbers', 'make_rail_111_11') if d.chance("lean", number('region.make_rail_numbers', 'make_rail_111_33')) else -number('region.make_rail_numbers', 'make_rail_111_43')
     pts = [(int(x - lean * ya * k), number('region.make_rail_numbers', 'make_rail_112_36')), (x, ya), (x, yb), (int(x + lean * (top - yb) * k), top)]
+    if not option("generation.parity"): pts = [(x, 0), (x, max(0, ya)), (x, min(top, yb)), (x, top)]
     cross = set()
     for r in roads:
         for a, b in zip(pts, pts[number('region.make_rail_numbers', 'make_rail_115_33'):]):
@@ -476,6 +477,9 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
     creeks = make_creeks(seed, roads)
     bar = [rail] + creeks if rail else list(creeks)     # rail corridor + floodplains: no lots or parcels
     town = make_town(seed, roads, rail, force_town, force_pop, creeks)
+    if town and not option("generation.parity"):
+        from connectivity import connect
+        connect(town["streets"], roads)
     d = rng(seed, "region")
     clear = FT(CLEAR[number('region.make_region_numbers', 'make_region_476_21')] + d.int("clear", CLEAR[number('region.make_region_numbers', 'make_region_476_47')] - CLEAR[number('region.make_region_numbers', 'make_region_476_58')] + number('region.make_region_numbers', 'make_region_476_63')))
     allroads = roads + (town["streets"] if town else [])

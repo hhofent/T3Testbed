@@ -70,7 +70,7 @@ def draw_lot(ax, L, labels, fs):
 def png(region,results,town_only=True):
     global reg,res,t
     reg,res,t=region,results,region['town']
-    b=t['box'] if t and town_only else (0,0,N_MI*MILE,N_MI*MILE)
+    extent=max(r['hi'] for r in reg['grid_roads']); b=t['box'] if t and town_only else (0,0,extent,extent)
     if t and town_only:
         for e in [c['lot'] for c in t['commercial']]:
             x,y=min(b[0],e[0]),min(b[1],e[1]); b=(x,y,max(b[0]+b[2],e[0]+e[2])-x,max(b[1]+b[3],e[1]+e[3])-y)

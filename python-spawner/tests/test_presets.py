@@ -22,3 +22,10 @@ def test_nested_finite_clamping():
  settings=stack(overrides=[key+'.'+leaf+'=999999'])
  assert settings.values[key][leaf]==CATALOG[key]['max'][leaf]
  with pytest.raises(ValueError): Settings({'region.rail_pct':float('nan')})
+
+
+def test_tuple_and_range_leaf_overrides():
+ settings=stack(overrides=['region.trailer_run.0=3','region.block_cx.start=400'])
+ assert settings.values['region.trailer_run'][0]==3
+ assert settings.values['region.block_cx'].start==400
+ assert isinstance(settings.values['region.block_cx'],range)

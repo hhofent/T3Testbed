@@ -15,8 +15,7 @@ The page has stage switches, seed random/lock, stacked presets, JSON download/lo
 changed-settings view, per-setting reset, reset-all, and 300 ms trailing redraw.
 Saving JSON downloads a file; it does not write arbitrary server paths.
 N12 downtown share controls relocation to highway strips without changing the
-researched business mix. N2 trees are small yard markers with no canopy fills;
-parity rendering can retain reference grove drawing for historical comparison.
+researched business mix. N2 trees are small yard markers with no canopy fills in either normal or parity mode.
 
     py cli.py --preset tiny-towns --preset rail-heavy --param region.rail_pct=80 --diff
     py cli.py --preset trailer-heavy --save-preset my-preset.json
@@ -47,3 +46,22 @@ edges, leaving continuous vertical routes and preserving network connectivity.
 Rail uses straight north-south road corridors, with square grade crossings.
 Terrain and network sampling are independent of requested viewport boundaries.
 First views may take several seconds; tile results are cached for subsequent pans.
+
+Verification:
+
+    py cli.py --verify --seed 31
+    py cli.py --verify --seed 13 --seeds 5
+
+Reports include counts and failure IDs and exit nonzero on any failed check.
+World building/marker checks include a one-mile surrounding window so border
+features participate. Roads must belong to one connected component; normal
+ragged towns receive the shortest collinear street extension when an island would
+otherwise remain. Both world and regional rail angles are checked. With rail
+switched off, the angle condition is explicitly vacuous (crossing count zero).
+`artifacts/verification.json` records default checks for seeds 13, 14, 30, 31, 46.
+All recorded crossings are 90 degrees. Injected-fault tests exercise collision,
+orphan, marker and acute-angle detection independently of generated data.
+The control schema currently has 162 entries; additional entries cover runtime,
+world and verification values beyond the original 130 reference/control groups.
+World tiles retain the reference 3-mile scale; regional size controls affect
+regional mode, while world.window_miles controls the endless viewport.

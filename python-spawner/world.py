@@ -4,7 +4,7 @@ geometry; SVG clips at the viewport. Settings and seed define the entire world.
 """
 import math,json,copy
 from functools import lru_cache
-from settings import Settings,applied,option
+from settings import Settings,applied,option,DEFAULTS
 from presets import document,apply_document
 from spawner import H,FT
 from region import make_region,spawn_region,road_rect,world_rect,to_world,MILE,ROW,RAIL_ROW,RAIL_GAP,_seg_rect
@@ -28,12 +28,13 @@ def rail_lanes(seed,rect):
  for lane in range(math.floor(rect[0]/spacing)-1,math.ceil((rect[0]+rect[2])/spacing)+1):
   if H(seed,'rail-history',lane)%100>=option('world.rail_enabled_pct'): continue
   along=lane*spacing+MILE
-  x=along+ROW//2+RAIL_GAP+RAIL_ROW//2
+  x=along+option('region.row')//2+option('region.rail_gap')+option('region.rail_row')//2
   yield lane,x,along
 
-@lru_cache(maxsize=128)
+@lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
 def _tile(seed,tx,ty,serialized):
  settings=apply_document(Settings(),json.loads(serialized))
+ settings.set('region.n_mi',settings.values['world.tile_miles'])
  with applied(settings):
   extent=option('world.tile_miles')*MILE; ox,oy=tx*extent,ty*extent
   def roads(local_seed,force):
@@ -42,7 +43,7 @@ def _tile(seed,tx,ty,serialized):
     for i in range(option('world.tile_miles')+1):
      global_line=(ty if axis=='h' else tx)*option('world.tile_miles')+i
      surface='paved' if global_line%option('world.main_spacing_miles')==1 else 'gravel'
-     output.append(dict(id=f'{axis}{i}',name=f'{axis.upper()} {global_line}',axis=axis,type=surface,c=i*MILE,lo=0,hi=extent,w=ROW,surface_ft=22))
+     output.append(dict(id=f'{axis}{i}',name=f'{axis.upper()} {global_line}',axis=axis,type=surface,c=i*MILE,lo=0,hi=extent,w=option('region.row'),surface_ft=22))
    return output,25
   def rail(local_seed,rs,force):
    if not option('stages.rail'): return None
@@ -52,7 +53,7 @@ def _tile(seed,tx,ty,serialized):
     local=along-ox
     if not MILE//2<=local<=extent-MILE//2: continue
     x-=ox
-    return dict(pts=[(x,0),(x,extent)],w=RAIL_ROW,along=f'v{local//MILE}',along_c=local,x=x,side=1,parallel=(0,extent),crossings=[],site=(local,ew['c']))
+    return dict(pts=[(x,0),(x,extent)],w=option('region.rail_row'),along=f'v{local//MILE}',along_c=local,x=x,side=1,parallel=(0,extent),crossings=[],site=(local,ew['c']))
    return None
   water=list(rivers(seed,(ox,oy,extent,extent)))
   def water_hits(local):
@@ -73,7 +74,7 @@ def _tile(seed,tx,ty,serialized):
   if reg['town']: add('towns','town',reg['town']['box'],size=reg['town']['size'])
   for r in reg['roads']:
    if r in reg['grid_roads']: continue
-   add('roads','street:'+r['id'],road_rect(r),surface='paved',history=['town plat','paved'])
+   add('roads','street:'+r['id'],road_rect(r),surface='paved',axis=r['axis'],history=['town plat','paved'])
   for creek in reg['creeks']:
    pts=[(x+ox,y+oy) for x,y in creek['pts']]
    out.append(feature('creeks',prefix+creek['id'],points=pts,width=creek['chan_w']))
@@ -108,7 +109,7 @@ def _tile(seed,tx,ty,serialized):
   return out
 
 def elevation(seed,x,y):
- wave=4*MILE
+ wave=option('world.hill_wavelength_miles')*MILE
  phase=(H(seed,'hills')%10000)/10000*2*math.pi
  return option('world.relief_ft')*(2+math.sin(x/wave*2*math.pi+phase)+math.cos(y/wave*2*math.pi-phase))/4
 
@@ -129,7 +130,7 @@ def rivers(seed,rect):
  spacing=option('world.river_spacing_miles')*MILE; step=option('world.tributary_spacing_miles')*MILE; width=FT(option('world.river_width_ft'))
  for lane in range(math.floor(rect[0]/spacing)-1,math.ceil((rect[0]+rect[2])/spacing)+1):
   phase=H(seed,'river',lane)%100/100*2*math.pi
-  def x(y): return lane*spacing+math.sin(y/(step*2)+phase)*MILE
+  def x(y): return lane*spacing+math.sin(y/(step*option('world.river_wave_steps'))+phase)*MILE*option('world.river_wander_miles')
   for row in range(math.floor(rect[1]/step)-1,math.ceil((rect[1]+rect[3])/step)+1):
    y=row*step; end=(x(y+step),y+step)
    yield feature('rivers',f'river:{lane}:{row}',points=[(x(y),y),end],width=width,flow='south',downstream=f'river:{lane}:{row+1}')
@@ -150,20 +151,29 @@ def window(seed,rect,settings=None):
      surface=road_type(seed,axis,line,segment)
      if surface is None: continue
      c,lo=line*MILE,segment*MILE
-     r=(lo,c-ROW/2,MILE,ROW) if axis=='h' else (c-ROW/2,lo,ROW,MILE)
+     r=(lo,c-option('region.row')/2,MILE,option('region.row')) if axis=='h' else (c-option('region.row')/2,lo,option('region.row'),MILE)
      out.append(feature('roads',f'road:{axis}:{line}:{segment}',rect=r,surface=surface,history=['wagon trail','upgraded','paved'] if surface=='paved' else ['survey grid','dirt',surface],axis=axis))
   if option('stages.rail'):
    for lane,x,_ in rail_lanes(seed,rect):
     for row in range(math.floor(rect[1]/MILE)-1,math.ceil((rect[1]+rect[3])/MILE)+1):
-     out.append(feature('rail',f'rail:{lane}:{row}',points=[(x,row*MILE),(x,(row+1)*MILE)],width=RAIL_ROW,history=['road corridor','rail']))
+     out.append(feature('rail',f'rail:{lane}:{row}',points=[(x,row*MILE),(x,(row+1)*MILE)],width=option('region.rail_row'),history=['road corridor','rail']))
   extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles'); serialized=json.dumps(document(settings),sort_keys=True)
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
    for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized))
   filtered={f['id']:f for f in out if intersects(f['bounds'],rect)}
   # A marker is rejected against geometry from every owner, including shared borders.
   blockers=[f for f in out if f['kind'] in ('roads','rail','buildings','driveways')]
+  cell=FT(option('verify.bin_ft')); bins={}
+  def keys(bounds):
+   for x in range(math.floor(bounds[0]/cell),math.floor((bounds[0]+bounds[2])/cell)+1):
+    for y in range(math.floor(bounds[1]/cell),math.floor((bounds[1]+bounds[3])/cell)+1): yield x,y
+  for blocker in blockers:
+   for key in keys(blocker['bounds']): bins.setdefault(key,[]).append(blocker)
   for id,f in list(filtered.items()):
-   if f['kind']=='trees' and any(intersects((f['bounds'][0]-FT(option('world.tree_radius_ft')),f['bounds'][1]-FT(option('world.tree_radius_ft')),2*FT(option('world.tree_radius_ft')),2*FT(option('world.tree_radius_ft'))),b['bounds']) for b in blockers): del filtered[id]
+   if f['kind']=='trees':
+    radius=FT(option('world.tree_radius_ft')); r=(f['bounds'][0]-radius,f['bounds'][1]-radius,2*radius,2*radius)
+    candidates={b['id']:b for key in keys(r) for b in bins.get(key,[])}
+    if any(intersects(r,b['bounds']) for b in candidates.values()): del filtered[id]
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
 COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none'}
@@ -186,7 +196,7 @@ def svg(scene):
     out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="0.3" vector-effect="non-scaling-stroke"/>')
    else:
     points=' '.join(f'{a},{b}' for a,b in f['points'])
-    width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(4) if kind=='rail' else FT(1)
+    width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' else FT(1)
     out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}"/>')
    out.append('</g>')
  out.append('</svg>'); return ''.join(out).encode()

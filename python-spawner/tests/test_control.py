@@ -22,3 +22,10 @@ def test_loopback_server_schema_and_bad_request():
    assert 'stages.rail' in schema['schema'] and len(schema['presets'])==6
    assert b'Changed from default' in urllib.request.urlopen(base).read()
   finally: server.shutdown(); thread.join()
+
+
+def test_schema_initial_preset_retains_true_reset_defaults():
+ from control import schema
+ data=schema(Settings({'region.rail_pct':0}))
+ assert data['values']['region.rail_pct']==0
+ assert data['defaults']['region.rail_pct']>0

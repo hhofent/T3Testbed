@@ -2507,10 +2507,17 @@ class Settings:
             # Nested dictionary/list leaves are addressable with dotted --param paths.
             parent=next((k for k in sorted(DEFAULTS,key=len,reverse=True) if key.startswith(k+'.')),None)
             if parent is None: raise KeyError(key)
-            path=key[len(parent)+1:].split('.'); obj=copy.deepcopy(self.values[parent]); cursor=obj
-            for part in path[:-1]: cursor=cursor[int(part) if isinstance(cursor,(list,tuple)) else int(part) if part.isdigit() and int(part) in cursor else part]
-            last=int(path[-1]) if isinstance(cursor,(list,tuple)) else int(path[-1]) if path[-1].isdigit() and int(path[-1]) in cursor else path[-1]
-            cursor[last]=value; self.set(parent,obj)
+            path=key[len(parent)+1:].split('.')
+            def replace(obj,parts):
+                if not parts: return value
+                if isinstance(obj,range):
+                    data={'start':obj.start,'stop':obj.stop,'step':obj.step}
+                    data=replace(data,parts); return range(data['start'],data['stop'],data['step'])
+                keypart=int(parts[0]) if isinstance(obj,(list,tuple)) or (isinstance(obj,dict) and parts[0].isdigit() and int(parts[0]) in obj) else parts[0]
+                result=list(obj) if isinstance(obj,tuple) else copy.deepcopy(obj)
+                result[keypart]=replace(obj[keypart],parts[1:])
+                return tuple(result) if isinstance(obj,tuple) else result
+            self.set(parent,replace(self.values[parent],path))
         return self
 
 _LOCK=RLock()
@@ -2527,6 +2534,10 @@ def applied(settings):
                 for target in modules.values():
                     if hasattr(target,name) and (target is modules[mod] or name in ('T','CLR','HEAD','GRID','MODULE','SF')):
                         saved.append((target,name,getattr(target,name))); setattr(target,name,copy.deepcopy(value))
+            if settings.values['region.grids']==DEFAULTS['region.grids']:
+                saved.append((region,'GRIDS',region.GRIDS))
+                region.GRIDS=copy.deepcopy(region.GRIDS)
+                region.GRIDS['tiny']=(copy.deepcopy(settings.values['region.town_grids']),copy.deepcopy(settings.values['region.rail_town_grids']))
             if not settings.values['stages.trailers']:
                 saved.append((region,'TRAILER_RUN_PCT',region.TRAILER_RUN_PCT)); region.TRAILER_RUN_PCT=0
             yield
@@ -2536,10 +2547,22 @@ def applied(settings):
 
 def configurable(fn):
     from functools import wraps
+    import ast,inspect
+    signature=inspect.signature(fn)
+    tree=ast.parse(inspect.getsource(fn)).body[0]
+    dynamic={}
+    for arg,default in zip(tree.args.args[-len(tree.args.defaults):],tree.args.defaults):
+        if isinstance(default,ast.Call) and isinstance(default.func,ast.Name) and default.func.id=='number':
+            dynamic[arg.arg]=compile(ast.Expression(default),'<settings default>','eval')
     @wraps(fn)
     def wrapped(*args,settings=None,**kwargs):
-        if settings is None and _ACTIVE.get() is not None: return fn(*args,**kwargs)
-        with applied(settings or Settings()): return fn(*args,**kwargs)
+        def call():
+            bound=signature.bind_partial(*args,**kwargs)
+            for name,code in dynamic.items():
+                if name not in bound.arguments: kwargs[name]=eval(code,{'number':number})
+            return fn(*args,**kwargs)
+        if settings is None and _ACTIVE.get() is not None: return call()
+        with applied(settings or Settings()): return call()
     return wrapped
 # Probability weights are percentages, independently editable (zero disables a category).
 CATALOG['region.town_size']['min']=[('tiny',0),('mid',0),('big',0)]
@@ -2594,3 +2617,15 @@ for _key,_default,_lo,_hi,_step,_units,_note in [
 define('world.pan_fraction',0.25,0.1,0.5,0.05,'fraction','PLACEHOLDER: viewport pan distance per button press.')
 define('world.zoom_factor',2,1.1,4,0.1,'ratio','PLACEHOLDER: zoom step ratio.')
 define('world.tree_radius_ft',1.5,0.5,3,0.5,'ft','PLACEHOLDER: small trunk-dot radius; never a canopy.')
+define('verify.minimum_angle_deg',45,30,90,1,'degrees','PLACEHOLDER: N4 minimum acute crossing angle.')
+define('verify.square_deviation_deg',15,0,30,1,'degrees','PLACEHOLDER: allowable deviation from a square crossing.')
+define('verify.square_share',0.8,0,1,0.05,'fraction','PLACEHOLDER: minimum proportion of near-square crossings.')
+define('verify.bin_ft',300,100,1000,50,'ft','PLACEHOLDER: spatial indexing cell size; affects verification speed only.')
+
+CATALOG['region.mile'].update(min=DEFAULTS['region.mile'],max=DEFAULTS['region.mile'],units='ticks per mile')
+CATALOG['region.n_mi'].update(min=2,max=6,units='mi')
+define('world.hill_wavelength_miles',4,1,12,1,'mi','PLACEHOLDER: analytic rolling-hill wavelength; normalized sine/cosine field.')
+define('world.river_wander_miles',1,0,3,0.25,'mi','PLACEHOLDER: trunk meander amplitude; phase sampled in 100 stable increments.')
+define('world.river_wave_steps',2,1,6,1,'tributary steps','PLACEHOLDER: trunk meander wavelength factor.')
+define('world.tile_cache_size',128,128,128,1,'tiles','PLACEHOLDER: fixed in-memory LRU capacity; viewport-independent.')
+define('world.rail_draw_ft',4,1,10,1,'ft','PLACEHOLDER: rail drawing stroke; contours use 1 ft and feature outlines 0.3 screen pixels.')

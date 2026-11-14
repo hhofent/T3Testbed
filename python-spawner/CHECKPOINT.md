@@ -1,15 +1,16 @@
 # Checkpoint
 
 ## Status
-Milestones 1-5 complete. Endless mode (--world, --window) adds global contours,
-south-flowing tributaries merging into wider trunks, historical section roads
-(paved/gravel/Level B/missing), road-aligned rail, and owned reference towns/farms/
-acreages. River-aware ownership and full canonical features preserve overlaps.
-Control page has world mode, drag/button pan and wheel/button zoom. 73 tests pass,
-including negative-coordinate overlap/order/immutability tests. JS syntax passes.
-Usage and simplified placeholder historical model documented in docs/USAGE.md.
+Milestones 1-6 complete, committed/pushed individually to python-test/spawner.
+162 settings entries including numeric packs; presets/overrides; CSV sweeps;
+standard-library HTTP control page; deterministic endless world with pan/zoom;
+--verify checks determinism, matching overlaps, buildings, road connectivity,
+crossing angles, and tree clearance. 79 tests pass; JS syntax and HTTP world SVG
+smoke checks pass. Seeds 13,14,30,31,46 pass default verification: crossings 90 deg.
+Five before/after PNG pairs are byte-identical in explicit parity mode. N9/N13
+raw-default exclusions and absent source CODING-AGENT-PROMPT.md are documented.
+Only python-spawner differs from master; C# and source branch untouched. No PR/merge.
 
 ## Exact next step
-Milestone 6: --verify determinism, overlap equality, building collision checks,
-road connectivity, crossing angles >=45 degrees and >=80% within 15 of square,
-and no marker intersecting roads/buildings/drives/rail; finish tests/docs and push.
+None required. Run `py python-spawner/cli.py --serve` and open the printed URL.
+Usage: docs/USAGE.md. Evidence: artifacts/verification.json and artifacts/parity/.

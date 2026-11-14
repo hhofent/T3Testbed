@@ -24,12 +24,10 @@ def draw_house(ax, plan, xf=IDENT, fs=5.5, labels=True):
     x0, x1 = L["side_left"], L["width"] - L["side_right"]
     _rect(ax, xf, x0, L["front_setback"], x1 - x0, L["depth"] - L["front_setback"] - L["rear_setback"],
           fill=False, ls="--", ec="#c33", lw=0.8, zorder=5)      # drawn above rooms (old bug: rooms hid it)
-    if option('stages.trees') and not option('generation.parity'):
+    if option('stages.trees'):
         from trees import local_markers
         for x,y in local_markers(plan):
             px,py=xf(x,y); ax.plot(f(px),f(py),'.',color='#42633b',markersize=2)
-    elif option('generation.parity'):
-        for g in plan.site.get("grove", []): _rect(ax, xf, *g, color="#5a9e4b", alpha=0.45, lw=0)
     for r in plan.site.get("drive", []): _rect(ax, xf, *r, color="#c8b48a" if L.get("drive_surface") == "gravel" else "#bbb", lw=0)
     for n, r in plan.site.get("farm", []):
         _rect(ax, xf, *r, fc="#7a4a2a", ec="k", lw=0.4)

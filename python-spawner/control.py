@@ -9,7 +9,7 @@ from sweep import statistics
 
 PAGE=Path(__file__).with_name('control.html')
 def schema(settings=None):
- return {'schema':plain(CATALOG),'values':plain((settings or Settings()).values),'presets':list(PRESETS),'units_per_mile':__import__('region').MILE}
+ return {'schema':plain(CATALOG),'values':plain((settings or Settings()).values),'defaults':plain(Settings().values),'presets':list(PRESETS),'units_per_mile':__import__('region').MILE}
 
 def render_request(data):
  settings=apply_document(Settings(),data['settings']); seed=int(data['seed'])

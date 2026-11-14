@@ -1,0 +1,197 @@
+[
+  {
+    "seed": 13,
+    "pass": true,
+    "checks": {
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 1117
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 81
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 4,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 16931
+      }
+    }
+  },
+  {
+    "seed": 14,
+    "pass": true,
+    "checks": {
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 2498
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 99
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 18,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 19369
+      }
+    }
+  },
+  {
+    "seed": 30,
+    "pass": true,
+    "checks": {
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 1173
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 84
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 5,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 18148
+      }
+    }
+  },
+  {
+    "seed": 31,
+    "pass": true,
+    "checks": {
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 2090
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 99
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 19,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 18078
+      }
+    }
+  },
+  {
+    "seed": 46,
+    "pass": true,
+    "checks": {
+      "determinism": {
+        "pass": true
+      },
+      "region_determinism": {
+        "pass": true
+      },
+      "matching_overlaps": {
+        "pass": true
+      },
+      "no_building_overlaps": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 1257
+      },
+      "no_orphan_roads": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 84
+      },
+      "rail_crossings": {
+        "pass": true,
+        "count": 10,
+        "minimum_angle": 90.0,
+        "near_square_share": 1.0
+      },
+      "no_tree_on_geometry": {
+        "pass": true,
+        "failures": [],
+        "count": 0,
+        "examined": 18352
+      }
+    }
+  }
+]

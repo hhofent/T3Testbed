@@ -1,6 +1,6 @@
 # Settings and parity
 
-`settings.py` contains 130 top-level entries. Numeric stage packs collect every
+`settings.py` contains 162 top-level entries after control, world and verification extensions. Numeric stage packs collect every
 numeric literal from region.py, spawner.py and validate.py; leaf keys retain the
 original function and source location. Invariants are locked. Unresearched bounds,
 steps and inherited numbers are marked PLACEHOLDER. Compound structures retain
@@ -18,3 +18,7 @@ include generated floor plans, town streets, businesses, rail and parcels.
 
 The reference branch has no tracked CODING-AGENT-PROMPT.md. It was not fabricated
 from the unrelated untracked prompt folders.
+
+Normal generation also uses square rail routes (N4) and connects otherwise isolated
+ragged street components (N8). These repairs are bypassed in parity mode. Current
+parity PNGs normalize drawing through the shared renderer, including N2 markers.

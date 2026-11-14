@@ -34,3 +34,10 @@ def test_settings_change_reaches_generator_and_does_not_leak():
     settings=Settings({'region.rail_pct':0})
     assert make_region(30,settings=settings)['rail'] is None
     assert make_region(30)['rail'] is not None
+
+
+def test_derived_tiny_grids_follow_primary_settings():
+    import region
+    settings=Settings({'region.town_grids':[(3,3)]*4})
+    with applied(settings): assert region.GRIDS['tiny'][0]==[(3,3)]*4
+    assert region.GRIDS['tiny'][0]!=[(3,3)]*4
