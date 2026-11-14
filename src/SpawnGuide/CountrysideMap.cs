@@ -28,10 +28,10 @@ public static class CountrysideMap
     /// <param name="edge">null → town centered on the interior junction (full town);
     /// "west"|"north" → town straddles that cell boundary — partial town, mostly rural (user's request).</param>
     /// <param name="config">Optional configuration for countryside generation parameters.</param>
-    public static MapPlan Generate(uint seed, string sizeName, bool detail = false, string? edge = null, CountrysideConfig? config = null)
+    public static MapPlan Generate(uint seed, string sizeName, bool detail = false, string? edge = null, CountrysideConfig? config = null, SpawnConfig? townConfig = null)
     {
         var cfg = config ?? new CountrysideConfig();
-        var town = SmallTownGenerator.Generate(seed, sizeName, detail: detail);
+        var town = SmallTownGenerator.Generate(seed, sizeName, detail: detail, config: townConfig?.SmallTown, townTiers: townConfig?.TownTiers, commercial: townConfig?.Commercial);
 
         var rng = new Rng(seed * 7919u + 13u);
         float cell = cfg.CellFeet;

@@ -20,6 +20,22 @@ namespace SpawnGuide
                 catch (ArgumentException) { return; }
                 throw new Exception("Accepted invalid override: " + expression);
             }
+            Test("nested towns preserve defaults and receive commercial overrides", () => {
+                foreach (uint seed in new uint[] { 13, 31, 1993 }) {
+                    var c = SpawnConfig.Default;
+                    string Country(SpawnConfig? cfg) => SvgMapRenderer.Render(CountrysideMap.Generate(seed, "hamlet", townConfig: cfg));
+                    string World(SpawnConfig? cfg) => SvgMapRenderer.Render(WorldMap.Generate(seed, 0, 0, townConfig: cfg).Map);
+                    Equal(Country(null), Country(c));
+                    Equal(World(null), World(c));
+                    string before = Country(c);
+                    c.Commercial.ElevatorWidthFt = 96f;
+                    if (before == Country(c)) throw new Exception("Countryside discarded commercial override");
+                    var near = WorldMap.NearestTown(seed, 0, 0);
+                    if (near == null) throw new Exception("No test town");
+                    string AtTown(SpawnConfig cfg) => SvgMapRenderer.Render(WorldMap.Generate(seed, near.CenterX, near.HighwayZ, townConfig: cfg).Map);
+                    if (AtTown(SpawnConfig.Default) == AtTown(c)) throw new Exception("World discarded commercial override");
+                }
+            });
             Test("commercial wiring preserves four default town hashes", () => {
                 string[] sizes = { "crossroads", "hamlet", "village", "town" };
                 string[] hashes = { "10eb5b9b71e579c0a69023ac85a8401d6f01296c98ced6b9337ad5ef0cf09f42", "e6564d50c0520507b486cfc7e1de483bea3a6ead0451987089eebe08eb8012ad", "0f751409af8d231834601b56097405311812d15a8fabe5f8c37569f5d3ea0353", "cd041218749b9bce2e8d70f505a6e59fed44bbdec6dc84259e1f77023d9b7abc" };

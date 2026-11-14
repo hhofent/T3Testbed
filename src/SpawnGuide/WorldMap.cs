@@ -126,7 +126,7 @@ namespace SpawnGuide
         /// size never change what exists at a world coordinate.
         /// </summary>
         public static WorldWindow Generate(uint worldSeed, float centerX, float centerZ,
-            float widthFeet = CellFeet * 3f, float depthFeet = CellFeet * 3f, WorldConfig? config = null, NoiseConfig? noiseConfig = null)
+            float widthFeet = CellFeet * 3f, float depthFeet = CellFeet * 3f, WorldConfig? config = null, NoiseConfig? noiseConfig = null, SpawnConfig? townConfig = null)
         {
             var cfg = config ?? new WorldConfig();
             var nc = noiseConfig ?? new NoiseConfig();
@@ -165,7 +165,7 @@ namespace SpawnGuide
 
         // --- roads, then the towns that grow on them ----------------------------
             var sites = CollectTownSites(worldSeed, ww, nc);
-            var towns = sites.Select(s => MaterializeTown(worldSeed, s, nc)).ToList();
+            var towns = sites.Select(s => MaterializeTown(worldSeed, s, nc, townConfig)).ToList();
             AddRoads(ww, worldSeed, towns, nc);
             AddRailSpurs(ww, towns, nc);
             StampTowns(ww, towns);
@@ -179,11 +179,11 @@ namespace SpawnGuide
         }
 
         /// <summary>Convenience for the 3-mile cell view.</summary>
-        public static WorldWindow GenerateCell(uint worldSeed, int cellX, int cellZ, WorldConfig? config = null, NoiseConfig? noiseConfig = null) =>
+        public static WorldWindow GenerateCell(uint worldSeed, int cellX, int cellZ, WorldConfig? config = null, NoiseConfig? noiseConfig = null, SpawnConfig? townConfig = null) =>
             Generate(worldSeed,
                 (cellX + 0.5f) * CellFeet,
                 (cellZ + 0.5f) * CellFeet,
-                CellFeet, CellFeet, config, noiseConfig);
+                CellFeet, CellFeet, config, noiseConfig, townConfig);
 
         /// <summary>Find the nearest town to a point, looking along nearby paved corridors.</summary>
         public static WorldTown? NearestTown(uint worldSeed, float x, float z, float maxMiles = 80f)
@@ -972,7 +972,7 @@ namespace SpawnGuide
             return new TownContext { HasRailSpur = true, RailZ = bestZ, SpurOffsetFt = off };
         }
 
-        static WorldTown MaterializeTown(uint worldSeed, TownSite site, NoiseConfig nc)
+        static WorldTown MaterializeTown(uint worldSeed, TownSite site, NoiseConfig nc, SpawnConfig? townConfig = null)
         {
             var town = new WorldTown
             {
@@ -1004,7 +1004,7 @@ namespace SpawnGuide
                         OwnsSpur = ownsSpur,
                     };
                 }
-                var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false, ctx: ctx, config: null);
+                var plan = SmallTownGenerator.Generate(seed, SizeName(cls), detail: false, ctx: ctx, config: townConfig?.SmallTown, townTiers: townConfig?.TownTiers, commercial: townConfig?.Commercial);
                 float ox = site.CenterX - plan.WidthFeet / 2f;
                 float oz = site.HighwayZ - 66f / 2f;
                 var part = new WorldTownPart { Plan = plan, Mirrored = mirrored, OriginX = ox, OriginZ = oz };

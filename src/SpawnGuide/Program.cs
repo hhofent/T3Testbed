@@ -142,7 +142,7 @@ static class Program
             SetConfigValue(testConfig, paramPath, val);
 
             // Generate world
-            var ww = WorldMap.Generate(seed, 0f, 0f, WorldMap.CellFeet * 3f, WorldMap.CellFeet * 3f, testConfig.World, testConfig.Noise);
+            var ww = WorldMap.Generate(seed, 0f, 0f, WorldMap.CellFeet * 3f, WorldMap.CellFeet * 3f, testConfig.World, testConfig.Noise, testConfig);
             var smalltown = SmallTownGenerator.Generate(seed, "hamlet", false, TownContext.None, testConfig.SmallTown);
 
             var result = new SensitivityResult
@@ -446,7 +446,7 @@ static class Program
                         string key = string.Join("|", s.ToString(CultureInfo.InvariantCulture), cx.ToString("R", CultureInfo.InvariantCulture), cz.ToString("R", CultureInfo.InvariantCulture), span.ToString("R", CultureInfo.InvariantCulture), farLod ? "far" : "detail", drawW.ToString("R", CultureInfo.InvariantCulture));
                         if (!worldCache.TryGetValue(key, out var svg))
                         {
-                            var ww = WorldMap.Generate(s, cx, cz, span, span);
+                            var ww = WorldMap.Generate(s, cx, cz, span, span, config.World, config.Noise, config);
                             if (farLod) ww.Map.LodSimple = true;
                             svg = SvgMapRenderer.Render(ww.Map, bare: true, targetWidth: drawW);
                             worldCache[key] = svg;
@@ -594,9 +594,9 @@ static class Program
             foreach (var (sz, es) in new[] { ("hamlet", (string?)null), ("village", null), ("town", "west"), ("hamlet", "north") })
             {
                 string stem = $"country-{seed}-{sz}{(es != null ? "-" + es : "")}";
-                var m = CountrysideMap.Generate(seed, sz, detail: false, edge: es, config: config.Countryside);
+                var m = CountrysideMap.Generate(seed, sz, detail: false, edge: es, config: config.Countryside, townConfig: config);
                 sections.Add(MapSection(m, $"{stem}.svg"));
-                var md = CountrysideMap.Generate(seed, sz, detail: true, edge: es, config: config.Countryside);
+                var md = CountrysideMap.Generate(seed, sz, detail: true, edge: es, config: config.Countryside, townConfig: config);
                 File.WriteAllText(Path.Combine(outDir, $"{stem}-detail.svg"), SvgMapRenderer.Render(md));
             }
         }
@@ -619,7 +619,7 @@ static class Program
                 { wcx = cx0; wcz = cz0; }
             }
             span = GetUInt(args, "--span", 0) > 0 ? GetUInt(args, "--span", 0) : span;
-            world = WorldMap.Generate(seed, wcx, wcz, span, span, config.World, config.Noise);
+            world = WorldMap.Generate(seed, wcx, wcz, span, span, config.World, config.Noise, config);
             string worldFile = $"world-{seed}-9mi.svg";
             string worldSvg = SvgMapRenderer.Render(world.Map, bare: true, targetWidth: 1400f);
             File.WriteAllText(Path.Combine(outDir, worldFile), worldSvg);
@@ -644,7 +644,7 @@ static class Program
                 foreach (var t in world.Towns)
                     Console.Error.WriteLine($"PROBE town {t.Name} cx={t.CenterX:0} hwZ={t.HighwayZ:0} spur={t.Rail.HasRailSpur} off={t.Rail.SpurOffsetFt:0} railZ={t.Rail.RailZ:0} minX={t.MinX:0} maxX={t.MaxX:0} minZ={t.MinZ:0} maxZ={t.MaxZ:0} layout={t.Layout}");
 
-            var cell = WorldMap.Generate(seed, wcx, wcz, WorldMap.CellFeet, WorldMap.CellFeet, config.World, config.Noise);
+            var cell = WorldMap.Generate(seed, wcx, wcz, WorldMap.CellFeet, WorldMap.CellFeet, config.World, config.Noise, config);
             string cellFile = $"world-{seed}-cell.svg";
             string cellSvg = SvgMapRenderer.Render(cell.Map, bare: true, targetWidth: 1100f);
             File.WriteAllText(Path.Combine(outDir, cellFile), cellSvg);
