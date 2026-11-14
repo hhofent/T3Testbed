@@ -1,6 +1,11 @@
 # Python spawner checkpoint
 
 ## Status
+Road fix: paved corridors are selected before missing-edge sampling. Only gravel
+and Level B roads can be missing. Overview road strokes have a 0.9 px minimum
+(previously 0.3 px), preserving true road width at detail. Added actual paved
+geometry gap verification and deletion regression; 13 targeted tests pass.
+
 Fix 1 reworked after the broken 961bf7d browser test. Always endless world;
 Find a town / next / previous with adjustable town zoom. Drag and cursor-anchored
 wheel zoom are on the visible chunk surface (previously on the hidden PNG).

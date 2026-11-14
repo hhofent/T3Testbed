@@ -32,3 +32,13 @@ def test_ragged_street_islands_are_connected_without_losing_stubs():
  assert streets[0]['lo']==0 and streets[0]['hi']==200
  features=[dict(kind='roads',id=r['id'],rect=road_rect(r),bounds=road_rect(r)) for r in grid+streets]
  assert orphan_roads(features)==[]
+
+
+def test_paved_gap_verifier_detects_deleted_edge():
+ from verification import paved_road_gaps
+ from world import window,MILE
+ from settings import Settings
+ rect=(0,0,2*MILE,2*MILE)
+ features=window(31,rect,Settings(),detail=False)['features']
+ assert not paved_road_gaps(features,rect)
+ assert 'road:h:1:0' in paved_road_gaps([f for f in features if f['id']!='road:h:1:0'],rect)

@@ -18,6 +18,7 @@ def feature(kind,id,**data):
  return result
 
 def road_type(seed,axis,line,segment):
+ if line%option('world.main_spacing_miles')==1: return 'paved'
  # Each removable edge belongs to one disjoint unit-square cycle. At most one
  # of its four edges is removed, so its other three edges are a guaranteed detour.
  # Both orientations participate equally; no query-order-dependent repair.
@@ -235,7 +236,7 @@ def svg(scene):
     points=' '.join(f'{a},{b}' for a,b in f['shape']); out.append(f'<polygon points="{points}" fill="none" stroke="#b5c0ab" stroke-width="0.3" vector-effect="non-scaling-stroke"/>')
    elif 'rect' in f:
     a,b,c,d=f['rect']; stroke='#b5c0ab' if kind in ('towns','lots') else '#687060'
-    out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="0.3" vector-effect="non-scaling-stroke"/>')
+    out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="{0.9 if kind=="roads" else 0.3}" vector-effect="non-scaling-stroke"/>')
    else:
     points=' '.join(f'{a},{b}' for a,b in f['points'])
     width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' else FT(1)

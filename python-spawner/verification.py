@@ -96,6 +96,20 @@ def river_checks(seed,rect):
      if intersection_angle(a,b,c,d) is not None: crossings.append((f['id'],g['id']))
  return {'river_continuity':{'pass':not dead,'failures':dead[:10],'examined':len(selected)},'rivers_downhill':{'pass':not uphill,'failures':uphill[:10]},'no_river_crossings':{'pass':not crossings,'failures':crossings[:10]}}
 
+def paved_road_gaps(features,rect):
+ # Inspect actual geometry, including paved edges absent from the feature list.
+ x,y,w,h=rect; present={f['id']:f for f in features if f['kind']=='roads'}; gaps=[]
+ for axis in ('h','v'):
+  c0,c1,s0,s1=(y,y+h,x,x+w) if axis=='h' else (x,x+w,y,y+h)
+  for line in range(math.ceil(c0/MILE),math.floor(c1/MILE)+1):
+   if line%option('world.main_spacing_miles')!=1: continue
+   for segment in range(math.floor(s0/MILE),math.ceil(s1/MILE)):
+    id=f'road:{axis}:{line}:{segment}'; f=present.get(id)
+    expected=((segment*MILE,line*MILE),((segment+1)*MILE,line*MILE)) if axis=='h' else ((line*MILE,segment*MILE),(line*MILE,(segment+1)*MILE))
+    if f is None or f['surface']!='paved' or road_line(f)!=expected: gaps.append(id)
+ return gaps
+
+
 def run(seed=31,settings=None,rect=None):
  settings=settings or Settings(); rect=rect or (0,0,3*MILE,3*MILE)
  with applied(settings):
@@ -106,6 +120,7 @@ def run(seed=31,settings=None,rect=None):
   halo=(rect[0]-MILE,rect[1]-MILE,rect[2]+2*MILE,rect[3]+2*MILE)
   expanded=window(seed,halo,settings); features=expanded['features']
   collisions=building_collisions(features); orphans=orphan_roads(features); trees=tree_collisions(features)
+  gaps=paved_road_gaps(features,rect)
   angles=crossing_angles(features)
   region=make_region(seed); local=[]
   if region['rail']:
@@ -117,6 +132,7 @@ def run(seed=31,settings=None,rect=None):
   all_angles=angles+local
   near=sum(a>=90-option('verify.square_deviation_deg') for a in all_angles)/len(all_angles) if all_angles else 1
   checks={
+   'paved_roads_no_gaps':{'pass':not gaps,'failures':gaps[:10]},
    'determinism':{'pass':json.dumps(a,sort_keys=True)==json.dumps(again,sort_keys=True)},
    'region_determinism':{'pass':json.dumps(region,sort_keys=True)==json.dumps(make_region(seed),sort_keys=True)},
    'matching_overlaps':{'pass':project(a)==project(b)},

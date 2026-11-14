@@ -73,7 +73,8 @@ def test_missing_roads_both_axes_one_percent_and_cycle_detours():
    for line in range(-100,100):
     for segment in range(-100,100):
      if road_type(31,axis,line,segment) is None: missing[axis].append((line,segment))
-   assert .007<len(missing[axis])/40000<.013
+   assert .007<len(missing[axis])/(40000*8/9)<.013
+   assert all(line%9!=1 for line,segment in missing[axis])
   for axis,edges in missing.items():
    for line,segment in edges:
     bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
@@ -91,3 +92,12 @@ def test_empty_water_blocked_town_does_not_poison_prefetch():
  # in a halo tile must become countryside, rather than failing every request.
  scene=window(896138,[21*MILE,-3*MILE,3*MILE,3*MILE],Settings(),detail=False)
  assert scene['features']
+
+
+def test_paved_roads_never_missing_even_at_maximum_loss():
+ from settings import applied
+ from world import road_type
+ with applied(Settings({'world.missing_pct':10})):
+  for axis in ('h','v'):
+   for line in range(-26,28,9):
+    assert all(road_type(31,axis,line,segment)=='paved' for segment in range(-100,100))
