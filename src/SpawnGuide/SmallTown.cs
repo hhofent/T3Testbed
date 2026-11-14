@@ -21,23 +21,16 @@ namespace SpawnGuide
     /// </summary>
     public static class SmallTownGenerator
     {
-        const float HighwayWidth = 66f;
-        const float StreetRow = 36f;
-        const float AlleyRow = 16f;
-        const float BlockLotDepth = 122f;
-        const float SideLotDepth = 80f;
-        const float BandDepth = 175f;
-
         /// <param name="detail">false = quiet annotations, true = all captions on.</param>
         /// <param name="ctx">World context (rail spur info).</param>
         /// <param name="config">Small town configuration (uses new ResidentialConfig, StreetConfig, etc.).</param>
-        public static MapPlan Generate(uint seed, string sizeName, bool detail = false, TownContext? ctx = null, SmallTownConfig? config = null)
+        public static MapPlan Generate(uint seed, string sizeName, bool detail = false, TownContext? ctx = null, SmallTownConfig? config = null, TownTierSystem? townTiers = null)
         {
             ctx ??= TownContext.None;
             var cfg = config ?? new SmallTownConfig();
 
             var rng = new Rng(seed);
-            float lotDepth = BlockLotDepth + rng.Range(-cfg.LotDepthJitter, cfg.LotDepthJitter);
+            float lotDepth = cfg.BlockLotDepth + rng.Range(-cfg.LotDepthJitter, cfg.LotDepthJitter);
             int blockRows = 0; // Will be set after tier computed
 
             // --- Determine town tier from sizeName or pick randomly ---
@@ -50,8 +43,8 @@ namespace SpawnGuide
                 _ => throw new ArgumentException($"Unknown town size '{sizeName}'. Valid sizes: crossroads, hamlet, village, town."),
             };
 
-            // Use TownTierSystem if available in parent config
-            var tierSystem = new TownTierSystem(); // Default, could be passed from SpawnConfig
+            // Town tier system from the loaded config (defaults match the original hard-coded values)
+            var tierSystem = townTiers ?? new TownTierSystem();
 
             // Compute grid size from tier system
             var (columns, ewStreets) = tierSystem.ComputeGridSize(tier, rng);
@@ -81,7 +74,7 @@ namespace SpawnGuide
             var rowAlley = new bool[blockRows];
             for (int r = 0; r < blockRows; r++)
                 rowAlley[r] = rng.Chance(cfg.RowAlleyChance.Sample(rng));
-            float BlockDepth(int row) => 2 * lotDepth + (rowAlley[row] ? AlleyRow : 0f);
+            float BlockDepth(int row) => 2 * lotDepth + (rowAlley[row] ? cfg.AlleyRow : 0f);
 
             // Place name
             string townName = rng.Pick(cfg.PlaceNames);
@@ -99,12 +92,12 @@ namespace SpawnGuide
                 colFrontages.Add(new List<float>());
                 for (int i = 0; i < n; i++) colFrontages[c].Add(cfg.LotFrontage.Sample(rng));
             }
-            float BlockWidth(int col) => colFrontages[col].Sum() + 2 * SideLotDepth;
-            float totalWidth = StreetRow * (columns + 1);
+            float BlockWidth(int col) => colFrontages[col].Sum() + 2 * cfg.SideLotDepth;
+            float totalWidth = cfg.StreetRow * (columns + 1);
             for (int c = 0; c < columns; c++) totalWidth += BlockWidth(c);
 
             var nsX = new List<float>();
-            { float x = 0f; for (int s = 0; s <= columns; s++) { nsX.Add(x); if (s < columns) x += StreetRow + BlockWidth(s); } }
+            { float x = 0f; for (int s = 0; s <= columns; s++) { nsX.Add(x); if (s < columns) x += cfg.StreetRow + BlockWidth(s); } }
 
             var fourSide = new Dictionary<(int row, int col), bool>();
             bool IsFourSide(int blockRow, int col)
@@ -125,12 +118,12 @@ namespace SpawnGuide
             bool blobReady = false;
 
             // Z layout
-            float zBand = HighwayWidth;
-            float zFirstStreet = zBand + BandDepth;
+            float zBand = cfg.HighwayWidth;
+            float zFirstStreet = zBand + cfg.BandDepth;
             var ewZ = new float[ewStreets];
             ewZ[0] = zFirstStreet;
-            for (int i = 1; i < ewStreets; i++) ewZ[i] = ewZ[i - 1] + StreetRow + BlockDepth(i - 1);
-            float lastStreetEnd = ewZ[ewStreets - 1] + StreetRow;
+            for (int i = 1; i < ewStreets; i++) ewZ[i] = ewZ[i - 1] + cfg.StreetRow + BlockDepth(i - 1);
+            float lastStreetEnd = ewZ[ewStreets - 1] + cfg.StreetRow;
             float totalDepth = lastStreetEnd + lotDepth;
 
             blobCZ = (zBand + totalDepth) / 2f;
@@ -209,7 +202,7 @@ namespace SpawnGuide
             {
                 float want = totalWidth / 2f + ctx.SpurOffsetFt;
                 int best = -1; float bestD = float.MaxValue;
-                for (int s = 1; s < columns; s++) { float d = MathF.Abs(nsX[s] + StreetRow / 2f - want); if (d < bestD) { bestD = d; best = s; } }
+                for (int s = 1; s < columns; s++) { float d = MathF.Abs(nsX[s] + cfg.StreetRow / 2f - want); if (d < bestD) { bestD = d; best = s; } }
                 if (best > 0) spurIdx = best;
             }
             if (spurIdx >= 0) spurTrackX = nsX[spurIdx] - 64f;
@@ -221,21 +214,21 @@ namespace SpawnGuide
             float sideStreetX = -1f;
             if (hasSideStreet)
             {
-                sideStreetX = rng.Chance(0.5f) ? rng.Range(60f, MathF.Max(61f, mainX - StreetRow - 120f)) : rng.Range(mainX + StreetRow + 120f, MathF.Max(mainX + StreetRow + 121f, totalWidth - 120f));
+                sideStreetX = rng.Chance(0.5f) ? rng.Range(60f, MathF.Max(61f, mainX - cfg.StreetRow - 120f)) : rng.Range(mainX + cfg.StreetRow + 120f, MathF.Max(mainX + cfg.StreetRow + 121f, totalWidth - 120f));
                 sideStreetX = Math.Clamp(sideStreetX, 50f, MathF.Max(50f, totalWidth - 120f));
-                if (spurIdx >= 0 && sideStreetX + StreetRow > spurTrackX - 16f && sideStreetX - StreetRow / 2f < spurTrackX + 64f)
+                if (spurIdx >= 0 && sideStreetX + cfg.StreetRow > spurTrackX - 16f && sideStreetX - cfg.StreetRow / 2f < spurTrackX + 64f)
                     sideStreetX = Math.Clamp(spurTrackX + 76f, 50f, MathF.Max(50f, totalWidth - 120f));
-                bandOcc.Add((sideStreetX - StreetRow / 2f - 6f, sideStreetX + StreetRow / 2f + 6f));
+                bandOcc.Add((sideStreetX - cfg.StreetRow / 2f - 6f, sideStreetX + cfg.StreetRow / 2f + 6f));
             }
 
             // Grain elevator
             float evW = cfg.ElevatorWidth, evD = cfg.ElevatorDepth;
             bool elevatorRight = rng.Chance(cfg.ElevatorRightChance);
-            float evX0 = elevatorRight ? mainX + StreetRow + cfg.ElevatorOffsetFromMain.Sample(rng) : mainX - StreetRow - cfg.ElevatorOffsetFromMain.Sample(rng) - evW;
+            float evX0 = elevatorRight ? mainX + cfg.StreetRow + cfg.ElevatorOffsetFromMain.Sample(rng) : mainX - cfg.StreetRow - cfg.ElevatorOffsetFromMain.Sample(rng) - evW;
             if (spurIdx >= 0) { spurTrackX = Math.Clamp(spurTrackX, 60f, MathF.Max(60f, totalWidth - 60f)); evX0 = spurTrackX - evW / 2f; }
             else evX0 = Math.Clamp(evX0, 40f, MathF.Max(40f, totalWidth - evW - 40f));
 
-            map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.GrainElevator, Center = new Vec2(evX0 + evW / 2f, zBand + BandDepth / 2f), WidthFeet = evW, DepthFeet = evD, Label = "ELEVATOR" });
+            map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.GrainElevator, Center = new Vec2(evX0 + evW / 2f, zBand + cfg.BandDepth / 2f), WidthFeet = evW, DepthFeet = evD, Label = "ELEVATOR" });
             bandOcc.Add((evX0 - 12f, evX0 + evW + 12f));
 
             int bins = cfg.ElevatorBinCount.Sample(rng);
@@ -244,19 +237,19 @@ namespace SpawnGuide
             float binX = evX0 + (evW - binRowW) / 2f;
             if (binX + binRowW > totalWidth - 8f) binX = totalWidth - 8f - binRowW;
             if (binX < 8f) binX = 8f;
-            for (int i = 0; i < bins; i++) map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.GrainBin, Center = new Vec2(binX + i * spacing + binD / 2f, zBand + BandDepth / 2f + evD / 2f + 10f + binD / 2f), DiameterFeet = binD, Label = "" });
+            for (int i = 0; i < bins; i++) map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.GrainBin, Center = new Vec2(binX + i * spacing + binD / 2f, zBand + cfg.BandDepth / 2f + evD / 2f + 10f + binD / 2f), DiameterFeet = binD, Label = "" });
             bandOcc.Add((binX - 8f, binX + binRowW + 8f));
 
             // Rail industrial strip
             if (spurIdx >= 0)
             {
                 bandOcc.Add((spurTrackX - 16f, spurTrackX + 64f));
-                var railOcc = new List<(float x0, float z0, float x1, float z1)> { (evX0, zBand + BandDepth / 2f - evD / 2f, evX0 + evW, zBand + BandDepth / 2f + evD / 2f), (binX, zBand + BandDepth / 2f + evD / 2f + 10f, binX + binRowW, zBand + BandDepth / 2f + evD / 2f + 10f + binD) };
+                var railOcc = new List<(float x0, float z0, float x1, float z1)> { (evX0, zBand + cfg.BandDepth / 2f - evD / 2f, evX0 + evW, zBand + cfg.BandDepth / 2f + evD / 2f), (binX, zBand + cfg.BandDepth / 2f + evD / 2f + 10f, binX + binRowW, zBand + cfg.BandDepth / 2f + evD / 2f + 10f + binD) };
                 var railPool = BusinessCatalogue.Industrial.Where(b => b.MinTier <= tier).ToList();
                 for (int row = 0; row < blockRows && railPool.Count > 0; row++)
                 {
                     if (row == blockRows - 1 && blockRows > 1) continue;
-                    float z0 = ewZ[row] + StreetRow, z1 = row + 1 < ewZ.Length ? ewZ[row + 1] : zBand + BandDepth;
+                    float z0 = ewZ[row] + cfg.StreetRow, z1 = row + 1 < ewZ.Length ? ewZ[row + 1] : zBand + cfg.BandDepth;
                     float along = cfg.RailIndustrialRowSpacing.Sample(rng);
                     if (z1 - z0 < along + 24f) continue;
                     int pick = rng.RangeInt(0, railPool.Count); var biz = railPool[pick]; railPool.RemoveAt(pick);
@@ -297,7 +290,7 @@ namespace SpawnGuide
                     int tries = 0;
                     while (tries++ < 24)
                     {
-                        bool inMainGap = x + w > mainX - 12f && x < mainX + StreetRow + 12f;
+                        bool inMainGap = x + w > mainX - 12f && x < mainX + cfg.StreetRow + 12f;
                         bool inBandOcc = bandOcc.Any(b => x < b.x1 && x + w > b.x0);
                         if (x + w <= totalWidth - 35f && !inMainGap && !inBandOcc) break;
                         x += 12f;
@@ -310,7 +303,7 @@ namespace SpawnGuide
                     if (guard++ > 40) break;
                 }
                 foreach (var p in placed) { RecordContent(-1, 0, p.x, p.x + p.w, zBand, zBand + 80f); map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(p.x + p.w / 2f, zBand + p.d / 2f + 8f), WidthFeet = p.w, DepthFeet = p.d, Label = p.label }); }
-                foreach (var biz in industrial) { float iw = rng.Range(biz.MinWidth, biz.MaxWidth), id = rng.Range(biz.MinDepth, biz.MaxDepth); float ix = rng.Range(45f, MathF.Max(46f, totalWidth - iw - 45f)); bool straddles = ix < mainX + StreetRow + 20f && ix + iw > mainX - 20f; bool collides = bandOcc.Any(b => ix < b.x1 && ix + iw > b.x0); if (straddles || collides) continue; map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(ix + iw / 2f, zBand + id / 2f + 8f), WidthFeet = iw, DepthFeet = id, Label = BusinessCatalogue.LabelFor(rng, biz) }); bandOcc.Add((ix - 10f, ix + iw + 10f)); }
+                foreach (var biz in industrial) { float iw = rng.Range(biz.MinWidth, biz.MaxWidth), id = rng.Range(biz.MinDepth, biz.MaxDepth); float ix = rng.Range(45f, MathF.Max(46f, totalWidth - iw - 45f)); bool straddles = ix < mainX + cfg.StreetRow + 20f && ix + iw > mainX - 20f; bool collides = bandOcc.Any(b => ix < b.x1 && ix + iw > b.x0); if (straddles || collides) continue; map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(ix + iw / 2f, zBand + id / 2f + 8f), WidthFeet = iw, DepthFeet = id, Label = BusinessCatalogue.LabelFor(rng, biz) }); bandOcc.Add((ix - 10f, ix + iw + 10f)); }
 
                 int crossShops = rng.RangeInt(0, cfg.CrossStreetShopMax);
                 for (int i = 0; i < crossShops; i++)
@@ -319,8 +312,8 @@ namespace SpawnGuide
                     if (biz == null) break;
                     bool west = rng.Chance(0.5f);
                     float w = rng.Range(biz.MinDepth, biz.MaxDepth), d = rng.Range(biz.MinWidth, biz.MaxWidth);
-                    float cx = west ? mainX - StreetRow / 2f - 6f - w / 2f : mainX + StreetRow / 2f + 6f + w / 2f;
-                    float cz = rng.Range(zBand + 24f, MathF.Max(zBand + 25f, zBand + BandDepth - d - 12f));
+                    float cx = west ? mainX - cfg.StreetRow / 2f - 6f - w / 2f : mainX + cfg.StreetRow / 2f + 6f + w / 2f;
+                    float cz = rng.Range(zBand + 24f, MathF.Max(zBand + 25f, zBand + cfg.BandDepth - d - 12f));
                     bool clash = bandOcc.Any(b => cx - w / 2f < b.x1 && cx + w / 2f > b.x0); if (clash) continue;
                     map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(cx, cz), WidthFeet = w, DepthFeet = d, Label = BusinessCatalogue.LabelFor(rng, biz) });
                     bandOcc.Add((cx - w / 2f - 6f, cx + w / 2f + 6f));
@@ -370,7 +363,7 @@ namespace SpawnGuide
                 if (lm.Kind == OutbuildingKind.Depot && spurIdx < 0) continue;
                 if (lm.Kind == OutbuildingKind.Depot)
                 {
-                    float depotZ = ewZ[Math.Max(0, blockRows - 1)] + StreetRow + 45f;
+                    float depotZ = ewZ[Math.Max(0, blockRows - 1)] + cfg.StreetRow + 45f;
                     map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Depot, Center = new Vec2(spurTrackX + 28f, depotZ), WidthFeet = 34f, DepthFeet = 70f, Label = "DEPOT" });
                     continue;
                 }
@@ -382,14 +375,14 @@ namespace SpawnGuide
             void FillTownLot(int streetIdx, int col, int lotIdx, bool facesSouth, int districtRow, float lotX, float frontage, OutbuildingKind? anchor, bool alley, float? depthOverride = null)
             {
                 float streetZ = ewZ[streetIdx]; float dep = depthOverride ?? lotDepth;
-                float rowZ0 = facesSouth ? streetZ + StreetRow : streetZ - dep;
+                float rowZ0 = facesSouth ? streetZ + cfg.StreetRow : streetZ - dep;
                 float cx = lotX + frontage / 2f, cz = rowZ0 + dep / 2f;
                 if (!InsideBlob(cx, cz)) return;
                 RecordContent(districtRow, col, lotX, lotX + frontage, rowZ0, rowZ0 + dep);
                 if (!anchor.HasValue && IsVacantLot(cx, cz)) { map.LotLines.Add(new MapRect(lotX, rowZ0, frontage, dep)); return; }
                 map.LotLines.Add(new MapRect(lotX, rowZ0, frontage, dep));
 
-                float setback = cfg.LotSetback.Sample(rng); float frontLineZ = facesSouth ? streetZ + StreetRow : streetZ;
+                float setback = cfg.LotSetback.Sample(rng); float frontLineZ = facesSouth ? streetZ + cfg.StreetRow : streetZ;
                 int gRoll = rng.RangeInt(0, 100);
                 float detachedThreshold = cfg.GarageModeDetachedChance * 100;
                 float integralThreshold = detachedThreshold + cfg.GarageModeIntegralChance * 100;
@@ -425,33 +418,33 @@ namespace SpawnGuide
 
             void FillSideFace(int blockRow, int col, int side, float blockX0, float blockX1, float bz0, float bz1)
             {
-                bool west = side == 0; float lotX = west ? blockX0 : blockX1 - SideLotDepth; float z = bz0 + 3f;
-                while (true) { float f = rng.Range(58f, 76f); if (z + f > bz1 - 3f) break; float cx = lotX + SideLotDepth / 2f, cz = z + f / 2f; if (!InsideBlob(cx, cz)) { z += f; continue; } if (IsVacantLot(cx, cz)) { RecordContent(blockRow, col, lotX, lotX + SideLotDepth, z, z + f); map.LotLines.Add(new MapRect(lotX, z, SideLotDepth, f)); z += f; continue; } PlaceSideLot(blockRow, col, lotX, z, f, west); z += f; }
+                bool west = side == 0; float lotX = west ? blockX0 : blockX1 - cfg.SideLotDepth; float z = bz0 + 3f;
+                while (true) { float f = rng.Range(58f, 76f); if (z + f > bz1 - 3f) break; float cx = lotX + cfg.SideLotDepth / 2f, cz = z + f / 2f; if (!InsideBlob(cx, cz)) { z += f; continue; } if (IsVacantLot(cx, cz)) { RecordContent(blockRow, col, lotX, lotX + cfg.SideLotDepth, z, z + f); map.LotLines.Add(new MapRect(lotX, z, cfg.SideLotDepth, f)); z += f; continue; } PlaceSideLot(blockRow, col, lotX, z, f, west); z += f; }
             }
 
             void PlaceSideLot(int districtRow, int col, float lotX, float z0, float f, bool west)
             {
-                RecordContent(districtRow, col, lotX, lotX + SideLotDepth, z0, z0 + f); map.LotLines.Add(new MapRect(lotX, z0, SideLotDepth, f));
-                float setback = rng.Range(9f, 17f); uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; string arch = Weighted(rng); var house = HouseGenerator.Generate(arch, hSeed); house = west ? house.Rotate90CW() : house.Rotate90CCW(); float dx = west ? lotX + setback : lotX + SideLotDepth - setback; float hzMin = house.Footprint.Select(p => p.Z).Min(); float hzSpan = house.Footprint.Select(p => p.Z).Max() - hzMin;
+                RecordContent(districtRow, col, lotX, lotX + cfg.SideLotDepth, z0, z0 + f); map.LotLines.Add(new MapRect(lotX, z0, cfg.SideLotDepth, f));
+                float setback = rng.Range(9f, 17f); uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; string arch = Weighted(rng); var house = HouseGenerator.Generate(arch, hSeed); house = west ? house.Rotate90CW() : house.Rotate90CCW(); float dx = west ? lotX + setback : lotX + cfg.SideLotDepth - setback; float hzMin = house.Footprint.Select(p => p.Z).Min(); float hzSpan = house.Footprint.Select(p => p.Z).Max() - hzMin;
                 if (hzSpan > f - 8f) { house = HouseGenerator.Generate("farmhouse", hSeed ^ 0x5f3759dfu); house = west ? house.Rotate90CW() : house.Rotate90CCW(); hzMin = house.Footprint.Select(p => p.Z).Min(); hzSpan = house.Footprint.Select(p => p.Z).Max() - hzMin; }
                 if (hzSpan > f - 8f) return;
-                float dz = z0 + f / 2f - (hzMin + hzSpan / 2f); house = house.OffsetCopy(dx, dz); var houseBounds = FootprintBounds(house); if (OccupiedCollides(houseBounds)) return; map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false }); RegisterOccupied(houseBounds); var fd = FindFrontDoor(house); float walkStartX = west ? lotX - 2.25f : lotX + SideLotDepth + 2.25f; map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4f, Points = { new Vec2(walkStartX, fd.Z), fd } }); var (garageDoor, garageWall, runsE) = FindGarageDoor(house); bool frontEntry = !runsE; float xStart = west ? lotX - 2.25f : lotX + SideLotDepth + 2.25f; if (!float.IsNaN(garageDoor.X)) { float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f; bool garagePositiveZ = garageDoor.Z >= fc; map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, xStart, "concrete", 17f)); }
+                float dz = z0 + f / 2f - (hzMin + hzSpan / 2f); house = house.OffsetCopy(dx, dz); var houseBounds = FootprintBounds(house); if (OccupiedCollides(houseBounds)) return; map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false }); RegisterOccupied(houseBounds); var fd = FindFrontDoor(house); float walkStartX = west ? lotX - 2.25f : lotX + cfg.SideLotDepth + 2.25f; map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4f, Points = { new Vec2(walkStartX, fd.Z), fd } }); var (garageDoor, garageWall, runsE) = FindGarageDoor(house); bool frontEntry = !runsE; float xStart = west ? lotX - 2.25f : lotX + cfg.SideLotDepth + 2.25f; if (!float.IsNaN(garageDoor.X)) { float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f; bool garagePositiveZ = garageDoor.Z >= fc; map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, xStart, "concrete", 17f)); }
             }
 
             // North row of E/W streets
-            for (int s = 0; s < ewStreets; s++) { bool alley = s < blockRows && rowAlley[s]; for (int col = 0; col < columns; col++) { float x = nsX[col] + StreetRow + SideLotDepth; for (int i = 0; i < colFrontages[col].Count; i++) { float f = colFrontages[col][i]; OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 0, col), out var k0) ? k0 : null; FillTownLot(s, col, i, true, s, x, f, anchor, alley); x += f; } } }
-            for (int s = 1; s < ewStreets; s++) { bool alley = rowAlley[s - 1]; for (int col = 0; col < columns; col++) { float x = nsX[col] + StreetRow + SideLotDepth; for (int i = 0; i < colFrontages[col].Count; i++) { float f = colFrontages[col][i]; OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 1, col), out var k1) ? k1 : null; FillTownLot(s, col, i, false, s - 1, x, f, anchor, alley); x += f; } } }
+            for (int s = 0; s < ewStreets; s++) { bool alley = s < blockRows && rowAlley[s]; for (int col = 0; col < columns; col++) { float x = nsX[col] + cfg.StreetRow + cfg.SideLotDepth; for (int i = 0; i < colFrontages[col].Count; i++) { float f = colFrontages[col][i]; OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 0, col), out var k0) ? k0 : null; FillTownLot(s, col, i, true, s, x, f, anchor, alley); x += f; } } }
+            for (int s = 1; s < ewStreets; s++) { bool alley = rowAlley[s - 1]; for (int col = 0; col < columns; col++) { float x = nsX[col] + cfg.StreetRow + cfg.SideLotDepth; for (int i = 0; i < colFrontages[col].Count; i++) { float f = colFrontages[col][i]; OutbuildingKind? anchor = i == 0 && civic.TryGetValue((s, 1, col), out var k1) ? k1 : null; FillTownLot(s, col, i, false, s - 1, x, f, anchor, alley); x += f; } } }
 
             // Side lots (4-sided blocks)
-            for (int blockRow = 0; blockRow < blockRows; blockRow++) { float bz0 = ewZ[blockRow] + StreetRow, bz1 = ewZ[blockRow + 1]; for (int col = 0; col < columns; col++) { float bx0 = nsX[col] + StreetRow, bx1 = bx0 + BlockWidth(col); bool four = IsFourSide(blockRow, col); if (four || col == 0) FillSideFace(blockRow, col, 0, bx0, bx1, bz0, bz1); if (col == spurIdx - 1) continue; if (four || col == columns - 1) FillSideFace(blockRow, col, 1, bx0, bx1, bz0, bz1); } }
+            for (int blockRow = 0; blockRow < blockRows; blockRow++) { float bz0 = ewZ[blockRow] + cfg.StreetRow, bz1 = ewZ[blockRow + 1]; for (int col = 0; col < columns; col++) { float bx0 = nsX[col] + cfg.StreetRow, bx1 = bx0 + BlockWidth(col); bool four = IsFourSide(blockRow, col); if (four || col == 0) FillSideFace(blockRow, col, 0, bx0, bx1, bz0, bz1); if (col == spurIdx - 1) continue; if (four || col == columns - 1) FillSideFace(blockRow, col, 1, bx0, bx1, bz0, bz1); } }
 
             // Drop empty columns (same as before)
-            bool ColumnHasContent(int col) { float lo = nsX[col] + StreetRow, hi = lo + colFrontages[col].Sum() + 2 * SideLotDepth; int houses = 0, buildings = 0, lots = 0; foreach (var h in map.Houses) if (h.Plan.MinX >= lo && h.Plan.MinX < hi) houses++; foreach (var o in map.Outbuildings) if (o.Center.X >= lo && o.Center.X < hi) buildings++; foreach (var r in map.LotLines) { float cx = r.X + r.W / 2f; if (cx >= lo && cx < hi) lots++; } return houses >= 4 && houses * 2 >= lots; }
+            bool ColumnHasContent(int col) { float lo = nsX[col] + cfg.StreetRow, hi = lo + colFrontages[col].Sum() + 2 * cfg.SideLotDepth; int houses = 0, buildings = 0, lots = 0; foreach (var h in map.Houses) if (h.Plan.MinX >= lo && h.Plan.MinX < hi) houses++; foreach (var o in map.Outbuildings) if (o.Center.X >= lo && o.Center.X < hi) buildings++; foreach (var r in map.LotLines) { float cx = r.X + r.W / 2f; if (cx >= lo && cx < hi) lots++; } return houses >= 4 && houses * 2 >= lots; }
             void ShiftAllX(float bound, float dx) { foreach (var h in map.Houses) { var p = h.Plan; if (p.MinX >= bound) h.Plan = p.OffsetCopy(dx, 0f); } for (int i = 0; i < map.LotLines.Count; i++) { var r = map.LotLines[i]; if (r.X >= bound) map.LotLines[i] = new MapRect(r.X + dx, r.Z, r.W, r.H); } for (int i = 0; i < map.Alleys.Count; i++) { var r = map.Alleys[i]; if (r.X >= bound) map.Alleys[i] = new MapRect(r.X + dx, r.Z, r.W, r.H); } for (int i = 0; i < map.Outbuildings.Count; i++) { var o = map.Outbuildings[i]; if (o.Center.X >= bound) o.Center = new Vec2(o.Center.X + dx, o.Center.Z); } for (int i = 0; i < map.Walks.Count; i++) { var w = map.Walks[i]; if (!w.Points.Any(p => p.X >= bound)) continue; var d = new Driveway { WidthFeet = w.WidthFeet, Surface = w.Surface }; foreach (var p in w.Points) d.Points.Add(new Vec2(p.X + (p.X >= bound ? dx : 0f), p.Z)); map.Walks[i] = d; } for (int i = 0; i < map.Driveways.Count; i++) { var d = map.Driveways[i]; if (!d.Points.Any(p => p.X >= bound)) continue; var n = new Driveway { WidthFeet = d.WidthFeet, Surface = d.Surface }; foreach (var p in d.Points) n.Points.Add(new Vec2(p.X + (p.X >= bound ? dx : 0f), p.Z)); map.Driveways[i] = n; } for (int i = 0; i < map.Trees.Count; i++) if (map.Trees[i].X >= bound) map.Trees[i] = new Vec2(map.Trees[i].X + dx, map.Trees[i].Z); for (int i = 0; i < map.Labels.Count; i++) { var l = map.Labels[i]; if (l.Position.X >= bound) map.Labels[i] = new MapLabel { Position = new Vec2(l.Position.X + dx, l.Position.Z), Text = l.Text, Large = l.Large, RotateDeg = l.RotateDeg, Anchor = l.Anchor }; } for (int i = 0; i < map.Bulbs.Count; i++) { var b = map.Bulbs[i]; if (b.Center.X >= bound) map.Bulbs[i] = new RoadBulb { Center = new Vec2(b.Center.X + dx, b.Center.Z), RadiusFeet = b.RadiusFeet, Fill = b.Fill }; } }
-            for (int c = columns - 1; c >= 0; c--) { if (c == spurIdx - 1) continue; if (ColumnHasContent(c)) continue; float colW = colFrontages[c].Sum() + 2 * SideLotDepth + StreetRow; float lo = nsX[c] + StreetRow, hi = lo + colFrontages[c].Sum() + 2 * SideLotDepth; map.Houses.RemoveAll(h => h.Plan.MinX >= lo && h.Plan.MinX < hi); map.LotLines.RemoveAll(r => r.X + r.W > lo && r.X < hi); map.Alleys.RemoveAll(r => r.X + r.W > lo && r.X < hi); map.Outbuildings.RemoveAll(o => o.Center.X >= lo && o.Center.X < hi); map.Walks.RemoveAll(w => w.Points.Any(p => p.X >= lo && p.X < hi)); map.Driveways.RemoveAll(d => d.Points.Any(p => p.X >= lo && p.X < hi)); map.Trees.RemoveAll(t => t.X >= lo && t.X < hi); map.Labels.RemoveAll(l => l.Position.X >= lo && l.Position.X < hi); map.Bulbs.RemoveAll(b => b.Center.X >= lo && b.Center.X < hi); float bound = nsX[c + 1] + StreetRow; ShiftAllX(bound, -colW); for (int i = c + 2; i < nsX.Count; i++) nsX[i] -= colW; nsX.RemoveAt(c + 1); streetZ.RemoveAt(c + 1); colFrontages.RemoveAt(c); totalWidth -= colW; map.WidthFeet = totalWidth; }
+            for (int c = columns - 1; c >= 0; c--) { if (c == spurIdx - 1) continue; if (ColumnHasContent(c)) continue; float colW = colFrontages[c].Sum() + 2 * cfg.SideLotDepth + cfg.StreetRow; float lo = nsX[c] + cfg.StreetRow, hi = lo + colFrontages[c].Sum() + 2 * cfg.SideLotDepth; map.Houses.RemoveAll(h => h.Plan.MinX >= lo && h.Plan.MinX < hi); map.LotLines.RemoveAll(r => r.X + r.W > lo && r.X < hi); map.Alleys.RemoveAll(r => r.X + r.W > lo && r.X < hi); map.Outbuildings.RemoveAll(o => o.Center.X >= lo && o.Center.X < hi); map.Walks.RemoveAll(w => w.Points.Any(p => p.X >= lo && p.X < hi)); map.Driveways.RemoveAll(d => d.Points.Any(p => p.X >= lo && p.X < hi)); map.Trees.RemoveAll(t => t.X >= lo && t.X < hi); map.Labels.RemoveAll(l => l.Position.X >= lo && l.Position.X < hi); map.Bulbs.RemoveAll(b => b.Center.X >= lo && b.Center.X < hi); float bound = nsX[c + 1] + cfg.StreetRow; ShiftAllX(bound, -colW); for (int i = c + 2; i < nsX.Count; i++) nsX[i] -= colW; nsX.RemoveAt(c + 1); streetZ.RemoveAt(c + 1); colFrontages.RemoveAt(c); totalWidth -= colW; map.WidthFeet = totalWidth; }
             int effColumns = nsX.Count - 1;
 
-            float spurTrackXFinal = 0f; if (spurIdx >= 0) { spurTrackXFinal = nsX[spurIdx] - 64f; reserved.Add(new MapRect(nsX[spurIdx] - SideLotDepth, zBand, SideLotDepth, totalDepth + 200f)); }
+            float spurTrackXFinal = 0f; if (spurIdx >= 0) { spurTrackXFinal = nsX[spurIdx] - 64f; reserved.Add(new MapRect(nsX[spurIdx] - cfg.SideLotDepth, zBand, cfg.SideLotDepth, totalDepth + 200f)); }
             bool OnRailGround(float x0, float x1) => spurIdx >= 0 && ((x1 > spurTrackXFinal - 16f && x0 < spurTrackXFinal + 64f) || (x0 < nsX[spurIdx] + 36f && x1 > nsX[spurIdx]));
             bool ClearRailGround(ref float x, float width) { if (spurIdx < 0) return true; if (!OnRailGround(x, x + width)) return true; for (int step = 0; step < 8; step++) { float east = nsX[spurIdx] + 58f + step * 74f; if (east + width > totalWidth - 30f) break; bool clash = false; foreach (var r in map.Roads) if (r.W < r.H && r.X < east + width && r.X + r.W > east) { clash = true; break; } if (clash) continue; x = east; return true; } return false; }
 
@@ -463,58 +456,58 @@ namespace SpawnGuide
             foreach (var h in map.Houses) { builtMinX = MathF.Min(builtMinX, h.Plan.MinX); builtMaxX = MathF.Max(builtMaxX, h.Plan.MinX + h.Plan.WidthFeet); builtMaxZ = MathF.Max(builtMaxZ, h.Plan.MinZ + h.Plan.DepthFeet); }
             if (builtMinX == float.MaxValue) { builtMinX = 0; builtMaxX = totalWidth; builtMaxZ = totalDepth; }
             float gapN = cfg.PerimeterGapN.Sample(rng), jogH = cfg.PerimeterJogHeight.Sample(rng);
-            float northZ0 = builtMaxZ + gapN, northZ1 = northZ0 + StreetRow + jogH;
+            float northZ0 = builtMaxZ + gapN, northZ1 = northZ0 + cfg.StreetRow + jogH;
             int jogStreet = effColumns > 1 ? rng.RangeInt(1, effColumns) : 1; float jogX = nsX[jogStreet]; float PerimZ(float x) => x < jogX ? northZ0 : northZ1;
-            float outerRoadZ = northZ1 + StreetRow + cfg.OutlyingRoadZOffset.Sample(rng); bool outerRoadIsShops = hasBypassedHighway && !hasOutlyingRoad;
-            float nsZ1 = ewZ[lastKeptEW] + StreetRow; bool[] nsKeep = new bool[nsX.Count]; for (int s = 0; s < nsX.Count; s++) nsKeep[s] = streetZ[s].z1 > zBand + 40f; nsKeep[0] = true; nsKeep[nsX.Count - 1] = true; nsKeep[jogStreet] = true;
+            float outerRoadZ = northZ1 + cfg.StreetRow + cfg.OutlyingRoadZOffset.Sample(rng); bool outerRoadIsShops = hasBypassedHighway && !hasOutlyingRoad;
+            float nsZ1 = ewZ[lastKeptEW] + cfg.StreetRow; bool[] nsKeep = new bool[nsX.Count]; for (int s = 0; s < nsX.Count; s++) nsKeep[s] = streetZ[s].z1 > zBand + 40f; nsKeep[0] = true; nsKeep[nsX.Count - 1] = true; nsKeep[jogStreet] = true;
 
             // Draw roads
-            map.Roads.Add(new MapRect(0, 0, totalWidth, HighwayWidth)); map.RoadDashed.Add(true); map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, HighwayWidth / 2f), Text = "MAIN STREET", Large = true });
-            for (int s = 0; s < ewStreets; s++) if (ewKeep[s]) { map.Roads.Add(new MapRect(0, ewZ[s], totalWidth, StreetRow)); map.RoadDashed.Add(false); }
-            for (int s = 0; s < nsX.Count; s++) if (nsKeep[s]) { float zEnd = PerimZ(nsX[s]) + StreetRow; if (hasOuterRoad && (s == 0 || s == nsX.Count - 1)) zEnd = outerRoadZ + StreetRow; map.Roads.Add(new MapRect(nsX[s], zBand, StreetRow, zEnd - zBand)); map.RoadDashed.Add(false); }
-            map.Roads.Add(new MapRect(0, northZ0, jogX + StreetRow, StreetRow)); map.RoadDashed.Add(false);
-            map.Roads.Add(new MapRect(jogX, northZ1, totalWidth - jogX, StreetRow)); map.RoadDashed.Add(false);
+            map.Roads.Add(new MapRect(0, 0, totalWidth, cfg.HighwayWidth)); map.RoadDashed.Add(true); map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, cfg.HighwayWidth / 2f), Text = "MAIN STREET", Large = true });
+            for (int s = 0; s < ewStreets; s++) if (ewKeep[s]) { map.Roads.Add(new MapRect(0, ewZ[s], totalWidth, cfg.StreetRow)); map.RoadDashed.Add(false); }
+            for (int s = 0; s < nsX.Count; s++) if (nsKeep[s]) { float zEnd = PerimZ(nsX[s]) + cfg.StreetRow; if (hasOuterRoad && (s == 0 || s == nsX.Count - 1)) zEnd = outerRoadZ + cfg.StreetRow; map.Roads.Add(new MapRect(nsX[s], zBand, cfg.StreetRow, zEnd - zBand)); map.RoadDashed.Add(false); }
+            map.Roads.Add(new MapRect(0, northZ0, jogX + cfg.StreetRow, cfg.StreetRow)); map.RoadDashed.Add(false);
+            map.Roads.Add(new MapRect(jogX, northZ1, totalWidth - jogX, cfg.StreetRow)); map.RoadDashed.Add(false);
 
-            if (hasBoulevard && ewStreets > 0) { int bs = rng.RangeInt(0, ewStreets); if (!ewKeep[bs]) bs = 0; float mz = ewZ[bs] + StreetRow / 2f - 9f; map.Medians.Add(new MapRect(24f, mz, totalWidth - 48f, 18f)); for (float tx = 60f; tx < totalWidth - 60f; tx += 58f) map.Trees.Add(new Vec2(tx, mz + 9f)); }
+            if (hasBoulevard && ewStreets > 0) { int bs = rng.RangeInt(0, ewStreets); if (!ewKeep[bs]) bs = 0; float mz = ewZ[bs] + cfg.StreetRow / 2f - 9f; map.Medians.Add(new MapRect(24f, mz, totalWidth - 48f, 18f)); for (float tx = 60f; tx < totalWidth - 60f; tx += 58f) map.Trees.Add(new Vec2(tx, mz + 9f)); }
 
-            if (hasOuterRoad) { map.Roads.Add(new MapRect(0, outerRoadZ, totalWidth, StreetRow)); map.RoadDashed.Add(false); map.Labels.Add(new MapLabel { Position = new Vec2(42f, outerRoadZ + StreetRow / 2f), Text = outerRoadIsShops ? "OLD HIGHWAY" : "RURAL ROAD", Anchor = "start" }); }
-            if (hasSideStreet && sideStreetX > 0f) { map.Roads.Add(new MapRect(sideStreetX, HighwayWidth, StreetRow, ewZ[0] + StreetRow - HighwayWidth)); map.RoadDashed.Add(false); }
+            if (hasOuterRoad) { map.Roads.Add(new MapRect(0, outerRoadZ, totalWidth, cfg.StreetRow)); map.RoadDashed.Add(false); map.Labels.Add(new MapLabel { Position = new Vec2(42f, outerRoadZ + cfg.StreetRow / 2f), Text = outerRoadIsShops ? "OLD HIGHWAY" : "RURAL ROAD", Anchor = "start" }); }
+            if (hasSideStreet && sideStreetX > 0f) { map.Roads.Add(new MapRect(sideStreetX, cfg.HighwayWidth, cfg.StreetRow, ewZ[0] + cfg.StreetRow - cfg.HighwayWidth)); map.RoadDashed.Add(false); }
 
             // Alleys
-            for (int row = 0; row < blockRows; row++) { if (!rowAlley[row]) continue; float aZ = ewZ[row] + StreetRow + lotDepth; for (int col = 0; col < effColumns; col++) { if (!colFilled[row, col]) continue; float bX = nsX[col] + StreetRow, bW = colFrontages[col].Sum() + 2 * SideLotDepth; if (col == spurIdx - 1) bW -= 84f; if (bW <= 20f) continue; if (bX + colFrontages[col].Sum() > totalWidth + 1f) continue; map.Alleys.Add(new MapRect(bX, aZ, bW, AlleyRow)); } }
+            for (int row = 0; row < blockRows; row++) { if (!rowAlley[row]) continue; float aZ = ewZ[row] + cfg.StreetRow + lotDepth; for (int col = 0; col < effColumns; col++) { if (!colFilled[row, col]) continue; float bX = nsX[col] + cfg.StreetRow, bW = colFrontages[col].Sum() + 2 * cfg.SideLotDepth; if (col == spurIdx - 1) bW -= 84f; if (bW <= 20f) continue; if (bX + colFrontages[col].Sum() > totalWidth + 1f) continue; map.Alleys.Add(new MapRect(bX, aZ, bW, cfg.AlleyRow)); } }
 
             // Sidewalks
-            for (int i = 0; i < ewStreets; i++) if (ewKeep[i]) { float z = ewZ[i]; foreach (var wz in new[] { z + 2.25f, z + StreetRow - 2.25f }) map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(0, wz), new Vec2(totalWidth, wz) } }); }
-            for (int s = 0; s < nsX.Count; s++) if (nsKeep[s]) { float zEnd = PerimZ(nsX[s]) + StreetRow; foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + StreetRow - 2.25f }) map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(wx, zBand), new Vec2(wx, zEnd) } }); }
+            for (int i = 0; i < ewStreets; i++) if (ewKeep[i]) { float z = ewZ[i]; foreach (var wz in new[] { z + 2.25f, z + cfg.StreetRow - 2.25f }) map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(0, wz), new Vec2(totalWidth, wz) } }); }
+            for (int s = 0; s < nsX.Count; s++) if (nsKeep[s]) { float zEnd = PerimZ(nsX[s]) + cfg.StreetRow; foreach (var wx in new[] { nsX[s] + 2.25f, nsX[s] + cfg.StreetRow - 2.25f }) map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4.5f, Points = { new Vec2(wx, zBand), new Vec2(wx, zEnd) } }); }
 
             // Street names
-            for (int i = 0; i < ewStreets; i++) if (ewKeep[i]) map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, ewZ[i] + StreetRow / 2f), Text = ewNames[i % ewNames.Length] + " AVENUE" });
-            for (int s = 0; s < nsX.Count; s++) if (nsKeep[s]) { int ni = s < mainStreetIndex ? s : s - 1; string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length]; if (s == spurIdx) nm = "RAILROAD"; map.Labels.Add(new MapLabel { Position = new Vec2(nsX[s] + StreetRow / 2f, zBand + (PerimZ(nsX[s]) - zBand) * 0.62f), Text = nm + " STREET", RotateDeg = -90f }); }
+            for (int i = 0; i < ewStreets; i++) if (ewKeep[i]) map.Labels.Add(new MapLabel { Position = new Vec2(totalWidth / 2f, ewZ[i] + cfg.StreetRow / 2f), Text = ewNames[i % ewNames.Length] + " AVENUE" });
+            for (int s = 0; s < nsX.Count; s++) if (nsKeep[s]) { int ni = s < mainStreetIndex ? s : s - 1; string nm = s == mainStreetIndex ? "MAIN" : nsNames[ni % nsNames.Length]; if (s == spurIdx) nm = "RAILROAD"; map.Labels.Add(new MapLabel { Position = new Vec2(nsX[s] + cfg.StreetRow / 2f, zBand + (PerimZ(nsX[s]) - zBand) * 0.62f), Text = nm + " STREET", RotateDeg = -90f }); }
 
             // Dead-end streets
-            for (int d = 0; d < deadEnds; d++) { float stubX = 140f + (totalWidth - 300f) * ((d + 0.5f) / deadEnds) + rng.Range(-40f, 40f); if (stubX > jogX - 90f && stubX < jogX + StreetRow + 90f) stubX = stubX < jogX ? jogX - 90f : jogX + StreetRow + 90f; stubX = Math.Clamp(stubX, 60f, MathF.Max(60f, totalWidth - 90f)); if (!ClearRailGround(ref stubX, StreetRow)) continue; float stubLen = cfg.DeadEndStubLen.Sample(rng); float stubZ = PerimZ(stubX) + StreetRow; map.Roads.Add(new MapRect(stubX, stubZ, StreetRow, stubLen)); map.RoadDashed.Add(false); map.Bulbs.Add(new RoadBulb { Center = new Vec2(stubX + StreetRow / 2f, stubZ + stubLen - 10f), RadiusFeet = cfg.DeadEndBulbRadius }); for (int side = -1; side <= 1; side += 2) for (int i = 0; i < 2; i++) { float lx = side < 0 ? stubX - (i + 1) * 62f - i * 6f : stubX + StreetRow + 6f + i * 68f; map.LotLines.Add(new MapRect(lx, stubZ + 18f + i * 100f, 62f, 96f)); } }
+            for (int d = 0; d < deadEnds; d++) { float stubX = 140f + (totalWidth - 300f) * ((d + 0.5f) / deadEnds) + rng.Range(-40f, 40f); if (stubX > jogX - 90f && stubX < jogX + cfg.StreetRow + 90f) stubX = stubX < jogX ? jogX - 90f : jogX + cfg.StreetRow + 90f; stubX = Math.Clamp(stubX, 60f, MathF.Max(60f, totalWidth - 90f)); if (!ClearRailGround(ref stubX, cfg.StreetRow)) continue; float stubLen = cfg.DeadEndStubLen.Sample(rng); float stubZ = PerimZ(stubX) + cfg.StreetRow; map.Roads.Add(new MapRect(stubX, stubZ, cfg.StreetRow, stubLen)); map.RoadDashed.Add(false); map.Bulbs.Add(new RoadBulb { Center = new Vec2(stubX + cfg.StreetRow / 2f, stubZ + stubLen - 10f), RadiusFeet = cfg.DeadEndBulbRadius }); for (int side = -1; side <= 1; side += 2) for (int i = 0; i < 2; i++) { float lx = side < 0 ? stubX - (i + 1) * 62f - i * 6f : stubX + cfg.StreetRow + 6f + i * 68f; map.LotLines.Add(new MapRect(lx, stubZ + 18f + i * 100f, 62f, 96f)); } }
 
             // Cul-de-sac court
-            if (hasCourt) { float courtX = rng.Range(cfg.CourtXRange.Min, MathF.Max(cfg.CourtXRange.Min + 1, totalWidth - 200f)); if (courtX > jogX - 110f && courtX < jogX + StreetRow + 110f) courtX = courtX < jogX ? jogX - 110f : jogX + StreetRow + 110f; courtX = Math.Clamp(courtX, 100f, MathF.Max(100f, totalWidth - 180f)); if (!ClearRailGround(ref courtX, StreetRow)) courtX = -1f; float courtLen = cfg.CourtLen.Sample(rng); float courtZ = PerimZ(courtX) + StreetRow; if (courtX > 0f) { map.Roads.Add(new MapRect(courtX, courtZ, StreetRow, courtLen)); map.RoadDashed.Add(false); map.Bulbs.Add(new RoadBulb { Center = new Vec2(courtX + StreetRow / 2f, courtZ + courtLen - 10f), RadiusFeet = 44f }); float hz = courtZ + 24f; int courtHouses = cfg.CourtHouseCount.Sample(rng); for (int i = 0; i < courtHouses && hz + 80f < courtZ + courtLen - 30f; i++) { uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; var house = HouseGenerator.Generate(Weighted(rng), hSeed); house = house.Rotate90CCW(); float hx = courtX - 12f - house.DepthFeet - rng.Range(8f, 16f); house = house.OffsetCopy(hx, hz); map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false }); RegisterOccupied(FootprintBounds(house)); map.LotLines.Add(new MapRect(hx - 10f, hz - 8f, house.WidthFeet + 20f, house.DepthFeet + 16f)); hz += 92f; } } }
+            if (hasCourt) { float courtX = rng.Range(cfg.CourtXRange.Min, MathF.Max(cfg.CourtXRange.Min + 1, totalWidth - 200f)); if (courtX > jogX - 110f && courtX < jogX + cfg.StreetRow + 110f) courtX = courtX < jogX ? jogX - 110f : jogX + cfg.StreetRow + 110f; courtX = Math.Clamp(courtX, 100f, MathF.Max(100f, totalWidth - 180f)); if (!ClearRailGround(ref courtX, cfg.StreetRow)) courtX = -1f; float courtLen = cfg.CourtLen.Sample(rng); float courtZ = PerimZ(courtX) + cfg.StreetRow; if (courtX > 0f) { map.Roads.Add(new MapRect(courtX, courtZ, cfg.StreetRow, courtLen)); map.RoadDashed.Add(false); map.Bulbs.Add(new RoadBulb { Center = new Vec2(courtX + cfg.StreetRow / 2f, courtZ + courtLen - 10f), RadiusFeet = 44f }); float hz = courtZ + 24f; int courtHouses = cfg.CourtHouseCount.Sample(rng); for (int i = 0; i < courtHouses && hz + 80f < courtZ + courtLen - 30f; i++) { uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; var house = HouseGenerator.Generate(Weighted(rng), hSeed); house = house.Rotate90CCW(); float hx = courtX - 12f - house.DepthFeet - rng.Range(8f, 16f); house = house.OffsetCopy(hx, hz); map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false }); RegisterOccupied(FootprintBounds(house)); map.LotLines.Add(new MapRect(hx - 10f, hz - 8f, house.WidthFeet + 20f, house.DepthFeet + 16f)); hz += 92f; } } }
 
             // Plat edge street
-            if (hasPlatEdge) { float edgeX = rng.Range(cfg.PlatEdgeXRange.Min, MathF.Max(cfg.PlatEdgeXRange.Min + 1, totalWidth - 250f)); if (edgeX > jogX - 120f && edgeX < jogX + StreetRow + 120f) edgeX = edgeX < jogX ? jogX - 120f : jogX + StreetRow + 120f; edgeX = Math.Clamp(edgeX, 130f, MathF.Max(130f, totalWidth - 220f)); if (!ClearRailGround(ref edgeX, StreetRow)) edgeX = -1f; float edgeZ = PerimZ(edgeX) + StreetRow; float edgeLen = cfg.PlatEdgeLen.Sample(rng); if (edgeX > 0f) { map.Roads.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen)); map.RoadDashed.Add(false); map.RoadMayEndFree.Add(new MapRect(edgeX, edgeZ, StreetRow, edgeLen)); } }
+            if (hasPlatEdge) { float edgeX = rng.Range(cfg.PlatEdgeXRange.Min, MathF.Max(cfg.PlatEdgeXRange.Min + 1, totalWidth - 250f)); if (edgeX > jogX - 120f && edgeX < jogX + cfg.StreetRow + 120f) edgeX = edgeX < jogX ? jogX - 120f : jogX + cfg.StreetRow + 120f; edgeX = Math.Clamp(edgeX, 130f, MathF.Max(130f, totalWidth - 220f)); if (!ClearRailGround(ref edgeX, cfg.StreetRow)) edgeX = -1f; float edgeZ = PerimZ(edgeX) + cfg.StreetRow; float edgeLen = cfg.PlatEdgeLen.Sample(rng); if (edgeX > 0f) { map.Roads.Add(new MapRect(edgeX, edgeZ, cfg.StreetRow, edgeLen)); map.RoadDashed.Add(false); map.RoadMayEndFree.Add(new MapRect(edgeX, edgeZ, cfg.StreetRow, edgeLen)); } }
 
             // Outlying road buildings
             if (hasOuterRoad) { float bx = rng.Range(cfg.BypassedHighwayXRange.Min, MathF.Max(cfg.BypassedHighwayXRange.Min + 1, totalWidth - 200f)); int n = outerRoadIsShops ? cfg.BypassedHighwayShopCount.Sample(rng) : cfg.OutlyingRoadHouseCount.Sample(rng); float x = bx; for (int i = 0; i < n; i++) { if (outerRoadIsShops) { float w = rng.Range(58f, 88f), depth = rng.Range(44f, 58f); if (x + w > totalWidth - 40f) break; float y = outerRoadZ - 58f - depth / 2f; map.Outbuildings.Add(new Outbuilding { Kind = OutbuildingKind.Storefront, Center = new Vec2(x + w / 2f, y), WidthFeet = w, DepthFeet = depth, Label = BusinessCatalogue.LabelFor(rng, BusinessCatalogue.Shops[rng.RangeInt(0, BusinessCatalogue.Shops.Length)]) }); x += w + rng.Range(300f, 430f); } else { uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; var house = HouseGenerator.Generate(Weighted(rng), hSeed); house = house.FlipZ(); if (x + house.WidthFeet > totalWidth - 40f) break; float hz = outerRoadZ - 14f - house.DepthFeet; house = house.OffsetCopy(x, hz); map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = true }); RegisterOccupied(FootprintBounds(house)); map.LotLines.Add(new MapRect(x - 12f, hz - 10f, house.WidthFeet + 24f, house.DepthFeet + 20f)); x += house.WidthFeet + cfg.OutlyingRoadHouseSpacing.Sample(rng); } } }
 
             // Final plat pass
-            float plattedMaxZ = northZ1 + StreetRow + 130f;
+            float plattedMaxZ = northZ1 + cfg.StreetRow + 130f;
             bool RectFree(float x0, float z0, float x1, float z1) { foreach (var r in reserved) if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false; foreach (var r in map.LotLines) if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false; foreach (var r in map.Alleys) if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false; foreach (var r in map.Roads) if (r.X < x1 && r.X + r.W > x0 && r.Z < z1 && r.Z + r.H > z0) return false; foreach (var h in map.Houses) { float hx0 = h.Plan.Footprint.Min(p => p.X), hx1 = h.Plan.Footprint.Max(p => p.X), hz0 = h.Plan.Footprint.Min(p => p.Z), hz1 = h.Plan.Footprint.Max(p => p.Z); if (hx0 < x1 && hx1 > x0 && hz0 < z1 && hz1 > z0) return false; } foreach (var o in map.Outbuildings) { float ow = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet : o.WidthFeet, od = o.Kind == OutbuildingKind.GrainBin ? o.DiameterFeet : o.DepthFeet; if (o.Center.X - ow / 2f < x1 && o.Center.X + ow / 2f > x0 && o.Center.Z - od / 2f < z1 && o.Center.Z + od / 2f > z0) return false; } return true; }
 
             void PlatEWStrip(float x0, float x1, float streetEdgeZ, bool northSide) { float depth = northSide ? MathF.Min(lotDepth, plattedMaxZ - streetEdgeZ) : MathF.Min(lotDepth, streetEdgeZ - zBand); if (depth < 40f) return; float lotZ0 = northSide ? streetEdgeZ : streetEdgeZ - depth; float lotZ1 = lotZ0 + depth; float walkZ = northSide ? streetEdgeZ - 2.25f : streetEdgeZ + 2.25f; float cursor = x0; int guard = 0; while (cursor < x1 - 30f && guard++ < 30) { float frontage = MathF.Min(rng.Range(cfg.PlatLotFrontage.Min, cfg.PlatLotFrontage.Max), x1 - cursor); if (frontage < 40f) break; float a = cursor + 2f, b = cursor + frontage - 2f; cursor += frontage; if (b - a < 36f) continue; if (!RectFree(a, lotZ0, b, lotZ1)) continue; map.LotLines.Add(new MapRect(a, lotZ0, b - a, depth)); if (rng.Chance(cfg.PlatVacantChance)) continue; uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; string arch = Weighted(rng); var house = HouseGenerator.Generate(arch, hSeed); if (house.WidthFeet > (b - a) - 4f && arch != "farmhouse") house = HouseGenerator.Generate("farmhouse", hSeed ^ 0x5f3759dfu); float setback = rng.Range(cfg.PlatSetback.Min, cfg.PlatSetback.Max); float hx = a + MathF.Max(2f, ((b - a) - house.WidthFeet) / 2f); bool mirrored = !northSide; if (mirrored) house = house.FlipZ(); house = house.OffsetCopy(hx, mirrored ? streetEdgeZ - setback : streetEdgeZ + setback); float fhx0 = house.Footprint.Min(p => p.X), fhx1 = house.Footprint.Max(p => p.X), fhz0 = house.Footprint.Min(p => p.Z), fhz1 = house.Footprint.Max(p => p.Z); if (fhx0 < a - 2f || fhx1 > b + 2f || fhz0 < lotZ0 - 2f || fhz1 > lotZ1 + 2f) continue; map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = mirrored }); RegisterOccupied(FootprintBounds(house)); var fd = FindFrontDoor(house); map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4f, Points = { new Vec2(fd.X, walkZ), fd } }); var (garageDoor, garageWall, frontEntry) = FindGarageDoor(house); if (!float.IsNaN(garageDoor.X)) { bool gr = !frontEntry && GarageSideIsRight(house, garageWall!); map.Driveways.Add(DrivewayTo(garageDoor, frontEntry, gr, walkZ, "concrete", 17f)); } } }
 
-            void PlatNSStrip(float z0, float z1, float streetEdgeX, bool eastSide) { if (z0 < zBand - 1f) return; float depth = SideLotDepth; float lotX0 = eastSide ? streetEdgeX : streetEdgeX - depth, lotX1 = eastSide ? streetEdgeX + depth : streetEdgeX; if (lotX0 < -depth - 60f || lotX1 > totalWidth + depth + 60f) return; float cap = MathF.Min(z1, plattedMaxZ); if (cap - z0 < 40f) return; float walkX = eastSide ? streetEdgeX - 2.25f : streetEdgeX + 2.25f; float cursor = z0; int guard = 0; while (cursor < cap - 30f && guard++ < 30) { float frontage = MathF.Min(rng.Range(cfg.PlatLotFrontage.Min, cfg.PlatLotFrontage.Max), cap - cursor); if (frontage < 34f) break; float a = cursor + 3f, b = cursor + frontage - 3f; cursor += frontage; if (b - a < 30f) continue; if (!RectFree(lotX0, a, lotX1, b)) continue; map.LotLines.Add(new MapRect(lotX0, a, depth, b - a)); if (rng.Chance(cfg.PlatVacantChance)) continue; uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; var house = HouseGenerator.Generate(Weighted(rng), hSeed); house = eastSide ? house.Rotate90CCW() : house.Rotate90CW(); float setback = rng.Range(9f, 16f); float hx = eastSide ? lotX1 - setback : lotX0 + setback; float hz = a + MathF.Max(2f, ((b - a) - house.DepthFeet) / 2f); house = house.OffsetCopy(hx, hz); float gx0 = house.Footprint.Min(p => p.X), gx1 = house.Footprint.Max(p => p.X), gz0 = house.Footprint.Min(p => p.Z), gz1 = house.Footprint.Max(p => p.Z); if (gx0 < lotX0 - 2f || gx1 > lotX1 + 2f || gz0 < a - 2f || gz1 > b + 2f) continue; map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false }); RegisterOccupied(FootprintBounds(house)); var fd = FindFrontDoor(house); map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4f, Points = { new Vec2(walkX, fd.Z), fd } }); var (garageDoor, garageWall, frontEntry) = FindGarageDoor(house); if (!float.IsNaN(garageDoor.X)) { float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f; bool garagePositiveZ = garageDoor.Z >= fc; map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, walkX, "concrete", 17f)); } } }
+            void PlatNSStrip(float z0, float z1, float streetEdgeX, bool eastSide) { if (z0 < zBand - 1f) return; float depth = cfg.SideLotDepth; float lotX0 = eastSide ? streetEdgeX : streetEdgeX - depth, lotX1 = eastSide ? streetEdgeX + depth : streetEdgeX; if (lotX0 < -depth - 60f || lotX1 > totalWidth + depth + 60f) return; float cap = MathF.Min(z1, plattedMaxZ); if (cap - z0 < 40f) return; float walkX = eastSide ? streetEdgeX - 2.25f : streetEdgeX + 2.25f; float cursor = z0; int guard = 0; while (cursor < cap - 30f && guard++ < 30) { float frontage = MathF.Min(rng.Range(cfg.PlatLotFrontage.Min, cfg.PlatLotFrontage.Max), cap - cursor); if (frontage < 34f) break; float a = cursor + 3f, b = cursor + frontage - 3f; cursor += frontage; if (b - a < 30f) continue; if (!RectFree(lotX0, a, lotX1, b)) continue; map.LotLines.Add(new MapRect(lotX0, a, depth, b - a)); if (rng.Chance(cfg.PlatVacantChance)) continue; uint hSeed = houseSeed = houseSeed * 1664525u + 1013904223u; var house = HouseGenerator.Generate(Weighted(rng), hSeed); house = eastSide ? house.Rotate90CCW() : house.Rotate90CW(); float setback = rng.Range(9f, 16f); float hx = eastSide ? lotX1 - setback : lotX0 + setback; float hz = a + MathF.Max(2f, ((b - a) - house.DepthFeet) / 2f); house = house.OffsetCopy(hx, hz); float gx0 = house.Footprint.Min(p => p.X), gx1 = house.Footprint.Max(p => p.X), gz0 = house.Footprint.Min(p => p.Z), gz1 = house.Footprint.Max(p => p.Z); if (gx0 < lotX0 - 2f || gx1 > lotX1 + 2f || gz0 < a - 2f || gz1 > b + 2f) continue; map.Houses.Add(new PositionedHouse { Plan = house, MirroredZ = false }); RegisterOccupied(FootprintBounds(house)); var fd = FindFrontDoor(house); map.Walks.Add(new Driveway { Surface = "concrete", WidthFeet = 4f, Points = { new Vec2(walkX, fd.Z), fd } }); var (garageDoor, garageWall, frontEntry) = FindGarageDoor(house); if (!float.IsNaN(garageDoor.X)) { float fc = (house.Footprint.Select(p => p.Z).Min() + house.Footprint.Select(p => p.Z).Max()) / 2f; bool garagePositiveZ = garageDoor.Z >= fc; map.Driveways.Add(DrivewayToX(garageDoor, frontEntry, garagePositiveZ, walkX, "concrete", 17f)); } } }
 
-            void PlatStreetFrontage() { for (int i = 0; i < map.Roads.Count; i++) { var r = map.Roads[i]; if (MathF.Abs(r.Z) < 0.5f && MathF.Abs(r.H - HighwayWidth) < 0.5f) continue; bool horizontal = r.W >= r.H; if (horizontal) { PlatEWStrip(r.X, r.X + r.W, r.Z, false); PlatEWStrip(r.X, r.X + r.W, r.Z + r.H, true); } else { PlatNSStrip(r.Z, r.Z + r.H, r.X, false); PlatNSStrip(r.Z, r.Z + r.H, r.X + r.W, true); } } }
+            void PlatStreetFrontage() { for (int i = 0; i < map.Roads.Count; i++) { var r = map.Roads[i]; if (MathF.Abs(r.Z) < 0.5f && MathF.Abs(r.H - cfg.HighwayWidth) < 0.5f) continue; bool horizontal = r.W >= r.H; if (horizontal) { PlatEWStrip(r.X, r.X + r.W, r.Z, false); PlatEWStrip(r.X, r.X + r.W, r.Z + r.H, true); } else { PlatNSStrip(r.Z, r.Z + r.H, r.X, false); PlatNSStrip(r.Z, r.Z + r.H, r.X + r.W, true); } } }
 
             // Free-standing landmarks
-            foreach (var lm in freeLandmarks) { float lx = rng.Range(40f, MathF.Max(41f, totalWidth - lm.Width - 40f)); float lo = zBand + BandDepth + 30f, hi = northZ0 - lm.Depth - 40f; if (hi < lo) continue; float lz = rng.Range(lo, hi); var ob = new Outbuilding { Kind = lm.Kind, Center = new Vec2(lx + lm.Width / 2f, lz + lm.Depth / 2f), WidthFeet = lm.Width, DepthFeet = lm.Depth, Label = lm.Kind switch { OutbuildingKind.WaterTower => "WATER TOWER", OutbuildingKind.Cemetery => "CEMETERY", OutbuildingKind.BallField => "BALL FIELD", OutbuildingKind.GolfCourse => "GOLF COURSE", OutbuildingKind.Fairgrounds => "FAIRGROUNDS", OutbuildingKind.Airstrip => "AIRSTRIP", _ => "" } }; if (OccupiedCollides(OccupiedBounds(ob))) continue; map.Outbuildings.Add(ob); RegisterOccupied(OccupiedBounds(ob)); }
+            foreach (var lm in freeLandmarks) { float lx = rng.Range(40f, MathF.Max(41f, totalWidth - lm.Width - 40f)); float lo = zBand + cfg.BandDepth + 30f, hi = northZ0 - lm.Depth - 40f; if (hi < lo) continue; float lz = rng.Range(lo, hi); var ob = new Outbuilding { Kind = lm.Kind, Center = new Vec2(lx + lm.Width / 2f, lz + lm.Depth / 2f), WidthFeet = lm.Width, DepthFeet = lm.Depth, Label = lm.Kind switch { OutbuildingKind.WaterTower => "WATER TOWER", OutbuildingKind.Cemetery => "CEMETERY", OutbuildingKind.BallField => "BALL FIELD", OutbuildingKind.GolfCourse => "GOLF COURSE", OutbuildingKind.Fairgrounds => "FAIRGROUNDS", OutbuildingKind.Airstrip => "AIRSTRIP", _ => "" } }; if (OccupiedCollides(OccupiedBounds(ob))) continue; map.Outbuildings.Add(ob); RegisterOccupied(OccupiedBounds(ob)); }
 
             PlatStreetFrontage();
 
@@ -525,7 +518,7 @@ namespace SpawnGuide
 
             // Built extent for road clipping
             map.BuiltMinX = builtMinX; map.BuiltMaxX = builtMaxX; map.BuiltMinZ = zBand; map.BuiltMaxZ = builtMaxZ;
-            map.LoopMinX = builtMinX; map.LoopMaxX = builtMaxX; map.LoopMinZ = northZ0; map.LoopMaxZ = northZ1 + StreetRow;
+            map.LoopMinX = builtMinX; map.LoopMaxX = builtMaxX; map.LoopMinZ = northZ0; map.LoopMaxZ = northZ1 + cfg.StreetRow;
             if (spurIdx >= 0) { map.RailTrackLocalX = spurTrackXFinal; map.RailTrackLocalZ0 = zBand + 40f; map.RailTrackLocalZ1 = builtMaxZ; }
 
             return map;
