@@ -3,7 +3,7 @@ import hashlib,json,math,threading
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from settings import applied
-from presets import document
+from presets import document,plain
 from region import MILE
 from world import window,svg
 
@@ -14,7 +14,7 @@ CACHE=Path(__file__).parent/'out'/'cache'
 
 def identity(settings):
  values={k:v for k,v in settings.values.items() if not k.startswith(('controls.','verify.')) and k not in ('world.window_miles','world.pan_fraction','world.zoom_factor')}
- return hashlib.sha256(json.dumps(values,sort_keys=True).encode()).hexdigest()[:24]
+ return hashlib.sha256(json.dumps(plain(values),sort_keys=True).encode()).hexdigest()[:24]
 
 def generate(seed,x,y,settings,path):
  size=settings.values['world.chunk_miles']*MILE
@@ -42,4 +42,10 @@ def request(data,settings):
    job=JOBS[jobkey]
    if not isinstance(job,str) and job.done(): job=JOBS[jobkey]=job.result()
    if (a,b) in visible: output.append(dict(x=a,y=b,svg=job if isinstance(job,str) else None))
+   # Bound completed in-memory entries; evicted chunks remain available on disk.
+  protected={(seed,key,a,b) for a,b in visible}
+  for old in list(JOBS):
+   if len(JOBS)<=settings.values['world.tile_cache_size']: break
+   job=JOBS[old]
+   if old not in protected and (isinstance(job,str) or job.done()): del JOBS[old]
  return dict(key=f'{seed}:{key}',size=size,chunks=output,pending=any(c['svg'] is None for c in output))
