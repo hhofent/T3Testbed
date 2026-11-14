@@ -168,3 +168,6 @@ Run `py -3.11 -m pytest python-spawner/tests -q` for all 95 tests. For the real-
 cache regression, evaluate tools/browser_flow.js in the page then await
 regressionZoomPanCache(). No merge, force push or PR. Unrelated untracked root
 folders remain untouched. No new user acceptance is claimed.
+
+## Fix 2, 2026-11-13
+Chunk SVGs now rasterize at their displayed CSS size, with screen-space minima for roads, rail, water and town outlines. Gravel drops above 48 mi. Raw SVG cache identity stays reusable; each image rerasterizes on size changes. Full pytest: 96 passed; parity regeneration running.

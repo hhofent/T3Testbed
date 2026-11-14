@@ -18,9 +18,24 @@ async function redraw(r){await redrawChunks(r)}
 const chunkImages=new Map(),towns=new Map();let chunkKey='',previousView,viewSignature='',townList=[],townIndex=-1;
 function lod(){return Math.max(viewport[2],viewport[3])<=2*mile?'detail':'overview'}
 function imageKey(x,y){return viewSignature+':'+lod()+':'+x+':'+y}
+function rasterChunk(src,pixels,span){
+ const xml=new DOMParser().parseFromString(decodeURIComponent(src.split(',').slice(1).join(',')),'image/svg+xml'),root=xml.documentElement,unit=span/pixels;
+ root.setAttribute('width',pixels);root.setAttribute('height',pixels);
+ for(const group of root.querySelectorAll('g')){
+  const id=group.querySelector('title')?.textContent||'',shape=group.lastElementChild;
+  let minimum=0;
+  if(id.startsWith('road:')||id.includes(':street:')){if(viewport[2]>48*mile&&shape.getAttribute('fill')!=='#525954'){group.remove();continue}minimum=shape.getAttribute('fill')==='#525954'?1.2:.65;}
+  else if(id.startsWith('rail:'))minimum=1.2;
+  else if(id.startsWith('river:'))minimum=1.5;
+  else if(id.startsWith('tributary:'))minimum=.8;
+  else if(id.trim().endsWith(':town'))minimum=.8;
+  if(minimum){shape.removeAttribute('vector-effect');shape.setAttribute('stroke-width',Math.max(Number(shape.getAttribute('stroke-width'))||0,minimum*unit));}
+ }
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(root));
+}
 function paintChunks(){if(!viewport)return;$('map').style.display='none';const host=$('tiles');host.style.display='block';host.style.background='#deded2';const size=values['world.chunk_miles']*mile,keep=new Set(),existing=new Map([...host.children].map(n=>[n.dataset.key,n]));
 for(let x=Math.floor(viewport[0]/size);x<Math.ceil((viewport[0]+viewport[2])/size);x++)for(let y=Math.floor(viewport[1]/size);y<Math.ceil((viewport[1]+viewport[3])/size);y++){
- const key=imageKey(x,y);keep.add(key);let img=existing.get(key);if(!img){img=document.createElement('img');img.dataset.key=key;img.alt='';img.draggable=false;host.append(img)}const src=chunkImages.get(key);if(src&&img.getAttribute('src')!==src)img.src=src;
+ const key=imageKey(x,y);keep.add(key);let img=existing.get(key);if(!img){img=document.createElement('img');img.dataset.key=key;img.alt='';img.draggable=false;host.append(img)}const src=chunkImages.get(key);const pixels=Math.max(1,host.getBoundingClientRect().width*size/viewport[2]),rasterKey=src+':'+pixels;if(src&&img._rasterKey!==rasterKey){img.src=rasterChunk(src,pixels,size);img._rasterKey=rasterKey;}
  Object.assign(img.style,{position:'absolute',left:((x*size-viewport[0])/viewport[2]*100)+'%',top:((y*size-viewport[1])/viewport[3]*100)+'%',width:(size/viewport[2]*100)+'%',height:(size/viewport[3]*100)+'%',padding:'0',pointerEvents:'none',visibility:src?'visible':'hidden'});
 }for(const n of [...host.children])if(!keep.has(n.dataset.key))n.remove();}
 function trimChunkImages(size){const visible=new Set();for(let x=Math.floor(viewport[0]/size);x<Math.ceil((viewport[0]+viewport[2])/size);x++)for(let y=Math.floor(viewport[1]/size);y<Math.ceil((viewport[1]+viewport[3])/size);y++)visible.add(imageKey(x,y));const limit=Math.max(256,visible.size+128);for(const key of chunkImages.keys()){if(chunkImages.size<=limit)break;if(!visible.has(key))chunkImages.delete(key)}}
