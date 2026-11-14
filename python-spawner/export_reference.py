@@ -19,15 +19,14 @@ def layout(seed):
     town_lots = [s for s in lots if s["kind"] == "town"]
     out = {"seed": seed, "lots": len(lots), "by_kind": dict(kinds), "road_miles": r["road_miles"],
            "paved_share": r.get("paved_share"), "rail": bool(r["rail"]), "creeks": len(r.get("creeks") or []),
-           "parcels": sorted(p["kind"] for p in r["parcels"]), "park_pads": len(r["park"]["pads"]) if r.get("park") else 0}
+           "parcels": sorted(p["kind"] for p in r["parcels"])}
     if r["rail"]:
         out["rail_crossings"] = len(r["rail"]["crossings"]); out["rail_parallel_ft"] = (r["rail"]["parallel"][1] - r["rail"]["parallel"][0]) / FT(1)
     if t:
         out["town"] = {"size": t["size"], "rail_town": t["rail_town"], "cols": t["cols"], "rows": t["rows"], "blocks": len(t["blocks"]),
                        "houses": len(town_lots), "trailers": sum(s["house_type"] == "trailer" for s in town_lots),
                        "pop_est": t["pop_est"], "band": t["band"], "year": t["year"],
-                       "businesses": sorted(c["type"] for c in t["commercial"]), "unplaced": t["unplaced"],
-                       "park_rule": t.get("park_check")}
+                       "businesses": sorted(c["type"] for c in t["commercial"]), "unplaced": t["unplaced"]}
     return out
 
 def full(seed):

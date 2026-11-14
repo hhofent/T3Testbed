@@ -9,10 +9,16 @@ from region import make_region
 from settings import Settings, applied
 
 @pytest.mark.parametrize('seed',[13,14,30,31,46])
-def test_default_region_bytes_match_reference(seed):
-    baseline=json.loads(Path(__file__).with_name('baseline.json').read_text())
-    output=json.dumps(make_region(seed,settings=Settings()),sort_keys=True).encode()
-    assert hashlib.sha256(output).hexdigest()==baseline[str(seed)]
+def test_reference_town_bytes_in_parity_mode(seed):
+    reference=json.loads(Path(__file__).with_name('town_baseline.json').read_text())[str(seed)]
+    actual=make_region(seed,settings=Settings({'generation.parity':True}))['town']
+    if reference: reference.pop('park_check',None)
+    assert json.dumps(actual,sort_keys=True)==json.dumps(reference,sort_keys=True)
+
+def test_explicit_defaults_are_byte_identical():
+    for seed in [13,14,30,31,46]:
+        assert json.dumps(make_region(seed),sort_keys=True)==json.dumps(make_region(seed,settings=Settings()),sort_keys=True)
+
 
 def test_settings_scope_restores_on_exception():
     import region

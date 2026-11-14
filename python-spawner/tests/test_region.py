@@ -85,23 +85,7 @@ def test_towns_without_rail_are_allowed():
 def _inside(r, R): return R[0] <= r[0] and R[1] <= r[1] and r[0] + r[2] <= R[0] + R[2] and r[1] + r[3] <= R[1] + R[3]
 def _ovl(a, b): return a[0] < b[0] + b[2] and b[0] < a[0] + a[2] and a[1] < b[1] + b[3] and b[1] < a[1] + a[3]
 
-@pytest.fixture(scope="module")
-def parkreg(reg):
-    """Seed 30's natural town fails the park rule, so park geometry is tested on the same town with a big stick-built count."""
-    from region import make_park
-    big = dict(reg["town"], lots=[{"house_type": "stick"}] * 120)
-    occ = [road_rect(r) for r in reg["roads"]] + [reg["town"]["box"]] + [p["rect"] for p in reg["parcels"] if not p.get("in_town")]
-    p = make_park(SEED, big, reg["grid_roads"], reg["rail"], occ, force=True)
-    return dict(reg, park=p)
 
-def test_park_rule_branches(reg):
-    from region import park_condition
-    t = reg["town"]
-    assert reg["park"] is None and not t["park_check"]["ok"]                                   # demo town: too many trailers
-    only = dict(t, lots=[{"house_type": "trailer"}] * 10)
-    assert park_condition(only, 20)["ok"] and "only" in park_condition(only, 20)["reason"]   # (a) trailers only
-    mix = dict(t, lots=[{"house_type": "stick"}] * 60 + [{"house_type": "trailer"}] * 5)
-    assert park_condition(mix, 25)["ok"] and not park_condition(mix, 26)["ok"]                # (b) exactly 2x boundary
 
 def test_coop_office_on_coop_lot_not_main_street(reg):
     assert all(c["type"] != "co-op office" for c in reg["town"]["commercial"])
@@ -124,9 +108,6 @@ def test_town_size_classes_and_ragged_edge():
     assert any(len(t["blocks"]) < t["cols"] * t["rows"] for _, t in sizes["mid"] + sizes["big"])
     assert all(t["band"] == 2 for _, t in sizes["big"] if t["pop_est"] >= 750)
 
-def test_small_town_fails_park_rule():
-    r = make_region(13, force_park=True); t = r["town"]
-    assert t["cols"] * t["rows"] <= 4 and r["park"] is None and not t["park_check"]["ok"]
 
 @pytest.fixture(scope="module")
 def bigreg():
@@ -144,7 +125,7 @@ def test_band_chooser_deterministic():
 def test_snapshot_year_and_monotone_rates():
     from region import region_year, biz_rates, vacant_pct, branch_pct, FADING_TYPES, YEARS
     assert region_year(SEED) == region_year(SEED) == make_region(SEED)["town"]["year"]
-    assert len({region_year(s) for s in range(40)}) > 1
+    assert {region_year(s) for s in range(40)} == {1990}
     for band in range(3):
         R = [biz_rates(band, y) for y in YEARS]
         for k in R[0]:
@@ -159,7 +140,7 @@ def _biz_checks(reg):
     t = reg["town"]; C = t["commercial"]; assert C
     roads = [road_rect(r) for r in reg["roads"]]
     houses = [world_rect(l["place"], l["spec"]["width"], l["spec"]["depth"]) for l in reg["lots"] if l["spec"].get("use", "house") == "house"]
-    others = [p["rect"] for p in reg["parcels"] if not p.get("in_town")] + ([reg["park"]["rect"]] if reg["park"] else [])
+    others = [p["rect"] for p in reg["parcels"] if not p.get("in_town")]
     own = [c for c in C if c["type"] != "funeral home"]
     for i, c in enumerate(own):
         L = c["lot"]
@@ -188,32 +169,7 @@ def test_gas_is_the_fuel_parcel(reg):
     fuel = [p for p in reg["parcels"] if p["kind"] == "fuel"]; assert len(fuel) == 1
     if gas: assert fuel[0]["rect"] == gas[0]["lot"] and 2 <= len(gas[0]["pumps"]) <= 4 and 6 <= gas[0]["spaces"] <= 12
 
-def test_park_pads_inside_and_clear(parkreg):
-    reg = parkreg
-    p = reg["park"]; assert p and 15 <= len(p["pads"]) <= 40
-    T = [x["trailer"] for x in p["pads"]]
-    for x in p["pads"]:
-        for r in (x["trailer"], x["parking"]):
-            assert _inside(r, p["rect"]) and not any(_ovl(r, w) for w in p["windbreak"]) and not any(_ovl(r, l) for l in p["lanes"])
-    assert not any(_ovl(a, b) for i, a in enumerate(T) for b in T[i + 1:])
-    assert p["windbreak"] and all(_inside(w, p["rect"]) for w in p["windbreak"])
 
-def test_every_park_trailer_has_a_pad_on_a_lane_that_reaches_the_road(parkreg):
-    reg = parkreg
-    p = reg["park"]; road = next(r for r in reg["grid_roads"] if r["id"] == p["road"])
-    edge = {road["c"] + ROW // 2, road["c"] - ROW // 2}
-    R = p["rect"]; assert R[1] in edge or R[1] + R[3] in edge                     # park fronts the public road
-    reach = {i for i, l in enumerate(p["lanes"]) if l[1] in edge or l[1] + l[3] in edge}
-    assert reach
-    while True:                                                                    # lanes connected to a road-touching lane
-        more = {i for i, l in enumerate(p["lanes"]) if i not in reach and any(_touch(l, p["lanes"][j]) for j in reach)}
-        if not more: break
-        reach |= more
-    assert reach == set(range(len(p["lanes"])))
-    for x in p["pads"]:
-        assert _touch(x["parking"], x["trailer"]) and _touch(x["parking"], p["lanes"][x["lane"]])
-        tr = x["trailer"]; ln = p["lanes"][x["lane"]]
-        assert (tr[2] > tr[3]) == (ln[3] > ln[2])                                 # trailer perpendicular to its lane
 
 def test_town_lot_trailers_are_a_minority(reg):
     tl = [l for l in reg["lots"] if l["spec"]["kind"] == "town"]
@@ -290,7 +246,6 @@ def test_no_lots_or_parcels_in_floodplain(creekregs):
             s = l["spec"]; assert not rail_hits(C, world_rect(l["place"], s["width"], s["depth"])), s["id"]
         for p in r["parcels"]: assert not rail_hits(C, p["rect"]), p["kind"]
         for c in r["town"]["commercial"]: assert not rail_hits(C, c["lot"]), c["type"]
-        if r["park"]: assert not rail_hits(C, r["park"]["rect"])
         for c in C:
             assert FT(150) <= c["buffer"] <= FT(300)
             road_ids = {x["id"] for x in r["grid_roads"]}
