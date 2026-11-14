@@ -1,6 +1,6 @@
 """Loopback-only control page, served with the Python standard library."""
 import base64,json
-from http.server import BaseHTTPRequestHandler,HTTPServer
+from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from settings import Settings,CATALOG,applied
 from presets import PRESETS,plain,apply_document,document,diff,stack
@@ -43,16 +43,21 @@ class Handler(BaseHTTPRequestHandler):
    self.reply(200,document(stack([name])))
   else: self.reply(404,{'error':'Not found'})
  def do_POST(self):
-  if self.path!='/render': self.reply(404,{'error':'Not found'}); return
+  if self.path not in ('/render','/chunks'): self.reply(404,{'error':'Not found'}); return
   try:
    length=int(self.headers.get('Content-Length','0'))
    if length<1 or length>Settings().values['controls.max_request_bytes']: raise ValueError('Invalid request size')
-   data=json.loads(self.rfile.read(length)); self.reply(200,render_request(data))
+   data=json.loads(self.rfile.read(length))
+   if self.path=='/chunks':
+    from chunks import request
+    result=request(data,apply_document(Settings(),data['settings']))
+   else: result=render_request(data)
+   self.reply(200,result)
   except (ValueError,KeyError,TypeError,ArithmeticError,IndexError) as error: self.reply(400,{'error':str(error)})
 
 def serve(port=None,settings=None):
  port=port or Settings().values['controls.port']
- with HTTPServer(('127.0.0.1',port),Handler) as server:
+ with ThreadingHTTPServer(('127.0.0.1',port),Handler) as server:
   server.settings=settings or Settings()
   print(f'Control page: http://127.0.0.1:{server.server_port}',flush=True)
   try: server.serve_forever()

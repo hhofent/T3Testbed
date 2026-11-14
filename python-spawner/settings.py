@@ -2629,3 +2629,5 @@ define('world.river_wander_miles',1,0,3,0.25,'mi','PLACEHOLDER: trunk meander am
 define('world.river_wave_steps',2,1,6,1,'tributary steps','PLACEHOLDER: trunk meander wavelength factor.')
 define('world.tile_cache_size',128,128,128,1,'tiles','PLACEHOLDER: fixed in-memory LRU capacity; viewport-independent.')
 define('world.rail_draw_ft',4,1,10,1,'ft','PLACEHOLDER: rail drawing stroke; contours use 1 ft and feature outlines 0.3 screen pixels.')
+
+define('world.chunk_miles',1,1,3,1,'mi','Size of independently cached display chunks.')
