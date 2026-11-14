@@ -1,3 +1,7 @@
 bin/
 obj/
 src/SpawnGuide/out/
+reference/python-spawner/.venv/
+
+__pycache__/
+reference/python-spawner/out/
