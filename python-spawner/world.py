@@ -411,6 +411,7 @@ def _route_geometry(seed,cx,cy):
  sampled.append(pts[-1])
  return feature('rivers',ident,points=sampled,width=FT(100),widths=[FT(100)]*len(sampled),stream_order=3,flow='regional',source=not _upstream_outlets(seed,cx,cy),downstream=f'river:outlet:{nx}:{ny}',basin=(cx,cy),area=3*MILE)
 
+@lru_cache(maxsize=65536)
 def _route_targets(seed,cx,cy):
  # Local headwater edges drain to their own basin outlet reach. Upstream
  # outlet reaches remain separate links which join at basin outlets. Reserve
@@ -422,7 +423,50 @@ def _route_targets(seed,cx,cy):
   if distance>=cut: start=i+1; break
  return ((ident,tuple(points[start:] or points[-2:])),)
 
+@lru_cache(maxsize=256)
+def _segment_index(points):
+ """Bucket an outlet polyline so a nearest-point query can skip far spans.
+
+ The buckets cover each segment's box. A query that has already found a point
+ closer than the unsearched cells can stop. The (distance, station) pair
+ matches the linear scan.
+ """
+ cell=MILE; segs=[]; buckets={}; before=0.0
+ for a,b in zip(points,points[1:]):
+  length=math.dist(a,b); segs.append((a,b,length,before)); before+=length
+  ix0,ix1=math.floor(min(a[0],b[0])/cell),math.floor(max(a[0],b[0])/cell)
+  iy0,iy1=math.floor(min(a[1],b[1])/cell),math.floor(max(a[1],b[1])/cell)
+  for ix in range(ix0,ix1+1):
+   for iy in range(iy0,iy1+1): buckets.setdefault((ix,iy),[]).append(len(segs)-1)
+ return (cell,tuple(segs),buckets,before)
+
+def _nearest_on_index(p,ident,index):
+ cell,segs,buckets,total=index
+ ix,iy=math.floor(p[0]/cell),math.floor(p[1]/cell)
+ best=None; best_d=math.inf; seen=set()
+ for radius in range(0,96):
+  if radius==0: keys=((ix,iy),)
+  else:
+   keys=[(x,iy-radius) for x in range(ix-radius,ix+radius+1)]+[(x,iy+radius) for x in range(ix-radius,ix+radius+1)]
+   keys+=[(ix-radius,y) for y in range(iy-radius+1,iy+radius)]+[(ix+radius,y) for y in range(iy-radius+1,iy+radius)]
+  for key in keys:
+   for i in buckets.get(key,()):
+    if i in seen: continue
+    seen.add(i)
+    a,b,length,before=segs[i]; dx,dy=b[0]-a[0],b[1]-a[1]
+    t=max(0,min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy)))
+    q=(a[0]+t*dx,a[1]+t*dy); d=math.dist(p,q); sample=a if t<.5 else b
+    station=(before+t*length)/total if total else 0
+    candidate=(d,ident,station,sample)
+    if best is None or candidate[:3]<best[:3]: best=candidate; best_d=d
+  if best is not None and best_d<radius*cell: return best
+ return best
+
 def _nearest_route(p,routes,barriers=()):
+ if not barriers and len(routes)==1:
+  ident,points=routes[0]
+  found=_nearest_on_index(p,ident,_segment_index(points))
+  if found is not None: return found
  candidates=[]; best=None
  for ident,points in routes:
   lengths=[math.dist(a,b) for a,b in zip(points,points[1:])]; total=sum(lengths); before=0
@@ -616,26 +660,117 @@ def _untangle_reaches(seed,features):
    f['bounds']=box(pts,max(f['widths'])/2)
   if collides: collides=collision(f,buckets,segments)
   if collides:
-   # Keep a topological edge instead of leaving a self-crossing spline when
-   # every meander phase collides in a tight junction pocket. Try pinned,
-   # seeded midpoint-displacement shapes bounded to 0.12 of the reach chord
-   # before accepting a straight fallback.
-   start=f['points'][0]; dx=end[0]-start[0]; dy=end[1]-start[1]; chord=math.hypot(dx,dy)
-   normal=(-dy/max(1,chord),dx/max(1,chord)); found=False
-   for phase in range(32):
-    pts=[start]
-    for i in range(1,5):
-     t=i/5; displacement=((H(seed,'fallback-edge',f['id'],phase,i)%20001)/10000-1)*.12*chord
-     pts.append((start[0]+t*dx+normal[0]*displacement,start[1]+t*dy+normal[1]*displacement))
-    pts.append(end); f['points']=pts
+   # A straight chord fixes the crossing and then fails the valley check.
+   # Keep a seeded bend, and only accept a sampled straight line if every
+   # gentler bend still crosses another channel.
+   start=f['points'][0]; found=False
+   for phase in range(12):
+    pts=_edge_curve(seed,f['id'],start,end,f['width'],('fallback',phase))
+    f['points']=pts
     f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
     f['bounds']=box(pts,max(f['widths'])/2)
     if not collision(f,buckets,segments): found=True; break
    if not found:
-    f['points']=[start,end]; f['widths']=[original_widths[0],original_widths[-1]]; f['bounds']=box(f['points'],max(f['widths'])/2)
+    n=max(2,math.ceil(math.dist(start,end)/FT(200)))
+    f['points']=[(start[0]+(end[0]-start[0])*i/n,start[1]+(end[1]-start[1])*i/n) for i in range(n+1)]
+    f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(f['points'])-1)*(len(original_widths)-1)))] for i in range(len(f['points']))]
+    f['bounds']=box(f['points'],max(f['widths'])/2)
   add_segments(f)
 
-def _edge_curve(seed,ident,a,b,width,phase_id=None):
+def _channel_pieces(seed,a,b,limit):
+ """Split a long chord into pieces that each lose elevation.
+
+ Equal cuts are kept when they already run downhill. A hollow under the
+ chord can put the next piece's start below its end, so those reaches try
+ other fractions. If no cut stays downhill inside the length band, the
+ chord is left whole.
+ """
+ distance=math.dist(a,b)
+ if distance<=limit or distance<=0: return [a,b]
+ floor=.62*MILE
+ ha=elevation(seed,*a); hb=elevation(seed,*b)
+ count=max(2,math.ceil(distance/limit))
+ def at(t):
+  return (a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t)
+ def accept(ts):
+  pts=[a]+[at(t) for t in ts]+[b]
+  prev,prev_h=a,ha
+  for j,p in enumerate(pts[1:]):
+   dist=math.dist(prev,p)
+   if dist<floor or dist>limit: return None
+   h=hb if j==len(pts)-2 else elevation(seed,*p)
+   if h>prev_h+1e-7: return None
+   prev,prev_h=p,h
+  pts[0]=a; pts[-1]=b
+  return pts
+ if count==2:
+  for t in (.5,.42,.58,.38,.62,.34,.66,.30,.70,.26,.74):
+   d0=distance*t; d1=distance-d0
+   if d0<floor or d1<floor or d0>limit or d1>limit: continue
+   got=accept([t])
+   if got: return got
+  return [a,b]
+ base=[i/count for i in range(1,count)]
+ got=accept(base)
+ if got: return got
+ for shift in (-.08,.08,-.12,.12,-.04,.04):
+  ts=[t+shift for t in base]
+  if any(t<=0 or t>=1 for t in ts) or ts!=sorted(ts): continue
+  gaps=[ts[0]]+[q-p for p,q in zip(ts,ts[1:])]+[1-ts[-1]]
+  if any(distance*g<floor or distance*g>limit for g in gaps): continue
+  got=accept(ts)
+  if got: return got
+ return [a,b]
+
+def _valley_points(seed,ident,a,b,phase_id=None):
+ """Smoothed seeded bow between two nodes, pinned at both ends.
+
+ One wave per 1.25 miles keeps the displacement inside 0.10-0.25 of that
+ wavelength, which is the whole edge when the edge itself is under 1.5 miles.
+ """
+ chord=math.dist(a,b)
+ if chord<=1: return [a,b]
+ waves=max(1,int(round(chord/(1.25*MILE))))
+ key=ident if phase_id is None else phase_id
+ frac=.19+.03*((H(seed,'valley-amp',key)%10001)/10000)
+ amp=frac*chord/waves
+ step=MILE/8
+ n=max(waves*8,math.ceil(chord/step))
+ ux=(b[0]-a[0])/chord; uy=(b[1]-a[1])/chord; nx,ny=-uy,ux
+ h2=((H(seed,'valley-h2',key)%20001)/10000-1)
+ h3=((H(seed,'valley-h3',key)%20001)/10000-1)
+ pts=[]
+ for i in range(n+1):
+  t=i/n
+  bow=math.sin(2*math.pi*waves*t)+.12*h2*math.sin(4*math.pi*waves*t)+.08*h3*math.sin(6*math.pi*waves*t)
+  pts.append((a[0]+ux*chord*t+nx*amp*bow,a[1]+uy*chord*t+ny*amp*bow))
+ for _pass in range(2):
+  nxt=[a]
+  for i in range(1,n):
+   p,q,r=pts[i-1],pts[i],pts[i+1]
+   nxt.append(((p[0]+2*q[0]+r[0])/4,(p[1]+2*q[1]+r[1])/4))
+  nxt.append(b)
+  pts=nxt
+ # Smoothing shrinks the bow. Scale the lateral offset back up to `amp`.
+ peak=0
+ for i in range(1,n):
+  t=i/n
+  base=(a[0]+ux*chord*t,a[1]+uy*chord*t)
+  peak=max(peak,abs((pts[i][0]-base[0])*nx+(pts[i][1]-base[1])*ny))
+ if peak>1:
+  gain=amp/peak
+  scaled=[a]
+  for i in range(1,n):
+   t=i/n
+   base=(a[0]+ux*chord*t,a[1]+uy*chord*t)
+   lat=(pts[i][0]-base[0])*nx+(pts[i][1]-base[1])*ny
+   scaled.append((base[0]+nx*lat*gain,base[1]+ny*lat*gain))
+  scaled.append(b)
+  pts=scaled
+ pts[0]=a; pts[-1]=b
+ return pts
+
+def _meander_points(seed,ident,a,b,width,phase_id=None):
  # Four pinned midpoint-displacement rounds seed each reach's individual
  # shape. Langbein-style direction oscillation adds width-scaled meanders.
  pts=[a,b]
@@ -683,6 +818,41 @@ def _edge_curve(seed,ident,a,b,width,phase_id=None):
   disp=(pts[ref][0]-base[0],pts[ref][1]-base[1])
   output.append((px+.05*disp[0],py+.05*disp[1]))
  output[0]=a; output[-1]=b
+ return output
+
+def _valley_frame(valley,t):
+ n=len(valley)-1
+ pos=min(n,max(0.0,t*n))
+ i=min(n-1,int(pos)); f=pos-i
+ p,q=valley[i],valley[i+1]
+ base=(p[0]+f*(q[0]-p[0]),p[1]+f*(q[1]-p[1]))
+ dx,dy=q[0]-p[0],q[1]-p[1]; norm=math.hypot(dx,dy) or 1
+ return base,(-dy/norm,dx/norm)
+
+def _edge_curve(seed,ident,a,b,width,phase_id=None):
+ """Valley centreline plus the width-scaled meander, both pinned at a and b.
+
+ Samples follow the meander spacing, at least one vertex every 200 ft, so a
+ mile of channel keeps more than six points after the valley bow is applied.
+ Outlet centreline stays on the meander alone. A valley bow on the trunk
+ moves the relief surface and changes which headwaters drain downhill.
+ """
+ if phase_id=='outlet': return _meander_points(seed,ident,a,b,width,phase_id)
+ chord=math.dist(a,b)
+ if chord<=1: return [a,b]
+ valley=_valley_points(seed,ident,a,b,phase_id)
+ meander=_meander_points(seed,ident,a,b,width,phase_id)
+ # Reach-to-reach amplitude spread. A shared valley scale pulls raw
+ # sinuosity into a band tighter than the finished-river check allows.
+ mix=.70+.70*((H(seed,'meander-mix',ident if phase_id is None else phase_id)%10001)/10000)
+ ux=(b[0]-a[0])/chord; uy=(b[1]-a[1])/chord; nx,ny=-uy,ux
+ output=[a]
+ for p in meander[1:-1]:
+  along=(p[0]-a[0])*ux+(p[1]-a[1])*uy
+  lat=((p[0]-a[0])*nx+(p[1]-a[1])*ny)*mix
+  base,normal=_valley_frame(valley,min(1,max(0,along/chord)))
+  output.append((base[0]+normal[0]*lat,base[1]+normal[1]*lat))
+ output.append(b)
  return output
 
 def _diagonal_allowed(seed,gx,gy,nx,ny):
@@ -853,12 +1023,20 @@ def basin(seed,cx,cy,options):
     continue
   v=(qnext[0]-end[0],qnext[1]-end[1])
   side=1 if v[0]*(p[1]-end[1])-v[1]*(p[0]-end[0])>=0 else -1
-  pts=_edge_curve(seed,ident,p,end,widths[key],(receiver,side))
-  span=max(1,len(pts)-1)
-  profile=[widths[key]+(end_width-widths[key])*i/span for i in range(span+1)]
-  out.append(feature('rivers',ident,points=pts,width=max(profile,default=widths[key]),widths=profile,
-   stream_order=order[key],flow='regional',source=not incoming[key],downstream=receiver,
-   basin=(cx,cy),area=area[key],growth_events=[growth_type[key]]))
+  pieces=_channel_pieces(seed,p,end,1.45*MILE)
+  count=len(pieces)-1
+  for i in range(count):
+   pa,pb=pieces[i],pieces[i+1]
+   piece_id=ident if i==0 else f'{ident}:part:{i}'
+   next_id=f'{ident}:part:{i+1}' if i+1<count else receiver
+   w0=widths[key]+(end_width-widths[key])*i/count
+   w1=widths[key]+(end_width-widths[key])*(i+1)/count
+   pts=_edge_curve(seed,piece_id,pa,pb,(w0+w1)/2,(receiver,side,i))
+   span=max(1,len(pts)-1)
+   profile=[w0+(w1-w0)*k/span for k in range(span+1)]
+   out.append(feature('rivers',piece_id,points=pts,width=max(profile,default=w0),widths=profile,
+    stream_order=order[key],flow='regional',source=(i==0 and not incoming[key]),downstream=next_id,
+    basin=(cx,cy),area=area[key],growth_events=[growth_type[key]]))
  out.extend(_route_geometry(seed,x,y) for x in range(cx-1,cx+2) for y in range(cy-1,cy+2))
  route_features=[f for f in out if f['id'].startswith('river:outlet:')]
  for route in route_features:

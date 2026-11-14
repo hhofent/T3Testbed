@@ -9,7 +9,7 @@ crossings/bridges 75/75; chunk hash match, 12 features; outlet SD 28.78°).
 ## Checklist
 
 1. Versioned chunk cache — done. See below.
-2. Curved valley paths — next. `checks/river_valley.py`, seeds 14/30/31, 40 mi window `(-20,-20,40,40)`. Median valley sinuosity after 0.5 mi smoothing 1.15-1.35; edge length p10/median/p90 inside 0.6-1.5 mi; share of edges with near-zero curvature over more than 1 mi under 5%.
+2. Curved valley paths — awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
 3. Varied meanders, no kinks — `checks/river_meander.py`. Per-reach local-wavelength CV >= 0.25; non-junction nodes with heading change over 35° = 0; order-1 reaches with amplitude over 20x channel width = 0.
 4. Junction angles — `checks/river_junctions.py`. All joins, unfiltered, last 0.3 mi vs receiving channel. Seeds 14/30/31: mean 55-75°, under 25° < 5%, minimum >= 10°.
 5. Channel spacing — `checks/river_spacing.py`. Order >= 2 channels that do not join within 0.5 mi stay at least 0.4 mi apart. Violation count 0 on the 40 mi window; print the worst pair.
@@ -26,7 +26,31 @@ After: that test and `test_cache_version_tag_uses_nogit_when_git_is_unavailable`
 `py -m pytest -q`: 114 passed in 61.40s.
 `py checks/run_all.py --quick`: passed in 43.96s, same seed-13 metrics as the baseline (entropy 0.884, sinuosity 1.771/0.574, 75/75 bridges).
 
-Next: part 2, curved valley centrelines. Write `checks/river_valley.py`, show it failing, then change `world.py`.
+## Part 2: curved valley paths — awaiting visual review
+
+Check `checks/river_valley.py` was shown failing on head `e709402` before `world.py` changed.
+`py checks/river_valley.py` exit 1, 92.19s.
+
+- seed 14: median valley sinuosity 1.002; edge mi p10/median/p90 1.308/1.513/2.042; straight-run share 50.14%; points/mi min 0.5
+- seed 30: 1.002; 1.299/1.519/2.039; 47.15%; min 0.5
+- seed 31: 1.002; 1.289/1.547/2.043; 47.42%; min 0.3
+
+After the valley centreline, the same command exited 0 in 163.27s.
+
+- seed 14: median valley sinuosity 1.245; edge mi p10/median/p90 0.746/0.990/1.379; straight-run share 1.76%; points/mi min 9.3
+- seed 30: 1.247; 0.745/0.992/1.378; 2.08%; min 9.9
+- seed 31: 1.247; 0.750/0.988/1.375; 2.01%; min 8.1
+
+First full pytest after the curves: 2 failed, 112 passed in 63.69s. `test_drainage_continuity_and_downhill` found split pieces whose end sits above the start (one example, seed 13, rise 5.19 ft on a 0.93 mi piece). `test_finished_river_metrics_smoke_fails_on_comb_geometry` had sinuosity spread 0.214 on the 4 mi window. Outlet centreline stays on the old meander so the relief field does not move. Long chords split only where every piece still drops. Meander amplitude varies per reach by a factor from 0.70 to 1.40. A later pytest is 114 passed in 56.40s. `py checks/run_all.py --quick` passed in 51.82s: seed 13, 9 mi, entropy 0.928, E-W 17.9%, sinuosity median/spread 1.965/0.642, order-1 width 12.39-15.00 ft, bridges 85/85, chunk features 17, outlet SD 28.78°.
+
+Review renders, not committed (`check-results/` is ignored):
+
+- `python-spawner/check-results/a2-part2/seed14-40mi.png`
+- `python-spawner/check-results/a2-part2/seed30-40mi.png`
+- `python-spawner/check-results/a2-part2/seed31-40mi.png`
+- `python-spawner/check-results/a2-part2/seed14-8mi.png`
+
+Next: part 3, varied meanders, after these four maps have been looked at.
 
 ---
 

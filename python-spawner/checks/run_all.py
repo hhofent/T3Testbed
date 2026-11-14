@@ -12,6 +12,7 @@ import river_chunks
 import river_crossings
 import river_lattice
 import river_metrics
+import river_valley
 
 
 def main(argv=None):
@@ -32,6 +33,10 @@ def main(argv=None):
         ('chunk request order', lambda: river_chunks.run(chunk_seeds, args.quick, progress)),
         ('outlet lattice', lambda: river_lattice.run(lattice_seeds, args.quick, progress)),
     ]
+    # The 40 mi valley window is a full-run measurement. --quick stays on the small smoke.
+    if not args.quick:
+        valley_seeds = seeds if args.seeds else (14, 30, 31)
+        checks.append(('valley geometry', lambda: river_valley.run(valley_seeds, False, progress)))
     for i, (label, run) in enumerate(checks, 1):
         print(f"\n=== {i}/{len(checks)}: {label} ===", flush=True)
         try:
