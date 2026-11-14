@@ -1,3 +1,35 @@
+# Item A2: river geometry, 2026-11-14
+
+Start: `6725de2` (v0.10) on `python-test/spawner`. Push only that branch.
+Baseline before any A2 edit: `py -m pytest -q` 112 passed in 59.94s.
+`py checks/run_all.py --quick` passed in 44.68s (seed 13, 9 mi: entropy 0.884,
+E-W 14.6%, sinuosity median/spread 1.771/0.574, order-1 width 12.39-15.00 ft;
+crossings/bridges 75/75; chunk hash match, 12 features; outlet SD 28.78°).
+
+## Checklist
+
+1. Versioned chunk cache — done. See below.
+2. Curved valley paths — next. `checks/river_valley.py`, seeds 14/30/31, 40 mi window `(-20,-20,40,40)`. Median valley sinuosity after 0.5 mi smoothing 1.15-1.35; edge length p10/median/p90 inside 0.6-1.5 mi; share of edges with near-zero curvature over more than 1 mi under 5%.
+3. Varied meanders, no kinks — `checks/river_meander.py`. Per-reach local-wavelength CV >= 0.25; non-junction nodes with heading change over 35° = 0; order-1 reaches with amplitude over 20x channel width = 0.
+4. Junction angles — `checks/river_junctions.py`. All joins, unfiltered, last 0.3 mi vs receiving channel. Seeds 14/30/31: mean 55-75°, under 25° < 5%, minimum >= 10°.
+5. Channel spacing — `checks/river_spacing.py`. Order >= 2 channels that do not join within 0.5 mi stay at least 0.4 mi apart. Violation count 0 on the 40 mi window; print the worst pair.
+6. Real copy test — resample each branch over 3 mi, compare normalised curvature profiles, flag correlation >= 0.9. Must fail on `b2ee52f` and on a same-recipe sine pair, and flag under 5% on the new network.
+
+## Part 1: versioned chunk cache — done
+
+Cache path is `out/cache/<VERSION>-<short git hash>/<seed>/<lod-key>/<x>_<y>.svg`.
+Hash is `nogit` when git cannot be run. README says old `out/cache/*` folders can be deleted.
+
+Before (on `6725de2`): `tests/test_chunks.py::test_versioned_chunk_cache_path_contains_version_and_hash` failed. Built path `out/cache/864201/<lod-key>/0_0.svg` (and the halo tiles) did not contain `v0.10-6725de2`.
+
+After: that test and `test_cache_version_tag_uses_nogit_when_git_is_unavailable` passed (2 passed in 0.17s).
+`py -m pytest -q`: 114 passed in 61.40s.
+`py checks/run_all.py --quick`: passed in 43.96s, same seed-13 metrics as the baseline (entropy 0.884, sinuosity 1.771/0.574, 75/75 bridges).
+
+Next: part 2, curved valley centrelines. Write `checks/river_valley.py`, show it failing, then change `world.py`.
+
+---
+
 # Item A WIP: basin rivers and check harness, 2026-11-14
 
 Starting head confirmed as `b2ee52f`. The old `drainage_*` templates and their

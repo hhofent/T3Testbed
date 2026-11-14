@@ -4,6 +4,50 @@ from settings import Settings
 from presets import document
 from region import MILE
 
+def test_versioned_chunk_cache_path_contains_version_and_hash(monkeypatch):
+ import shutil,subprocess
+ from pathlib import Path
+ root=Path(__file__).resolve().parents[1]
+ cache=root/'out'/'cache'
+ if cache.exists():
+  for folder in cache.rglob('864201'):
+   if folder.is_dir() and folder.name=='864201': shutil.rmtree(folder)
+ captured=[]
+ def fake_generate(seed,x,y,settings,path,detail=True):
+  captured.append(Path(path))
+  path.parent.mkdir(parents=True,exist_ok=True)
+  path.write_text('<svg versioned-cache="true"/>',encoding='utf-8')
+  return '<svg versioned-cache="true"/>'
+ monkeypatch.setattr(chunks,'generate',fake_generate)
+ chunks.JOBS.clear()
+ settings=Settings({'stages.houses':False,'stages.trees':False})
+ data=dict(seed=864201,window=[0,0,MILE,MILE])
+ result=chunks.request(data,settings)
+ deadline=time.monotonic()+30
+ while result['pending']:
+  assert time.monotonic()<deadline
+  time.sleep(.02); result=chunks.request(data,settings)
+ version=(root/'VERSION').read_text(encoding='utf-8').strip()
+ try:
+  git_hash=subprocess.check_output(['git','rev-parse','--short','HEAD'],cwd=root,text=True,stderr=subprocess.DEVNULL).strip() or 'nogit'
+ except Exception:
+  git_hash='nogit'
+ assert captured
+ assert any(path.name=='0_0.svg' for path in captured)
+ assert all(f'{version}-{git_hash}' in path.parts for path in captured)
+ chunks.JOBS.clear()
+ for path in captured:
+  try: path.unlink()
+  except OSError: pass
+
+
+def test_cache_version_tag_uses_nogit_when_git_is_unavailable(monkeypatch):
+ from pathlib import Path
+ monkeypatch.setattr(chunks,'git_short_hash',lambda:'nogit')
+ version=(Path(__file__).resolve().parents[1]/'VERSION').read_text(encoding='utf-8').strip()
+ assert chunks.cache_version_tag()==f'{version}-nogit'
+
+
 def test_cache_priority_disk_and_fast_reuse(tmp_path,monkeypatch):
  monkeypatch.setattr(chunks,'CACHE',tmp_path)
  # This test is about the cache protocol; geometry generation has dedicated

@@ -106,7 +106,8 @@ rm -rf out/cache __pycache__ tests/__pycache__ checks/__pycache__ tools/__pycach
 
 Places this code writes cached chunks, tiles, SVGs, or JSON:
 
-- `out/cache/<seed>/<lod-key>/<x>_<y>.svg` is the chunk SVG cache. `chunks.py` writes here, using a sibling `.tmp` file then renaming. This is the folder that makes the map look stale.
+- `out/cache/<VERSION>-<short git hash>/<seed>/<lod-key>/<x>_<y>.svg` is the chunk SVG cache. `chunks.py` writes here, using a sibling `.tmp` file then renaming. The hash is `nogit` when git is unavailable. This is the folder that makes the map look stale.
+- Old `out/cache/*` folders can be deleted.
 - `out/region.json` is the default CLI export. `--world` also writes `out/region.svg` next to it. `--output` and `--png` override those paths.
 - `out/sweep.csv` is the default parameter-sweep table (`--csv` overrides it).
 - `out/batch.json` and `out/sample_<id>.report.json` come from `batch.py`.

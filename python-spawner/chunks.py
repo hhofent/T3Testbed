@@ -1,5 +1,5 @@
 """Prioritized, nonblocking world chunks, with separate overview/detail caches."""
-import hashlib,json,math,threading
+import hashlib,json,math,subprocess,threading
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor,Future
 from settings import applied
@@ -12,7 +12,20 @@ LOCK=threading.RLock()
 JOBS={}
 WAITING={}
 ACTIVE=None
-CACHE=Path(__file__).parent/'out'/'cache'
+
+def git_short_hash():
+ """Short HEAD hash, or nogit when git cannot be run."""
+ try:
+  text=subprocess.check_output(['git','rev-parse','--short','HEAD'],cwd=Path(__file__).resolve().parent,text=True,stderr=subprocess.DEVNULL,timeout=5).strip()
+  return text or 'nogit'
+ except Exception:
+  return 'nogit'
+
+def cache_version_tag():
+ version=(Path(__file__).resolve().parent/'VERSION').read_text(encoding='utf-8').strip()
+ return f'{version}-{git_short_hash()}'
+
+CACHE=Path(__file__).parent/'out'/'cache'/cache_version_tag()
 
 def identity(settings):
  values={k:v for k,v in settings.values.items() if not k.startswith(('controls.','verify.')) and k not in ('world.window_miles','world.pan_fraction','world.zoom_factor')}
