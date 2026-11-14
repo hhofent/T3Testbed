@@ -2575,3 +2575,22 @@ for _key,_value in DEFAULTS.items():
         CATALOG[_key]['min']={'start':0,'stop':1,'step':1}
         CATALOG[_key]['max']={'start':_value.stop*2,'stop':_value.stop*3,'step':max(1,_value.step*4)}
         CATALOG[_key]['units']='ft'
+for _key,_default,_lo,_hi,_step,_units,_note in [
+ ('world.tile_miles',3,3,3,1,'mi','Fixed reference tile size; preserves town geometry.'),
+ ('world.main_spacing_miles',9,3,30,3,'mi','PLACEHOLDER: upgraded historical main-road spacing.'),
+ ('world.level_b_pct',5,0,20,1,'percent','PLACEHOLDER: Level B dirt share.'),
+ ('world.missing_pct',1,0,10,1,'percent','PLACEHOLDER: missing road share; only horizontal non-main sections removed to retain connectivity.'),
+ ('world.rail_spacing_miles',12,3,60,3,'mi','PLACEHOLDER: north-south rail corridors following road history.'),
+ ('world.rail_enabled_pct',70,0,100,1,'percent','PLACEHOLDER: active rail corridor probability.'),
+ ('world.river_spacing_miles',28,8,60,1,'mi','PLACEHOLDER: south-flowing trunk watershed spacing.'),
+ ('world.tributary_spacing_miles',8,2,20,1,'mi','PLACEHOLDER: tributaries merge into larger trunk rivers.'),
+ ('world.river_width_ft',100,40,300,10,'ft','PLACEHOLDER: trunk width; tributaries are half this width.'),
+ ('world.relief_ft',120,20,130,10,'ft','PLACEHOLDER: low rolling hill relief.'),
+ ('world.contour_interval_ft',20,5,40,5,'ft','PLACEHOLDER: contour spacing.'),
+ ('world.contour_cell_ft',660,330,1320,110,'ft','PLACEHOLDER: globally anchored marching-squares sampling.'),
+ ('world.window_miles',3,0.25,12,0.25,'mi','PLACEHOLDER: initial window size and zoom limits.'),
+ ('world.halo_tiles',1,1,1,1,'tiles','Fixed ownership halo around query; reference features fit within this halo.'),
+]: define(_key,_default,_lo,_hi,_step,_units,_note)
+define('world.pan_fraction',0.25,0.1,0.5,0.05,'fraction','PLACEHOLDER: viewport pan distance per button press.')
+define('world.zoom_factor',2,1.1,4,0.1,'ratio','PLACEHOLDER: zoom step ratio.')
+define('world.tree_radius_ft',1.5,0.5,3,0.5,'ft','PLACEHOLDER: small trunk-dot radius; never a canopy.')

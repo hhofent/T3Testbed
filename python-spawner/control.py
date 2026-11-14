@@ -9,11 +9,18 @@ from sweep import statistics
 
 PAGE=Path(__file__).with_name('control.html')
 def schema(settings=None):
- return {'schema':plain(CATALOG),'values':plain((settings or Settings()).values),'presets':list(PRESETS)}
+ return {'schema':plain(CATALOG),'values':plain((settings or Settings()).values),'presets':list(PRESETS),'units_per_mile':__import__('region').MILE}
 
 def render_request(data):
  settings=apply_document(Settings(),data['settings']); seed=int(data['seed'])
  with applied(settings):
+  if data.get('world'):
+   from world import window,svg
+   rect=data['window']
+   if len(rect)!=4 or max(rect[2:])>CATALOG['world.window_miles']['max']*__import__('region').MILE: raise ValueError('Window exceeds control-page zoom range')
+   scene=window(seed,rect,settings)
+   counts={k:sum(f['kind']==k for f in scene['features']) for k in sorted({f['kind'] for f in scene['features']})}
+   return {'image':base64.b64encode(svg(scene)).decode(),'image_type':'image/svg+xml','stats':counts,'changed':diff(settings),'settings':document(settings)}
   region=make_region(seed)
   results=spawn_region(region) if settings.values['stages.houses'] else {}
   from map_render import png

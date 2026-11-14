@@ -7,6 +7,8 @@ def parser():
  p=argparse.ArgumentParser(description=__doc__)
  p.add_argument('--seed',type=int,default=31)
  p.add_argument('--serve',action='store_true')
+ p.add_argument('--world',action='store_true')
+ p.add_argument('--window',nargs=4,type=float,default=[0,0,3,3],metavar=('X_MI','Y_MI','W_MI','H_MI'))
  p.add_argument('--port',type=int)
  p.add_argument('--preset',action='append',default=[],help='Stack a named preset or JSON path')
  p.add_argument('--param',action='append',default=[],metavar='a.b=value')
@@ -34,6 +36,13 @@ def main(argv=None):
   except (ValueError,KeyError) as error: p.error(str(error))
   print(output); return
  from region import make_region,spawn_region
+ if args.world:
+  from world import window,svg,MILE
+  from settings import applied
+  scene=window(args.seed,[v*MILE for v in args.window],settings)
+  path=Path(args.output); path.parent.mkdir(parents=True,exist_ok=True); path.write_text(json.dumps(scene,sort_keys=True)+'\n')
+  with applied(settings): path.with_suffix('.svg').write_bytes(svg(scene))
+  print(path); return
  region=make_region(args.seed,settings=settings)
  path=Path(args.output); path.parent.mkdir(parents=True,exist_ok=True)
  path.write_text(json.dumps(region,sort_keys=True,indent=1)+'\n',encoding='utf-8')

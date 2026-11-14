@@ -130,7 +130,7 @@ def make_creeks(seed, roads):
     """Meandering, roughly diagonal polylines (Lyon County refs). The first passes 900-2200 ft off the blacktop crossing."""
     if not option("stages.creeks"): return []
     d = rng(seed, "creek"); top = N_MI * MILE; out = []
-    ew = next(r for r in roads if r["type"] == "paved" and r["axis"] == "h"); ns = next((r for r in roads if r["type"] == "paved" and r["axis"] == "v"), None)
+    ew = next((r for r in roads if r["type"] == "paved" and r["axis"] == "h"), next(r for r in roads if r["axis"] == "h")); ns = next((r for r in roads if r["type"] == "paved" and r["axis"] == "v"), None)
     ax_, ay_ = (ns["c"] if ns else top // number('region.make_creeks_numbers', 'make_creeks_132_42')), ew["c"]
     for k in range(d.weighted("n", CREEK_N)):
         dk = rng(seed, "creek", k)
@@ -470,9 +470,9 @@ def place_edge_biz(seed, town, roads, rail, occupied):
 
 
 # ---------- region ----------
-def make_region(seed, force_town=False, overrides=None, force_rail=None, force_pop=None):
-    roads, pct = make_roads(seed, force_town)
-    rail = make_rail(seed, roads, force_rail)
+def make_region(seed, force_town=False, overrides=None, force_rail=None, force_pop=None, road_factory=None, rail_factory=None):
+    roads, pct = (road_factory or make_roads)(seed, force_town)
+    rail = (rail_factory or make_rail)(seed, roads, force_rail)
     creeks = make_creeks(seed, roads)
     bar = [rail] + creeks if rail else list(creeks)     # rail corridor + floodplains: no lots or parcels
     town = make_town(seed, roads, rail, force_town, force_pop, creeks)
