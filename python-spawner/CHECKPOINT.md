@@ -1,3 +1,25 @@
+# Item 3 complete, 2026-11-14
+
+All N-S survey roads now shift sideways at globally anchored 24-mile correction
+parallels. Seeded integer-tick offsets alternate sides, so no correction is
+accidentally zero. E-W correction roads stay continuous even at maximum missing
+road settings, providing the connecting jog for gravel as well as pavement.
+N-S paved geometry incorporates the same offsets and retains exact shared route
+endpoints and wide corners. Region placement uses those corrected N-S road
+coordinates; rural layouts are unchanged. The gap verifier tests physical
+coordinates rather than expecting an off-viewport corrected line in the view.
+
+Fresh full run: 104 passed in 40.46s. New test covers negative and positive 24-mi
+boundaries, seed variation, actual shifted survey sections, continuous E-W edges,
+and exact paved joins. Cache lod-v17-correction-lines. No final screenshots yet;
+server on 8002 still has the item-1 code and must be restarted before final capture.
+
+Completed item commits: 1 e7f582d + checkpoint edc4b44; 2 f0164fd; this commit 3.
+NEXT item 4 bridges, then 5 rail, 6 towns, 7 farmsteads, shared style and world
+rebaseline, final browser screenshots. Read only files listed below. Push only
+python-test/spawner; no merge, force-push, history rewrite or PR.
+
+--- Prior checkpoint ---
 # Item 2 complete, 2026-11-14
 
 Paved routes are planned from drainage before missing gravel edges. Each owns

@@ -135,13 +135,15 @@ def paved_road_gaps(features,rect):
   f=present.get(expected['id'])
   if f is None or f['surface']!='paved' or f.get('points')!=expected['points']: gaps.append(expected['id'])
  # Survey sections are retained as addressable road edges as well as routes.
- from world import paved_edge
+ from world import paved_edge,correction_shift
  x,y,w,h=rect
  for axis in ('h','v'):
   c0,c1,s0,s1=(y,y+h,x,x+w) if axis=='h' else (x,x+w,y,y+h)
   for line in range(math.ceil(c0/MILE),math.floor(c1/MILE)+1):
    for segment in range(math.floor(s0/MILE),math.ceil(s1/MILE)):
     if not paved_edge(seed,axis,line,segment): continue
+    coordinate=line*MILE+(correction_shift(seed,math.floor(segment/24)) if axis=='v' else 0)
+    if not c0<=coordinate<=c1: continue
     id=f'road:{axis}:{line}:{segment}'
     # Pure generator inputs used to verify route ownership have no survey edges.
     if not any(k.startswith('road:') for k in present): continue

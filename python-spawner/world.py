@@ -17,6 +17,12 @@ def feature(kind,id,**data):
  result['bounds']=data.get('rect') or box(data['points'],data.get('width',0)/2)
  return result
 
+def correction_shift(seed,band):
+ # Survey correction parallels every 24 miles. Adjacent bands shift to opposite
+ # sides of the meridian, avoiding an accidental zero jog at any correction.
+ magnitude=round((.04+(H(seed,'correction',band)%4001)/100000)*MILE)
+ return magnitude if band%2 else -magnitude
+
 def route_offset(seed,axis,lane,band):
  return _route_offset(seed,axis,lane,band,option('world.main_spacing_miles'),_drainage_options())
 
@@ -38,6 +44,7 @@ def paved_points(seed,axis,lane,band):
  base=lane*option('world.main_spacing_miles')+1
  a=(base+route_offset(seed,axis,lane,band))*MILE
  b=(base+route_offset(seed,axis,lane,band+1))*MILE
+ if axis=='v': a+=correction_shift(seed,band); b+=correction_shift(seed,band+1)
  start=band*24*MILE; end=start+24*MILE; radius=.18*MILE
  direction=1 if b>a else -1
  pts=[(a,start+radius),(a,end-radius)]
@@ -76,7 +83,7 @@ def road_type(seed,axis,line,segment):
  if paved_edge(seed,axis,line,segment): return 'paved'
  # Each removable edge belongs to one disjoint cycle. The other three edges
  # guarantee a detour, even if an edge is later upgraded to paved.
- if segment%2==0:
+ if segment%2==0 and not (axis=='h' and line%24==0):
   bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
   candidate=(line%2) if axis=='h' else 2+(line%2)
   if H(seed,'missing-cycle',bx,by)%10000<option('world.missing_pct')*800 and H(seed,'missing-edge',bx,by)%4==candidate: return None
@@ -106,14 +113,14 @@ def _tile(seed,tx,ty,serialized,detail=True):
     for i in range(option('world.tile_miles')+1):
      global_line=(ty if axis=='h' else tx)*option('world.tile_miles')+i
      surface=road_type(seed,axis,global_line,(tx if axis=='h' else ty)*option('world.tile_miles')+1) or 'gravel'
-     output.append(dict(id=f'{axis}{i}',name=f'{axis.upper()} {global_line}',axis=axis,type=surface,c=i*MILE,lo=0,hi=extent,w=option('region.row'),surface_ft=22))
+     output.append(dict(id=f'{axis}{i}',name=f'{axis.upper()} {global_line}',axis=axis,type=surface,c=i*MILE+(correction_shift(seed,math.floor(oy/(24*MILE))) if axis=='v' else 0),lo=0,hi=extent,w=option('region.row'),surface_ft=22))
    return output,25
   def rail(local_seed,rs,force):
    if not option('stages.rail'): return None
    ew=next((r for r in rs if r['axis']=='h' and r['type']=='paved'),None)
    if ew is None: return None
    for lane,x,along in rail_lanes(seed,(ox,oy,extent,extent)):
-    local=along-ox
+    local=along-ox+correction_shift(seed,math.floor(oy/(24*MILE)))
     if not MILE//2<=local<=extent-MILE//2: continue
     x-=ox
     return dict(pts=[(x,0),(x,extent)],w=option('region.rail_row'),along=f'v{local//MILE}',along_c=local,x=x,side=1,parallel=(0,extent),crossings=[],site=(local,ew['c']))
@@ -146,7 +153,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
    # A rural driveway must terminate on an extant historical section.
    if spec['kind']!='town':
     r=next(r for r in reg['roads'] if r['id']==lot['road_id']); along=int(lot['along']//MILE)
-    line=(ty if r['axis']=='h' else tx)*option('world.tile_miles')+r['c']//MILE
+    line=(ty if r['axis']=='h' else tx)*option('world.tile_miles')+round(r['c']/MILE)
     segment=(tx if r['axis']=='h' else ty)*option('world.tile_miles')+along
     if road_type(seed,r['axis'],line,segment) is None: continue
    if detail: add('lots',id,world_rect(pl,spec['width'],spec['depth']),use=spec['kind'])
@@ -331,6 +338,7 @@ def window(seed,rect,settings=None,detail=True):
      surface=road_type(seed,axis,line,segment)
      if surface is None: continue
      c,lo=line*MILE,segment*MILE
+     if axis=='v': c+=correction_shift(seed,math.floor(segment/24))
      length=MILE
      if surface=='paved':
       # Rectangular survey sections share the continuous route, but do not

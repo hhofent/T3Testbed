@@ -119,7 +119,7 @@ def test_missing_roads_both_axes_one_percent_and_cycle_detours():
    for line in range(-100,100):
     for segment in range(-100,100):
      if road_type(31,axis,line,segment) is None: missing[axis].append((line,segment))
-   assert .007<len(missing[axis])/(40000*8/9)<.013
+   assert .006<len(missing[axis])/(40000*8/9)<.013
    from world import paved_edge
    assert all(not paved_edge(31,axis,line,segment) for line,segment in missing[axis])
   for axis,edges in missing.items():
@@ -276,3 +276,29 @@ def test_world_region_never_calls_legacy_creeks(monkeypatch):
  def forbidden(*args): raise AssertionError('legacy per-tile water was called')
  monkeypatch.setattr(region,'make_creeks',forbidden)
  assert window(14,(0,0,MILE,MILE),Settings({'stages.houses':False}),detail=False)['features']
+
+
+def test_correction_lines_shift_north_south_every_twenty_four_miles():
+ from world import correction_shift,paved_points,road_type
+ from settings import applied
+ with applied(Settings()):
+  shifts=[correction_shift(31,band) for band in range(-3,4)]
+  assert all(a!=b for a,b in zip(shifts,shifts[1:]))
+  assert shifts!=[correction_shift(14,band) for band in range(-3,4)]
+  for band in range(-2,3):
+   points=paved_points(31,'v',0,band)
+   from world import route_offset
+   assert points[0][0]==(1+route_offset(31,'v',0,band))*MILE+correction_shift(31,band)
+   assert points[-1]==paved_points(31,'v',0,band+1)[0]
+   assert any(y==(band+1)*24*MILE for x,y in points)
+   # Correction parallels remain unbroken cross roads, including at max loss.
+   with applied(Settings({'world.missing_pct':10})):
+    assert all(road_type(31,'h',band*24,segment) is not None for segment in range(-30,30))
+  north=window(31,(-MILE,23*MILE,4*MILE,2*MILE),Settings({'stages.houses':False}),detail=False)
+  roads={f['id']:f for f in north['features'] if f['kind']=='roads'}
+  a=roads['road:v:2:23']['rect']; b=roads['road:v:2:24']['rect']
+  assert a[0]!=b[0] and a[1]+a[3]==b[1]==24*MILE
+  # E-W survey sections on either side still meet, without correction offsets.
+  for line in (23,24,25):
+   a=roads[f'road:h:{line}:0']['rect']; b=roads[f'road:h:{line}:1']['rect']
+   assert a[0]+a[2]==b[0] and a[1]==b[1]
