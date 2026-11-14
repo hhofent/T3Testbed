@@ -1,13 +1,12 @@
 # Checkpoint
 
 ## Status
-Milestone 1 complete: 130 settings entries including numeric stage packs; recursive
-validation/clamping; settings propagation; parks removed; 1990 default and explicit
-parity mode. 65 tests pass. Five before/after PNG pairs are byte-identical in parity
-mode (N9 year, N13 park exclusions). Raw-default incompatibility is documented in
-docs/SETTINGS-AND-PARITY.md. Original source branch lacks CODING-AGENT-PROMPT.md.
-Milestones 2-6 pending. Work only in python-spawner on python-test/spawner.
+Milestones 1-2 complete. 130 schema entries, numeric stage packs, no parks,
+1990 default, explicit parity. Five PNG pairs identical in parity mode.
+Typed JSON preset save/load/diff; six stackable presets and dotted --param overrides;
+recursive finite-value validation and clamping. 68 tests pass.
+Raw-default parity exclusions and absent source prompt documented in docs/SETTINGS-AND-PARITY.md.
 
 ## Exact next step
-Implement milestone 2: typed JSON presets save/load/diff, six stackable presets,
-and --param dotted overrides with clamping. Then milestones 3-6 in order.
+Milestone 3: --sweep param lo hi steps --seeds N CSV statistics. Then control page,
+endless world, and --verify in order. Commit/push and update this file at each milestone.

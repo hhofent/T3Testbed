@@ -2535,3 +2535,19 @@ def configurable(fn):
         if settings is None and _ACTIVE.get() is not None: return fn(*args,**kwargs)
         with applied(settings or Settings()): return fn(*args,**kwargs)
     return wrapped
+# Probability weights are percentages, independently editable (zero disables a category).
+CATALOG['region.town_size']['min']=[('tiny',0),('mid',0),('big',0)]
+CATALOG['region.town_size']['max']=[('tiny',100),('mid',100),('big',100)]
+
+# Preset strengths are exploratory PLACEHOLDER choices, not research values.
+# Definitions are kept beside the settings so all invented defaults have provenance.
+PRESET_VALUES = {
+ 'default':{},
+ 'tiny-towns':{'region.town_size':[('tiny',100),('mid',0),('big',0)]},
+ 'big-towns':{'region.town_size':[('tiny',0),('mid',0),('big',100)]},
+ 'rail-heavy':{'region.rail_pct':100,'region.railtown_pct':85},
+ 'sparse':{'region.norail_town_pct':5,'region.railtown_pct':15,'region.acreage_pct':5},
+ 'trailer-heavy':{'region.trailer_run_pct':65,'region.trailer_run':(3,6)},
+}
+for _spec in CATALOG.values():
+    _spec['note'] += ' Named preset strengths (tiny/big/rail/sparse/trailer) are PLACEHOLDER exploratory overrides.'
