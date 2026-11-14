@@ -1,76 +1,71 @@
-# PORT-CHECKPOINT (tier 1 free model)
+# PORT-CHECKPOINT
 
-**Resume instructions:** Fetch `port/builder-guy-towns`, read PORT-CHECKPOINT.md, STATE.md, T3-DECISIONS.md and SETTINGS-CLASHES.md, run the rebuild/test commands, confirm the numbers match the checkpoint, then continue at "Exact next step".
+**Resume instructions:** Fetch `port/builder-guy-towns`, read PORT-CHECKPOINT.md, STATE.md, T3-DECISIONS.md and SETTINGS-CLASHES.md, run the rebuild/test commands, confirm the numbers match the checkpoint, then continue at 'Exact next step'.
 
-**Date/time:** 2026-11-13 (resumed after context compaction)  
-**Last commit:** 35647a8 [tier1] T3: remove Boyden/Hull everywhere  
-**Branch:** port/builder-guy-towns  
-**History:** b13c150 (T1 baseline, generic country names), 19c57a5 (T2 python reference + decision files at root), 35647a8 (T3 boyden/hull removal)
+Date/time: 2026-11-13 19:55 America/Chicago  
+Last implementation commit: de66546 (report/checkpoint commit follows)  
+Branch: port/builder-guy-towns, origin https://github.com/hhofent/T3Testbed.git
 
-## Milestones done / in progress / next
-- Done: T1 (M0) b13c150; T2 19c57a5; T3 35647a8.
-  - T3 verified: build 146 warnings/0 errors = baseline; verify 13/13 pass; `rg boyden|hull src README.md STATE.md` clean; `--size boyden` fails listing valid sizes; `/gen?size=hull` → 400 with valid list; country renders byte-identical to port-report/baseline-hashes.txt under new village/town names.
-- Done: T4 Wire unconnected settings (M1 part 1) — wiring completed and committed-in-progress:
-  - SmallTown.cs: removed hard-coded consts (HighwayWidth 66, StreetRow 36, AlleyRow 16, BlockLotDepth 122, SideLotDepth 80, BandDepth 175); all reads now via `cfg.` on SmallTownConfig (defaults identical to old consts → output byte-identical to HEAD). Removed fresh `new CommercialConfig()` (not consumed — logged as unwired). Generate() now accepts `TownTierSystem? townTiers` and uses `townTiers ?? new TownTierSystem()` instead of always `new TownTierSystem()`.
-  - Program.cs: both smalltown Generate callsites pass `config.TownTiers`.
-  - Verified: T4 output == HEAD output exactly (clean build, crossroads seed 1993 = 10eb5b9b both before/after T4) → zero regression.
-  - Not yet written: port-report/settings-audit.md (still pending).
-- In progress: none.
-- Next: T5 BuilderGuy settings schema; T6 presets/overrides/sweep (start at T6: `--param path=value` overrides in Program.cs); T7 /params control page; T8 scaffolding.
+## Status
+PARTIAL. Tier 1 is NOT complete. Tier 2 is NOT started. No HANDOFF.md or `[tier1] complete` commit has been produced.
+
+Completed before takeover: T1 b13c150, T2 19c57a5, T3 35647a8; recovered partial T4 7286652. The earlier checkpoint overstated confidence in T4's baseline diagnosis; the audit and other unwired sections remain unfinished.
+
+Completed this session:
+- 921b51f: clean takeover baseline, approved four smalltown hash updates, cost log.
+- 4f2d4ef: T6 override subtask: repeatable --param path=value after stacked presets/profiles, strict path/type/nonfinite/range errors, exit 2 for input errors, actual --selftest runner.
+- de66546: repair eight existing profiles, preserve immutable range/distribution overrides, profile JSON round-trip, complete binary cache, preserve inactive distribution parameters. See port-report/profile-repairs.md.
+
+Remaining: T4 full settings audit/wiring evidence; T5 full BuilderGuy schema, Source attribute, schema migration and settings-map; T6 reference/default presets and pluggable sweep metrics; T7 /params control page; T8 data contracts, plumbing, parity/side-by-side/pending verify scaffolding and remaining selftests. Then HANDOFF and tier1-complete commit. All S1-S5/M2-M4/M7/M8 tier 2 work remains.
 
 ## Exact next step
-T6: add repeatable `--param path=value` overrides (applied after presets, validation errors for bad paths/out-of-range) in Program.cs; then `--selftest` override-parsing coverage. Commit after T6, update checkpoint.
+1. Read `newprompts/CODING-AGENT-PROMPT.md`, root SETTINGS-CLASHES.md/T3-DECISIONS.md, and tier prompt scope/stop rules. There is no root CODING-AGENT-PROMPT.md; user prompt packs are untracked and untouched.
+2. Audit SpawnConfig.cs and each referenced config class against real generation reads, writing port-report/settings-audit.md. T4 only wires six SmallTown constants and TownTiers; Residential/Streets/Commercial and density effects must still be assessed. Do not claim static name matches prove output effects.
+3. Implement T5 under src/SpawnGuide/BuilderGuy: every named/inline Python constant and PLACEHOLDER in region.py/spawner.py/validate.py (excluding parks), with typed settings and attributes, settings-map, schema bump/migration. Read source in small ranges. Use existing Windows Python venv below.
+4. Finish remaining T6, T7, T8 in separate commits, then complete tier1 acceptance/HANDOFF before tier 2. Do not mark pending work complete.
 
-## Parity numbers so far
-None (tier 1 scaffolding only; Python reference frozen under reference/python-spawner, 61 tests pass per T2).
+## Baseline and rebaseline provenance
+Initial takeover status: only untracked T3-port-prompts.zip, T3-port-prompts/, newprompts/. Actual starting HEAD was 7286652, not 35647a8 as the old checkpoint stated. git log --oneline -15 was inspected.
 
-## Verify ladder status
-- Baseline: 13/13 pass at seed 1993. Re-confirmed on clean build: all checks passed (`all checks passed`).
-- Build: `dotnet build SpawnGuide.csproj -c Release` → 72 warnings, 0 errors (baseline recorded 146 warnings; fewer now, no new warnings, 0 errors).
+User approved clean-35647a8 smalltown rebaseline because the old baseline had been reported as recorded from a stale incremental build. This session rebuilt a git archive of 35647a8 in an isolated temporary directory, without changing branch/history.
 
-## PRE-EXISTING baseline-hash mismatch (NOT caused by T4; document only, do not fix)
-- Clean-build default renders: country + world match port-report/baseline-hashes.txt exactly (all 6). All 4 smalltown sizes DIFFER (e.g. crossroads clean build = 10eb5b9b..., baseline-hashes.txt says 8fd7862f...).
-- Verified at HEAD (35647a8, before T4): clean build gives the same smalltown hashes as T4 → mismatch predates T4 work. T4 changes no generation values (cfg defaults == old consts), so T4 cannot have caused it.
-- Likely cause: baseline hashes were recorded under a stale incremental build state (incremental builds have reproduced 8fd7862f; clean builds give 10eb5b9b). Do NOT touch baseline-hashes.txt or generation logic — out of scope for T4/T6. Record here; tier 2 can decide whether to regenerate baselines.
+**Correction to old diagnosis:** clean 35647a8 from repository root gives 10eb5b9b...; clean 35647a8 from src/SpawnGuide gives old 8fd7862f.... Working-directory configuration discovery explains both: src/SpawnGuide loads spawnconfig.json; root uses code defaults. No stale binary is required to reproduce the difference. New port-report/baseline-hashes.txt explicitly represents REPOSITORY ROOT, no --config, seed 1993. Four smalltown entries updated; six country/world entries unchanged. Current implementation still matches all four smalltown entries. No generation logic was changed.
 
-## Blocked on user
-None.
+The initial --selftest invocation silently generated a gallery and returned 0: the option had no handler. That was not a passing selftest result. It now runs genuine tests.
+
+## Verification
+- .NET SDK 5.0.408, Windows, .NET 5 / C# 9, no new packages.
+- Initial clean Release build: 72 warnings, 0 errors. Latest build: 69 warnings, 0 errors (old nullable warnings removed with obsolete setter/cache code).
+- Verify seed 1993: 13/13 PASS, unchanged legacy logic. These are NOT evidence of N1-N13/tier2 compliance.
+- Selftests: 25 PASS, 0 FAIL: overrides, precedence, culture, invalid inputs, immutable bounds, eight profile JSON round-trips, imported profile application, inactive distribution fields and complete binary cache.
+- Python: 61 passed in 2.07s using existing .venv/Scripts/python.exe. Frozen Python logic untouched. Export reproducibility not rerun this session.
+- git diff --check: clean.
+- Evidence: port-report/takeover-build.txt, takeover-verify.txt, takeover-selftests.txt.
+- StreetRow=42 changes crossroads hash to abe93ebc45428f81875147ca588d7dc7d00593487cffdbf16783727ff7e28a84; default remains 10eb5b9b71e579c0a69023ac85a8401d6f01296c98ced6b9337ad5ef0cf09f42.
+
+## Parity
+Not implemented or measured. No exact-match, distribution or house-parity claims. No side-by-side artifacts or sample sweep yet.
 
 ## Decisions applied
-U12/U29: Boyden/Hull/George removed from src, README.md, STATE.md, docs/proposal-infinite-map.md (docs/research + docs/archive untouched).
-Config/default mismatches logged, not fixed (per T4 rule): SmallTown street stays 36 ft (StreetConfig default 66 ft — UC10); garage chances stay 45/45/10 (SmallTownConfig 55/35/10 appears elsewhere — UC9). CommercialConfig unwired (not consumed by any generator).
+U12/U29 generic names retained; U16 max zoom cap 300 enforced in Render setting and testing-max preset. N13: no park code/settings added. Root decision files unchanged; blank value rows must use Python values as settings per user. Full clash merge and N1-N13 implementation remain tier2 work.
 
-## Known bugs
-- See PRE-EXISTING baseline-hash mismatch above (smalltown sizes don't match baseline-hashes.txt on clean build; matches were seen only under stale incremental builds).
-- Leftover uncommitted partial work from the previous session was invalid C# (`const float cfg.HighwayWidth = 66f;` etc. in SmallTown.cs lines 24-29) — fixed as part of T4; build now passes.
+## Known issues and scope limits
+- Existing profiles repaired as documented in port-report/profile-repairs.md. A profile loading/round-tripping does not prove every setting drives output.
+- Only two legacy scalar bounds added so far: Rural.ShopChance [0,1], Render.ViewerMaxZoom [1,300]. Full Range/Units/Rationale coverage is still absent. Overrides enforce declared ranges and existing validators; they cannot enforce undocumented bounds. This is unfinished audit/schema work.
+- Noise/world and other config sections previously disappeared on binary cache loads; complete-cache format now rebuilds old partial caches from JSON. Historical cached results may therefore differ where custom newer sections were previously discarded.
+- Existing --test-profiles handler validates/repairs configs; actual round-trip checks are in --selftest.
+- Full layout/house port, updated verify ladder, controls, timings, and broad rule mutation tests remain absent.
 
-## Commands
-- Build: `cd src/SpawnGuide && dotnet build SpawnGuide.csproj -c Release` (expect 0 errors; warnings currently 72 after clean build)
-- Verify: `dotnet run -c Release -- --verify --seed 1993` (13/13 pass)
-- Baseline hash check: render 4 smalltown sizes + country + world at seed 1993 (each `--map smalltown --size <sz> --seed 1993 --out <dir>` then rename smalltown-1993.svg to smalltown-<sz>-1993.svg; `--map country`; `--map world`) and sha256-compare to port-report/baseline-hashes.txt. Country/world match; smalltown sizes differ — see PRE-EXISTING issue above (do not "fix").
-- Python: `cd reference/python-spawner && .venv/bin/python -m pytest -q tests` (61 passed); `export_reference.py` regenerates reference_out.
+## Blocked on user
+None. No tolerance/check was loosened or removed. No decisions were invented to establish parity. Work is incomplete, not externally blocked.
 
-## Takeover baseline milestone (2026-11-13)
-- Actual takeover HEAD: 7286652; branch port/builder-guy-towns. Initial status: only untracked user prompt packs (T3-port-prompts.zip, T3-port-prompts/, newprompts/).
-- Read shared spec from newprompts/CODING-AGENT-PROMPT.md (no root copy), root decisions/clashes, and tier prompts for scope/stop rules.
-- Clean Release: dotnet clean then dotnet build src/SpawnGuide/SpawnGuide.csproj -c Release: 72 warnings, 0 errors. Verify seed 1993: 13/13 pass.
-- Initial --selftest is NOT implemented: it silently falls through to gallery generation and exits 0. Do not treat this as a test pass.
-- User approved re-baselining smalltown hashes from clean 35647a8 because the old baseline was reported as recorded from a stale incremental build. Rebuilt a git archive of 35647a8 in an isolated temporary directory (no branch checkout/history changes).
-- Correction to the previous diagnosis: clean 35647a8 from repo root reproduces 10eb5b9b...; from src/SpawnGuide it reproduces the old 8fd7862f... . Working-directory config auto-discovery explains both hashes without stale binaries: src/SpawnGuide loads spawnconfig.json; repo root uses code defaults. The new baseline explicitly uses REPO ROOT, no --config, seed 1993. All four smalltown hashes updated; all six country/world hashes unchanged. Current recovered code matches the four new smalltown hashes.
-- No generation logic or decision changed. Exact next step: finish strict repeatable --param overrides and their selftests, then commit T6 override subtask; complete the rest of T6 after T5 schema.
-
-## T6 override subtask milestone (2026-11-13)
-- Added ConfigOverrides.cs: repeatable case-insensitive path=value, invariant numeric/enum/JSON conversion, strict unknown path/type/nonfinite/range errors, validation before conditional rules, immutable FloatDistribution/FloatRange/IntRange copy-back. Main reports CLI input errors with exit 2.
-- CLI accepts repeated --preset or --profile, including comma-separated stacks, before --param. Existing sensitivity --param path syntax retained.
-- SelfTests.cs / --selftest now runs actual tests: 14 pass, 0 fail. Includes precedence, malformed/missing/unknown input, nonfinite/out-of-range input, culture, repeated paths, immutable distribution bounds and inverted ranges.
-- Added intrinsic probability range [0,1] to Rural.ShopChance and user-prescribed zoom range [1,300] to Render.ViewerMaxZoom. Remaining range/attribute coverage is NOT complete and belongs in the audit.
-- Build remains 72 warnings / 0 errors; verify 13/13 pass. Evidence: port-report/takeover-{build,verify,selftests}.txt. StreetRow=42 changes crossroads seed 1993 SHA256 to abe93ebc45428f81875147ca588d7dc7d00593487cffdbf16783727ff7e28a84 (default 10eb5b9b...).
-- T6 is not complete: reference/default presets, profile round-trip repair and pluggable sweep metrics remain. T5/T7/T8 and all tier 2 remain.
-- Exact next step: audit every config setting into port-report/settings-audit.md; read reference constants in small ranges, add BuilderGuy schema/settings-map and Source attribute with migration (T5); finish T6 presets/sweeps, then T7/T8.
-
-## Existing-profile and persistence milestone (2026-11-13)
-- ConfigProfiles now uses the strict immutable-aware setter. All eight existing profiles apply and round-trip; details of obsolete paths/values and their repairs are in port-report/profile-repairs.md.
-- Full-config binary cache replaces incomplete seven-section cache; old caches fall back to source JSON. Distribution JSON preserves inactive parameters. No default generation changes.
-- Selftests: 25 pass / 0 fail. Build: 69 warnings / 0 errors (three old nullable warnings removed). Verify: 13/13 pass. Four root-default smalltown hashes still match the approved baseline.
-- Frozen Python tests: reference/python-spawner/.venv/Scripts/python.exe -m pytest -q reference/python-spawner/tests: 61 passed in 2.07s. Global python command is unavailable; use the existing venv executable on Windows.
-- Last prior commit: 4f2d4ef. T6 still awaits BuilderGuy presets and sweep interface/metrics after T5. Exact next step remains T5/audit, then remaining T6, T7, T8; tier 2 is unstarted.
+## Commands (run at repository root)
+```powershell
+dotnet clean src/SpawnGuide/SpawnGuide.csproj -c Release
+dotnet build src/SpawnGuide/SpawnGuide.csproj -c Release
+dotnet src/SpawnGuide/bin/Release/net5.0/SpawnGuide.dll --verify --seed 1993
+dotnet src/SpawnGuide/bin/Release/net5.0/SpawnGuide.dll --selftest
+reference/python-spawner/.venv/Scripts/python.exe -m pytest -q reference/python-spawner/tests
+dotnet src/SpawnGuide/bin/Release/net5.0/SpawnGuide.dll --map smalltown --size crossroads --seed 1993 --out src/SpawnGuide/out/check
+```
+Repeat last command with hamlet/village/town, renaming smalltown-1993.svg between runs when checking baseline hashes. No --serve process was started this session. Push only port/builder-guy-towns; no merge, force push, history rewrite or PR.
