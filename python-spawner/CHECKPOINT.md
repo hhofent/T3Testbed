@@ -31,7 +31,8 @@ Browser measurements, loopback HTTP + actual control.html JS, 1280x800:
   were the main CPU cost; resending SVG and replacing nodes added browser work.
 
 ## Exact next step
-Fix 3: navigation button labels/tooltips; then 4 rivers (continuous downhill,
+Fix 3 done: real navigation labels, accessible names and tooltips; all buttons act.
+Next: fix 4 rivers (continuous downhill,
 merging, no crossings/dead ends, verification); 5 rural variety and settings;
 6 diagonal/road-parallel rail, crossings >=45 degrees and >=80% within 15 of square;
 7 random missing road segments in both directions (~1%), connected network;
