@@ -1,5 +1,17 @@
 # PORT-CHECKPOINT
 
+## Current resume point ? supersedes historical audit instructions below
+
+2026-11-13: User replaced manual T4 source-read audit/wiring with automated settings probe. T4 is now complete under that approved scope. Do not resume historical source-read wiring tasks. No DEAD settings were wired or removed.
+
+- Added --probe-settings using loaded SpawnConfig reflection, numeric/bool leaves including distributions, legacy range endpoints, dictionaries and arrays; independent clones, both-direction nudges, bool flips, finite float limits, declared Range clamping. Runs root/no --config on seeds 1993/7/42 across crossroads/hamlet/village/town, country, world origin. SHA-256 SVG comparisons.
+- Reports: port-report/settings-probe.csv/.md; port-report/dead-settings.md. Counts: 2755 DEAD, 5 ERROR, 194 LIVE. ERROR takes precedence and retains successful effects. DEAD is sampled no-change, not source-level proof. Viewer-only and house-only settings can be DEAD in these requested map modes.
+- Execution evidence includes full run and supplemental legacy endpoint/finite-limit runs merged by exact path. Final default tool directly includes all leaves. Optional prefix/output flags support focused reproduction.
+- Release build: 69 warnings, zero errors. Selftests 29/29; verify 13/13. Default hash selftests remain green. Python logic untouched. No tolerances/checks changed. Root decision files untouched.
+- Exact next step: T5 clean BuilderGuy settings schema for Python constants/placeholders (no parks), each with range/units/note/source, migration and settings-map. User says BuilderGuy settings need no probing. Then remaining T6; T7 only LIVE T3 settings plus BuilderGuy, grouped by stage with sliders/min-max pairs/stage switches; T8; HANDOFF and [tier1] complete, then tier 2. Earlier T6 overrides/profile repairs remain completed; do not redo them.
+- T5-T8/HANDOFF/tier1 complete and tier2 remain unfinished. No user blocker. This is a working-context budget checkpoint, not a claim of overall completion.
+
+
 **Resume instructions:** Fetch `port/builder-guy-towns`, read PORT-CHECKPOINT.md, STATE.md, T3-DECISIONS.md and SETTINGS-CLASHES.md, run the rebuild/test commands, confirm the numbers match the checkpoint, then continue at 'Exact next step'.
 
 Date/time: 2026-11-13 20:03 America/Chicago

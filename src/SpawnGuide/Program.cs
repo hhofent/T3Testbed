@@ -270,6 +270,7 @@ static class Program
         if (args.Contains("--audit-settings")) return SettingsAudit.Run(GetString(args, "--audit-output", "port-report/settings-audit.md"));
         if (args.Contains("--selftest")) return SelfTests.Run();
         var config = LoadConfig(args);
+        if (args.Contains("--probe-settings")) return SettingsProbe.Run(config, GetString(args, "--probe-prefix", ""), GetString(args, "--probe-output", "port-report/settings-probe"));
 
         if (args.Contains("--probe-rail"))
         {

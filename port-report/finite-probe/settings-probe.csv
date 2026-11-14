@@ -1,0 +1,6 @@
+path,status,affected_maps_and_seeds,mutations,errors
+"Residential.YardTreeCount.Max","DEAD","","2.5521175E+38",""
+"Rural.BinCount.Max","DEAD","","2.5521175E+38",""
+"Rural.ShelterbeltRows.Max","DEAD","","2.5521175E+38",""
+"SmallTown.ElevatorBinCount.Max","DEAD","","2.5521175E+38",""
+"TownBlock.YardTreeCount.Max","DEAD","","2.5521175E+38",""
