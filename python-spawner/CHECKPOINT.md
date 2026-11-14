@@ -1,3 +1,33 @@
+# Item 1 complete: e7f582d, 2026-11-14
+
+Resumed at f397d8b on python-test/spawner. Drainage uses coarse basin owners
+H(seed,'basin',rx,ry), shared boundary anchors, southwest shear, seeded spacing,
+region-specific trunk direction and bends, and independently seeded tributary
+and headwater meanders. Three orders (1/2/3) widen at confluences; tributaries
+start small and taper downstream. Every downstream endpoint belongs to its
+receiving reach. Terrain measures distance to ALL channels, using spatial bins.
+World make_region receives the global water network as its placement barrier;
+it never calls old per-tile make_creeks. Town blocks clip at the floodplain.
+
+Fresh full validation: 102 passed in 31.33s. Seeds 13,31,46 pass continuity,
+acyclicity, downhill and no-crossing checks over 40 mi. New tests check order,
+widths, angled joins, unique normalized shapes, median sinuosity of 1.6-2.5,
+shared basin endpoints, valley elevations, and forbidden legacy creek calls.
+All five regenerated legacy parity PNG pairs remain byte-identical. Those
+exercise unchanged legacy region mode; world rebaselines and shared PNG/browser
+style verification are still pending with the later stages. Real Chromium:
+artifacts/item1-seed31-x-1-y0-3mi.png (Ready and decoded; town/road context).
+
+NEXT: item 2 paved routes, then 3 correction lines, 4 bridges, 5 rail, 6 towns,
+7 farmsteads, in order, commit and push each. Final shared-style/world parity
+checks and real-browser 3/10/30/96 mi + crossing/jog/bridge captures remain due.
+Server started on port 8002; restart after Python changes. Read only the files
+named below. Root newprompts/ and reference/ remain untouched. Push only
+python-test/spawner; no PR, merge or history rewrite. Checkpoint encoding is
+UTF-8: use explicit encoding when writing it. This follow-up records e7f582d
+because the first checkpoint write hit a Windows encoding error.
+
+--- Prior checkpoint ---
 # Item 1 verification preparation â€” WIP, 2026-11-14
 
 Resumed at b282432 on python-test/spawner. Item 1 is STILL INCOMPLETE;
