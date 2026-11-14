@@ -15,3 +15,6 @@
 7. **Images and sweep:** no side-by-side artifacts or sample sweep CSV yet.
 
 8. **Open work:** finish T4 settings audit and T5 schema/migration/settings-map; remaining T6 presets/metrics/sweeps; T7 controls; T8 scaffolding and acceptance; HANDOFF and tier1-complete commit; then every tier2 step. PORT-CHECKPOINT.md contains the exact next steps and commands. Do not treat this partial report as completion.
+
+
+Resume increment: empirical settings audit added at settings-audit.md (528 settings, 90 sampled effects, 415 sampled no-changes, 1 rejected probe, 22 structural/unprobed). T4 remains in progress. Build remains 69 warnings/0 errors, 25 selftests and 13 verify checks pass. See checkpoint for limitations and next steps.

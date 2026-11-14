@@ -2,8 +2,8 @@
 
 **Resume instructions:** Fetch `port/builder-guy-towns`, read PORT-CHECKPOINT.md, STATE.md, T3-DECISIONS.md and SETTINGS-CLASHES.md, run the rebuild/test commands, confirm the numbers match the checkpoint, then continue at 'Exact next step'.
 
-Date/time: 2026-11-13 19:55 America/Chicago  
-Last implementation commit: de66546 (report/checkpoint commit follows)  
+Date/time: 2026-11-13 20:03 America/Chicago  
+Last implementation commit before audit: de66546; resumed from 994c539 (audit/checkpoint commit follows)  
 Branch: port/builder-guy-towns, origin https://github.com/hhofent/T3Testbed.git
 
 ## Status
@@ -20,7 +20,7 @@ Remaining: T4 full settings audit/wiring evidence; T5 full BuilderGuy schema, So
 
 ## Exact next step
 1. Read `newprompts/CODING-AGENT-PROMPT.md`, root SETTINGS-CLASHES.md/T3-DECISIONS.md, and tier prompt scope/stop rules. There is no root CODING-AGENT-PROMPT.md; user prompt packs are untracked and untouched.
-2. Audit SpawnConfig.cs and each referenced config class against real generation reads, writing port-report/settings-audit.md. T4 only wires six SmallTown constants and TownTiers; Residential/Streets/Commercial and density effects must still be assessed. Do not claim static name matches prove output effects.
+2. Continue T4 using the new port-report/settings-audit.md and SettingsAudit.cs / --audit-settings. Inventory: 528 property settings; 90 mutations changed SVG output, 415 did not at seed 1993, one rejected probe (zoom=301), 22 structural/unprobed. Review NO CHANGE rows against actual generation reads; broaden seeds and use dedicated mutations for collections, metadata and rare features. This is NOT completed T4 wiring. T4 still only wires six SmallTown constants and TownTiers. Residential/Streets/Commercial and density effects must still be assessed. Re-run audit after each wiring change; keep defaults byte-identical. Do not interpret sampled no-change as proof a setting is unused.
 3. Implement T5 under src/SpawnGuide/BuilderGuy: every named/inline Python constant and PLACEHOLDER in region.py/spawner.py/validate.py (excluding parks), with typed settings and attributes, settings-map, schema bump/migration. Read source in small ranges. Use existing Windows Python venv below.
 4. Finish remaining T6, T7, T8 in separate commits, then complete tier1 acceptance/HANDOFF before tier 2. Do not mark pending work complete.
 
@@ -69,3 +69,11 @@ reference/python-spawner/.venv/Scripts/python.exe -m pytest -q reference/python-
 dotnet src/SpawnGuide/bin/Release/net5.0/SpawnGuide.dll --map smalltown --size crossroads --seed 1993 --out src/SpawnGuide/out/check
 ```
 Repeat last command with hamlet/village/town, renaming smalltown-1993.svg between runs when checking baseline hashes. No --serve process was started this session. Push only port/builder-guy-towns; no merge, force push, history rewrite or PR.
+
+## Resumed audit increment (2026-11-13 20:03)
+- Fetched origin/port/builder-guy-towns; resumed from 994c539, no tracked changes at start. Required specs/decisions and tier scope/stop rules re-read. No decision files modified.
+- Clean build re-confirmed: 69 warnings / 0 errors. Existing selftests 25/25 and verify 13/13 pass, also after adding diagnostic audit.
+- Added --audit-settings [--audit-output path], default port-report/settings-audit.md. Uses independently cloned configs, strict override application and validation, compares eleven generated SVG views at seed 1993. Reports declaration locations and exact mutation/rejection per row. Does not change normal generation, tolerances or checks.
+- Audit first pass: 528 property settings; changed 90; unchanged 415; rejected 1; structural/unprobed 22. Collection contents are represented by their owning property, not recursively proven. Before-state wiring remains unverified. Named bounds/distribution fields are probed as containing settings, not each constituent. Additional source review, metadata coverage and targeted tests are still needed before T4 completion.
+- The diagnostic initially used a wrong countryside class name (fixed before successful build) and encountered an overflowing extreme distribution mutation (clamped to finite float max in the probe, without changing any generation values or validation tolerance). Completed audit exits 0; unchanged rows are findings, not passing acceptance checks.
+- Context-limit checkpoint: stopping with T4 in progress. Exact next action is step 2 above, then T5 onward. No external blocker or user decision needed.

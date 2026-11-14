@@ -267,6 +267,7 @@ static class Program
 
     static int Run(string[] args)
     {
+        if (args.Contains("--audit-settings")) return SettingsAudit.Run(GetString(args, "--audit-output", "port-report/settings-audit.md"));
         if (args.Contains("--selftest")) return SelfTests.Run();
         var config = LoadConfig(args);
 
