@@ -31,6 +31,15 @@ def rail_lanes(seed,rect):
   x=along+option('region.row')//2+option('region.rail_gap')+option('region.rail_row')//2
   yield lane,x,along
 
+def rail_points(seed,lane,x,row):
+ y=row*MILE
+ # Keep crossing approaches square; deviate only inside road-grid cells and
+ # away from the paved town corridors. This also leaves road-parallel stretches.
+ near_main=min((row-1)%option('world.main_spacing_miles'),(1-row)%option('world.main_spacing_miles'))<=2
+ diagonal=not near_main and H(seed,'rail-diagonal',lane,row)%100<option('world.rail_diagonal_pct')
+ offset=option('world.rail_bend_miles')*MILE if diagonal else 0
+ return [(x,y),(x,y+.2*MILE),(x+offset,y+.5*MILE),(x,y+.8*MILE),(x,y+MILE)]
+
 @lru_cache(maxsize=DEFAULTS['world.tile_cache_size'])
 def _tile(seed,tx,ty,serialized,detail=True):
  settings=apply_document(Settings(),json.loads(serialized))
@@ -182,7 +191,7 @@ def window(seed,rect,settings=None,detail=True):
   if option('stages.rail'):
    for lane,x,_ in rail_lanes(seed,rect):
     for row in range(math.floor(rect[1]/MILE)-1,math.ceil((rect[1]+rect[3])/MILE)+1):
-     out.append(feature('rail',f'rail:{lane}:{row}',points=[(x,row*MILE),(x,(row+1)*MILE)],width=option('region.rail_row'),history=['road corridor','rail']))
+     out.append(feature('rail',f'rail:{lane}:{row}',points=rail_points(seed,lane,x,row),width=option('region.rail_row'),history=['road corridor','rail']))
   extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles') if detail else 0; serialized=json.dumps(document(settings),sort_keys=True)
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
    for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized,detail))

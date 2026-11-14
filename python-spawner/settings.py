@@ -2641,3 +2641,6 @@ define('rural.lane_width_ft',14,10,24,1,'ft','Width of rural access lanes and fa
 define('rural.bent_lanes_pct',70,0,100,1,'percent','Share of rural lanes with a bend before the house.')
 define('rural.grove_density',0.8,0,1,0.05,'fraction','Share of irregular shelterbelt marker positions occupied.')
 define('rural.lot_corner_fraction',0.15,0,0.3,0.01,'fraction','Maximum corner cut as a share of rural lot dimensions.')
+
+define('world.rail_diagonal_pct',65,0,100,1,'percent','Share of eligible rural rail sections with diagonal bends; road crossings stay square.')
+define('world.rail_bend_miles',0.25,0,0.5,0.05,'mi','Rail deviation between square crossing approaches and road-parallel sections.')

@@ -49,3 +49,16 @@ def test_rural_variety_reproducible_and_within_lots():
   assert len({tuple(n for n,_ in s['buildings']) for s in layouts})>3
   assert len({s['offset'] for s in layouts})>3
   assert len({tuple(s['trees']) for s in layouts})>3
+
+
+def test_diagonal_and_parallel_rail_has_square_road_crossings():
+ from settings import applied
+ from verification import crossing_angles
+ with applied(Settings({'world.rail_enabled_pct':100,'world.rail_diagonal_pct':100})):
+  scene=window(31,(-MILE,-MILE,6*MILE,12*MILE),Settings({'world.rail_enabled_pct':100,'world.rail_diagonal_pct':100}),detail=False)
+  rails=[f for f in scene['features'] if f['kind']=='rail']
+  assert any(a[0]!=b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
+  assert any(a[0]==b[0] for f in rails for a,b in zip(f['points'],f['points'][1:]))
+  angles=crossing_angles(scene['features'])
+  assert angles and min(angles)>=45
+  assert sum(a>=75 for a in angles)/len(angles)>=.8
