@@ -191,7 +191,7 @@ def test_long_winding_tributaries_and_tight_trunks_across_chunks():
  with applied(Settings()):
   streams=list(rivers(31,(-20*MILE,-20*MILE,40*MILE,40*MILE)))
   branches=[f for f in streams if f['source']]
-  assert all(sum(math.dist(a,b) for a,b in zip(f['points'],f['points'][1:]))>6*MILE for f in branches)
+  assert all(sum(math.dist(a,b) for a,b in zip(f['points'],f['points'][1:]))>(6 if f['stream_order']==2 else 1)*MILE for f in branches)
   trunk=[f for f in streams if f['id'].startswith('river:0:')]
   assert len(trunk)>200
   # Oxbow-like necks compress longitudinal spacing by roughly tenfold.
@@ -300,8 +300,9 @@ def test_correction_lines_shift_north_south_every_twenty_four_miles():
   assert a[0]!=b[0] and a[1]+a[3]==b[1]==24*MILE
   # E-W survey sections on either side still meet, without correction offsets.
   for line in (23,24,25):
-   a=roads[f'road:h:{line}:0']['rect']; b=roads[f'road:h:{line}:1']['rect']
-   assert a[0]+a[2]==b[0] and a[1]==b[1]
+   for segment in (-1,0,1):
+    a=roads[f'road:h:{line}:{segment}']['rect']; b=roads[f'road:h:{line}:{segment+1}']['rect']
+    assert a[0]+a[2]==b[0] and a[1]==b[1]
 
 
 def test_bridges_cover_every_paved_rail_and_gravel_water_crossing():

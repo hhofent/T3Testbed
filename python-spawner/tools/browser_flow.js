@@ -61,3 +61,20 @@ async function regressionStrokePixels(){
  }
  return results;
 }
+
+
+// Actual browser SVG decoding vs the PNG exporter, for exactly the same scene.
+async function regressionWorldPngParity(seed=31,rect=[-4,-3,10,10],width=800){
+ const response=await fetch('/render',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({seed,settings:doc(),world:true,png:true,detail:false,width,window:rect.map(v=>v*mile)})}).then(r=>r.json());
+ if(response.error)throw Error(response.error);
+ const prior=viewport;viewport=rect.map(v=>v*mile);
+ let source;
+ try{source=rasterChunk('data:image/svg+xml,'+encodeURIComponent(atob(response.svg)),width,rect[2]*mile)}finally{viewport=prior}
+ const decoded=await Promise.all(['data:image/png;base64,'+response.image,source].map(async src=>{const i=new Image();await new Promise((resolve,reject)=>{i.onload=resolve;i.onerror=reject;i.src=src});const c=document.createElement('canvas');c.width=width;c.height=width;const ctx=c.getContext('2d');ctx.drawImage(i,0,0,width,width);return ctx.getImageData(0,0,width,width).data}));
+ let error=0,severe=0;for(let p=0;p<decoded[0].length;p+=4){let peak=0;for(let k=0;k<3;k++){const d=Math.abs(decoded[0][p+k]-decoded[1][p+k]);error+=d;peak=Math.max(peak,d)}if(peak>40)severe++}
+ const result={seed,rect,width,meanAbsoluteRgbError:error/(width*width*3),severePixelShare:severe/(width*width)};
+ // Different antialiasers need a tolerance; palette and line coverage have a
+ // stricter analytic pytest regression for the same rectangle.
+ if(result.meanAbsoluteRgbError>1.5||result.severePixelShare>.01)throw Error(JSON.stringify(result));
+ return result;
+}

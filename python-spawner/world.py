@@ -151,6 +151,7 @@ def _town_scene(seed,site,serialized,detail):
    return dict(pts=[(c,0),(c,extent)],w=option('region.rail_row'),along='v1',along_c=MILE,x=c,side=1,parallel=(0,extent),crossings=[],site=(MILE,MILE))
   reg=make_region(H(seed,id),force_town=True,road_factory=roads,rail_factory=rail,water_barriers=barriers)
   if not reg['town']: return []
+  if on_rail and not any(p['kind']=='elevator' for p in reg['parcels']): return []
   reg['lots']=[lot for lot in reg['lots'] if lot['spec']['kind']=='town']
   results=spawn_region(reg) if detail and option('stages.houses') else {}
   out=[]
@@ -158,6 +159,11 @@ def _town_scene(seed,site,serialized,detail):
    a,b=absolute(r[0],r[1]); c,d=absolute(r[0]+r[2],r[1]+r[3])
    out.append(feature(kind,id+':'+suffix,rect=(min(a,c),min(b,d),abs(c-a),abs(d-b)),**kw))
   town=reg['town']; add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis)
+  reserved=[p['rect'] for p in reg['parcels'] if p['kind'] in ('elevator','industry')]+([reg['depot']] if reg['depot'] else [])
+  out[-1]['reserved']=[]
+  for a,b,c,d in reserved:
+   p,q=absolute(a,b),absolute(a+c,b+d)
+   out[-1]['reserved'].append((min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
   for road in reg['roads']:
    if road in reg['grid_roads']: continue
    add('roads','street:'+road['id'],road_rect(road),surface='paved',axis=road['axis'] if axis=='v' else ('h' if road['axis']=='v' else 'v'),history=['town plat','paved'])
@@ -359,9 +365,10 @@ def basin(seed,lane,row,options):
   out.append(feature('rivers',f'river:{lane}:{station}',points=points[i:i+2],width=width,stream_order=3,flow='southwest',source=False,downstream=f'river:{lane}:{station+1}',basin=(lane,row)))
  for side in (-1,1):
   # Disjoint tributary catchments on each bank. Every reach owns its random bends.
-  join=count if side==1 else count*3//4
-  n=join-2
   ident=f'river:branch:{lane}:{row}:{side}'
+  key=H(seed,ident)
+  join=(52+key%13) if side==1 else (34+key%15)
+  n=join-(2+(key//17)%9)
   key=H(seed,ident); phase=key%10000/10000*2*math.pi
   cycles=2+(key//10000)%3
   distance=spacing*(.27+(key//100000)%61/1000)
@@ -375,14 +382,14 @@ def basin(seed,lane,row,options):
   widths=[width*(.025+.375*(i/n)**.7) for i in range(n+1)]
   out.append(feature('rivers',ident,points=branch,width=width*.4,widths=widths,stream_order=2,flow='southwest',source=True,downstream=f'river:{lane}:{row*count+join}',basin=(lane,row)))
   # A second branching level, confined to the outer bank of its receiving reach.
-  end=n//2; start=0; child=[]; child_id=ident+':headwater'
+  end=round(n*(.45+(key//23)%16/100)); start=(key//41)%max(1,end//4); child=[]; child_id=ident+':headwater'
   key=H(seed,child_id); phase=key%10000/10000*2*math.pi
-  for i in range(end+1):
-   t=i/end; x,y=branch[i]
+  for i in range(end-start+1):
+   t=i/(end-start); x,y=branch[start+i]
    offset=spacing*.1*(1-t)*(1+.38*math.sin(6*math.pi*t+phase)*math.sin(math.pi*t))
    child.append((x+side*offset,y))
   child[-1]=branch[end]
-  widths=[width*(.006+.114*(i/end)**.7) for i in range(end+1)]
+  widths=[width*(.006+.114*(i/(end-start))**.7) for i in range(end-start+1)]
   out.append(feature('rivers',child_id,points=child,width=width*.12,widths=widths,stream_order=1,flow='southwest',source=True,downstream=ident,basin=(lane,row)))
  return out
 
@@ -525,7 +532,8 @@ def window(seed,rect,settings=None,detail=True):
      c,lo=line*MILE,segment*MILE
      if axis=='v': c+=correction_shift(seed,math.floor(segment/24))
      length=MILE
-     if surface=='paved':
+     if surface=='paved' and axis=='v':
+      # E-W survey roads stay continuous through correction parallels.
       # Rectangular survey sections share the continuous route, but do not
       # draw straight spurs through its rounded correction corners.
       trim=.18*MILE
@@ -541,7 +549,7 @@ def window(seed,rect,settings=None,detail=True):
       out.append(feature('rail',f'rail:{axis}:{lane}:{row}',points=rail_points(seed,lane,c,row,axis),width=option('region.rail_row'),axis=axis,route_id=f'rail:{axis}:{lane}',history=['drainage','survey roads','rail']))
   extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles') if detail else 0; serialized=json.dumps(document(settings),sort_keys=True)
   urban=settlements(seed,rect,serialized,detail)
-  envelopes=[f['bounds'] for f in urban if f['kind']=='towns']; countryside=[]
+  envelopes=[r for f in urban if f['kind']=='towns' for r in [f['bounds']]+f.get('reserved',[])]; countryside=[]
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
    for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1):
     tile=_tile(seed,tx,ty,serialized,detail)
@@ -566,6 +574,24 @@ def window(seed,rect,settings=None,detail=True):
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
 COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655','bridges':'#525954'}
+# One style contract for SVG/browser rasterization and the world PNG exporter.
+WORLD_STYLE={
+ 'background':'#f2f1e6','colors':COLORS,
+ 'roads':{'paved':'#525954','gravel':'#b9a17a','dirt':'#9a784c'},
+ 'minimum_px':{'paved':1.2,'gravel':.65,'dirt':.65,'rail':1.2,'river':1.5,'tributary':.8,'towns':.8},
+ 'gravel_hide_above_mi':48,'outline':'#687060','parcel_outline':'#b5c0ab','outline_px':.3,
+ 'order':['contours','rivers','creeks','towns','lots','roads','rail','bridges','driveways','buildings','trees','farms']}
+
+def feature_style(f):
+ kind=f['kind']; color=COLORS[kind]; minimum=0; hide=0
+ if kind in ('roads','bridges'):
+  surface=f.get('surface','paved'); color=COLORS['rail'] if surface=='rail' else WORLD_STYLE['roads'][surface]
+  minimum=WORLD_STYLE['minimum_px'][surface]
+  if surface in ('gravel','dirt'): hide=WORLD_STYLE['gravel_hide_above_mi']
+ elif kind=='rivers': minimum=WORLD_STYLE['minimum_px']['tributary' if f.get('stream_order',3)<3 else 'river']
+ elif kind in ('rail','towns'): minimum=WORLD_STYLE['minimum_px'][kind]
+ return dict(color=color,minimum_px=minimum,hide_above_mi=hide)
+
 def svg(scene,local=False):
  if local:
   # Chromium/Skia clips large absolute coordinates even with a distant viewBox.
@@ -578,15 +604,14 @@ def svg(scene,local=False):
     if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
  from html import escape
  x,y,w,h=scene['window']
- out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#f2f1e6"/>']
- order=['contours','rivers','creeks','towns','lots','roads','rail','bridges','driveways','buildings','trees','farms']
+ out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{WORLD_STYLE["background"]}"/>']
+ order=WORLD_STYLE['order']
  for kind in order:
   for f in scene['features']:
    if f['kind']!=kind: continue
-   color=COLORS[kind]
-   if kind in ('roads','bridges') and f.get('surface')!='rail': color={'paved':'#525954','gravel':'#b9a17a','dirt':'#9a784c'}[f['surface']]
+   style=feature_style(f); color=style['color']
    title=escape(f['id']+' '+str(f.get('use','')))
-   out.append('<g><title>'+title+'</title>')
+   out.append(f'<g data-kind="{kind}" data-minimum-px="{style["minimum_px"]}" data-hide-above-mi="{style["hide_above_mi"]}"><title>'+title+'</title>')
    if kind=='farms':
     a,b,c,d=f['rect']; out.append(f'<circle cx="{a+c/2}" cy="{b+d/2}" r="{FT(45)}" fill="{color}"/>')
    elif kind=='trees':
@@ -598,7 +623,7 @@ def svg(scene,local=False):
     out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="{0.9 if kind=="roads" else 0.3}" vector-effect="non-scaling-stroke"/>')
    else:
     points=' '.join(f'{a},{b}' for a,b in f['points'])
-    width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' else f.get('width',FT(1))
+    width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' or (kind=='bridges' and f.get('surface')=='rail') else f.get('width',FT(1))
     if 'widths' in f:
      for a,b,wa,wb in zip(f['points'],f['points'][1:],f['widths'],f['widths'][1:]):
       out.append(f'<polyline points="{a[0]},{a[1]} {b[0]},{b[1]}" fill="none" stroke="{color}" stroke-width="{(wa+wb)/2}" stroke-linecap="round"/>')

@@ -12,7 +12,8 @@ def schema(settings=None):
  from ui_schema import presentation
  catalog=plain(CATALOG)
  for key,spec in catalog.items(): spec.update(presentation(key,spec))
- return {'schema':catalog,'values':plain((settings or Settings()).values),'defaults':plain(Settings().values),'presets':list(PRESETS),'units_per_mile':__import__('region').MILE}
+ from world import WORLD_STYLE
+ return {'world_style':WORLD_STYLE,'schema':catalog,'values':plain((settings or Settings()).values),'defaults':plain(Settings().values),'presets':list(PRESETS),'units_per_mile':__import__('region').MILE}
 
 def render_request(data):
  settings=apply_document(Settings(),data['settings']); seed=int(data['seed'])
@@ -21,8 +22,12 @@ def render_request(data):
    from world import window,svg
    rect=data['window']
    if len(rect)!=4 or max(rect[2:])>CATALOG['world.window_miles']['max']*__import__('region').MILE: raise ValueError('Window exceeds control-page zoom range')
-   scene=window(seed,rect,settings)
+   scene=window(seed,rect,settings,detail=data.get('detail',True))
    counts={k:sum(f['kind']==k for f in scene['features']) for k in sorted({f['kind'] for f in scene['features']})}
+   if data.get('png'):
+    from map_render import world_png
+    width=max(64,min(2048,int(data.get('width',800))))
+    return {'image':base64.b64encode(world_png(scene,width)).decode(),'svg':base64.b64encode(svg(scene)).decode(),'image_type':'image/png','stats':counts}
    return {'image':base64.b64encode(svg(scene)).decode(),'image_type':'image/svg+xml','stats':counts,'changed':diff(settings),'settings':document(settings)}
   region=make_region(seed)
   results=spawn_region(region) if settings.values['stages.houses'] else {}

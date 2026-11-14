@@ -49,3 +49,29 @@ def test_visible_chunks_survive_cache_trim_in_real_page_script():
  if(chunkImages.size!==256)throw Error('cache unbounded');
  """
  subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
+
+def test_world_png_and_browser_share_styles_for_the_same_rectangle():
+ import io,xml.etree.ElementTree as ET
+ from PIL import Image
+ from world import WORLD_STYLE,feature,svg,feature_style,MILE,FT
+ from map_render import world_png
+ from control import schema
+ from settings import applied
+ assert schema()['world_style']==WORLD_STYLE
+ with applied(Settings()):
+  fs=[feature('rail','rail:test',points=[(MILE/4,0),(MILE/4,MILE)],width=FT(100)),
+      feature('rivers','river:test',points=[(MILE*3/4,0),(MILE*3/4,MILE)],width=FT(1),stream_order=3)]
+  scene=dict(window=(0,0,MILE,MILE),features=fs)
+  root=ET.fromstring(svg(scene)); groups=root.findall('{*}g')
+  raster=Image.open(io.BytesIO(world_png(scene,512))).convert('RGB')
+  bg=tuple(bytes.fromhex(WORLD_STYLE['background'][1:]))
+  for f in fs:
+   g=next(g for g in groups if g.find('{*}title').text.strip()==f['id'])
+   style=feature_style(f); color=tuple(bytes.fromhex(style['color'][1:]))
+   assert g.find('{*}polyline').attrib['stroke']==style['color']
+   assert float(g.attrib['data-minimum-px'])==style['minimum_px']
+   column=128 if f['kind']=='rail' else 384
+   channel=max(range(3),key=lambda i:abs(bg[i]-color[i]))
+   coverage=sum((bg[channel]-raster.getpixel((x,256))[channel])/(bg[channel]-color[channel]) for x in range(column-5,column+6))
+   assert abs(coverage-style['minimum_px'])<.15,(f['kind'],coverage)

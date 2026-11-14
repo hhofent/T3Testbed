@@ -89,32 +89,36 @@ def png(region,results,town_only=True,framed=False):
 
 
 def world_png(scene,width=1440):
-    """Render the requested world rectangle directly, without off-map layout artists."""
-    from world import COLORS
+    """Same geometry, colors, LOD rules and pixel minima as the browser SVG."""
+    from world import WORLD_STYLE,feature_style
     from matplotlib.collections import LineCollection,PatchCollection
-    x,y,w,h=scene['window']; height=max(1,round(width*h/w))
-    fig=plt.figure(figsize=(width/100,height/100),dpi=100,facecolor='#f2f1e6')
-    ax=fig.add_axes([0,0,1,1]); ax.set_facecolor('#f2f1e6')
+    from matplotlib.patches import Circle
+    x,y,w,h=scene['window']; height=max(1,round(width*h/w)); view=max(w,h)/MILE
+    fig=plt.figure(figsize=(width/100,height/100),dpi=100,facecolor=WORLD_STYLE['background'])
+    ax=fig.add_axes([0,0,1,1]); ax.set_facecolor(WORLD_STYLE['background'])
     try:
-        for kind in ('contours','rivers','creeks','towns','lots','roads','rail','driveways','buildings','trees','farms'):
-            patches=[];colors=[];lines=[];widths=[]
+        for layer,kind in enumerate(WORLD_STYLE['order']):
             for ftr in scene['features']:
                 if ftr['kind']!=kind: continue
-                color=COLORS[kind]
-                if kind=='roads': color=ROADC[ftr['surface']]
-                if 'shape' in ftr:
-                    patches.append(Polygon(ftr['shape'],closed=True));colors.append('none')
+                style=feature_style(ftr); color=style['color']; minimum=style['minimum_px']
+                if style['hide_above_mi'] and view>style['hide_above_mi']: continue
+                if kind in ('trees','farms'):
+                    a,b,c,d=ftr['rect']; radius=FT(45 if kind=='farms' else __import__('settings').option('world.tree_radius_ft'))
+                    ax.add_patch(Circle((a+c/2,b+d/2),radius,facecolor=color,edgecolor='none',snap=False,zorder=layer+1))
+                elif 'shape' in ftr:
+                    ax.add_patch(Polygon(ftr['shape'],closed=True,facecolor='none',edgecolor=WORLD_STYLE['parcel_outline'],linewidth=WORLD_STYLE['outline_px']*.72,snap=False,zorder=layer+1))
                 elif 'rect' in ftr:
-                    a,b,c,d=ftr['rect']
-                    if kind in ('trees','farms'):
-                        from matplotlib.patches import Circle
-                        patches.append(Circle((a+c/2,b+d/2),FT(45 if kind=='farms' else 1.5)))
-                    else: patches.append(Rectangle((a,b),c,d))
-                    colors.append(color)
+                    a,b,c,d=ftr['rect']; edge=WORLD_STYLE['parcel_outline'] if kind in ('towns','lots') else WORLD_STYLE['outline']
+                    line=minimum or WORLD_STYLE['outline_px']
+                    ax.add_patch(Rectangle((a,b),c,d,facecolor=color,edgecolor=edge,linewidth=line*.72,snap=False,zorder=layer+1))
                 else:
-                    lines.append(ftr['points']);widths.append(max(.35,ftr.get('width',FT(1))/w*width*.72))
-            if patches: ax.add_collection(PatchCollection(patches,facecolors=colors,edgecolors='#687060',linewidths=.25))
-            if lines: ax.add_collection(LineCollection(lines,colors=COLORS[kind],linewidths=widths))
+                    points=ftr['points']; widths=ftr.get('widths')
+                    raw=ftr.get('width',FT(1))
+                    if kind=='rail' or (kind=='bridges' and ftr.get('surface')=='rail'): raw=FT(__import__('settings').option('world.rail_draw_ft'))
+                    if widths:
+                        segments=list(zip(points,points[1:])); strokes=[max(minimum,(a+b)/2/w*width)*.72 for a,b in zip(widths,widths[1:])]
+                    else: segments=[points]; strokes=[max(minimum,raw/w*width)*.72]
+                    ax.add_collection(LineCollection(segments,colors=color,linewidths=strokes,capstyle='round' if widths else 'butt',snap=False,zorder=layer+1))
         ax.set_xlim(x,x+w); ax.set_ylim(y+h,y); ax.set_aspect('equal',adjustable='box');ax.set_axis_off()
         buf=io.BytesIO();fig.savefig(buf,format='png',dpi=100,facecolor=fig.get_facecolor(),metadata={'Software':'Python spawner'});return buf.getvalue()
     finally: plt.close(fig)

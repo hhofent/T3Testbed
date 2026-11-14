@@ -1,3 +1,42 @@
+# Final verification WIP, 2026-11-14
+
+Numbered stages 1-7 are implemented and pushed in the commits listed below.
+This follow-up fixes issues found in real-browser review and unifies rendering:
+- Tributary sources/joins now stagger by stream ID instead of sharing fixed
+  stations. Topology, downhill, unique-shape and sinuosity regressions pass.
+- A floodplain-blocked rail elevator rejects that town candidate; accepted rail
+  towns have both elevator and depot. Industry reservations also protect rural lots.
+- E-W paved survey rectangles remain continuous across correction corners;
+  the strengthened test includes the negative/zero boundary that exposed a gap.
+- WORLD_STYLE in world.py supplies colors, screen minima, LOD hiding and layer
+  order for PNG export and browser. Raw SVG carries style attributes; the browser
+  applies them generically. PNG disables Matplotlib snapping and matches SVG
+  layer order. Legacy reference PNG rendering is unchanged.
+
+Fresh full run: 109 passed in 49.22s. Fresh geometric verifier: seeds 13,14,30,31,46
+all pass (artifacts/final-verification.json). Real Chromium same-rectangle PNG/SVG
+comparison: seed31 [-4,-3,10,10] mi, 800px, RGB MAE 0.591145/255; only 0.0136%
+pixels differ by >40 (antialiasers differ). The test limit is MAE 1.5 / 1% severe;
+pytest also strictly checks colors and subpixel line coverage in one rectangle.
+Measured farm densities: seed14 1.58, seed31 1.4575, seed46 1.4975 / sq mi.
+
+Current cache lod-v24-continuous-ew-survey. Fresh server on 8004. Real browser tab
+owned by this session, current 30-mi view generating. Final required screenshot
+collection and world rebaseline are IN PROGRESS; do not claim complete yet.
+tools/check_images.py now also writes five canonical world PNGs and their style /
+geometry manifest under artifacts/parity, after checking unchanged legacy pairs.
+World rebaseline changes are intentional: basin topology/valleys, main routes,
+corrections, bridges, both rail directions, route towns, farm density and access,
+and corrected export palette / line widths. Only legacy mode remains byte-identical.
+
+Remaining: finish/save current-build 30 and 96-mi screenshots, ensure all seven
+requested views are fresh/decoded; finish image script; record browser checks,
+commit and push final artifacts/checkpoint. No further numbered stage is pending.
+Town spacing caveat: 6-10 mi describes candidate rail stations; floodplains or
+six-mile junction competition can omit stations and leave larger accepted gaps.
+Read only files named below. Push only python-test/spawner; no PR/merge/rewrite.
+
+--- Prior checkpoint ---
 # Item 7 complete, 2026-11-14
 
 Stable world farm ownership thins the old 2.7/sq-mi placement to about 1.5/sq mi,
