@@ -324,6 +324,48 @@ def rivers(seed,rect):
   for row in range(math.floor(rect[1]/step)-1,math.ceil((rect[1]+rect[3])/step)+1):
    yield from basin(seed,lane,row,options)
 
+def feature_points(f):
+ if 'points' in f: return f['points']
+ x,y,w,h=f['rect']
+ return [(x,y+h/2),(x+w,y+h/2)] if f.get('axis')=='h' else [(x+w/2,y),(x+w/2,y+h)]
+
+def crossing_point(a,b,c,d):
+ u=(b[0]-a[0],b[1]-a[1]); v=(d[0]-c[0],d[1]-c[1]); det=u[0]*v[1]-u[1]*v[0]
+ if abs(det)<1e-8: return None
+ q=(c[0]-a[0],c[1]-a[1]); t=(q[0]*v[1]-q[1]*v[0])/det; s=(q[0]*u[1]-q[1]*u[0])/det
+ if not (0<=t<=1 and 0<=s<=1): return None
+ return (a[0]+t*u[0],a[1]+t*u[1]),t,s,abs(det)/(math.hypot(*u)*math.hypot(*v))
+
+def bridges(features):
+ # Every carrier/water-segment pair owns its deck, independent of query order.
+ cells={}; segments={}
+ def keys(a,b):
+  for ix in range(math.floor(min(a[0],b[0])/MILE),math.floor(max(a[0],b[0])/MILE)+1):
+   for iy in range(math.floor(min(a[1],b[1])/MILE),math.floor(max(a[1],b[1])/MILE)+1): yield ix,iy
+ for stream in features:
+  if stream['kind']!='rivers': continue
+  for i,(a,b) in enumerate(zip(stream['points'],stream['points'][1:])):
+   id=stream['id']+':segment:'+str(i); segments[id]=(stream,i,a,b)
+   for key in keys(a,b): cells.setdefault(key,set()).add(id)
+ decks={}
+ for road in features:
+  if road['kind'] not in ('roads','rail'): continue
+  pts=feature_points(road)
+  for a,b in zip(pts,pts[1:]):
+   candidates=set().union(*(cells.get(k,set()) for k in keys(a,b)))
+   for water_id in sorted(candidates):
+    stream,i,c,d=segments[water_id]; hit=crossing_point(a,b,c,d)
+    if hit is None: continue
+    p,t,s,sine=hit; length=math.dist(a,b)
+    widths=stream.get('widths'); water_width=(widths[i]*(1-s)+widths[i+1]*s) if widths else stream['width']
+    half=(water_width/2+FT(20))/max(sine,.01)
+    ux,uy=(b[0]-a[0])/length,(b[1]-a[1])/length
+    points=[(p[0]-half*ux,p[1]-half*uy),(p[0]+half*ux,p[1]+half*uy)]
+    id='bridge:'+road['id']+'|'+water_id
+    decks[id]=feature('bridges',id,points=points,width=road.get('width',option('region.row')),owner_id=road['id'],river_segment_id=water_id,carrier=road['kind'],surface=road.get('surface','rail'),crossing=p)
+ # Gravel always bridges in this version: no water closure can orphan frontage.
+ return list(decks.values())
+
 def window(seed,rect,settings=None,detail=True):
  settings=settings or Settings()
  if len(rect)!=4 or any(not math.isfinite(v) for v in rect) or rect[2]<=0 or rect[3]<=0: raise ValueError('Window requires finite x,y and positive width,height')
@@ -355,6 +397,7 @@ def window(seed,rect,settings=None,detail=True):
   extent=option('world.tile_miles')*MILE; halo=option('world.halo_tiles') if detail else 0; serialized=json.dumps(document(settings),sort_keys=True)
   for tx in range(math.floor(rect[0]/extent)-halo,math.floor((rect[0]+rect[2])/extent)+halo+1):
    for ty in range(math.floor(rect[1]/extent)-halo,math.floor((rect[1]+rect[3])/extent)+halo+1): out.extend(_tile(seed,tx,ty,serialized,detail))
+  out.extend(bridges(out))
   filtered={f['id']:f for f in out if intersects(f['bounds'],rect)}
   # A marker is rejected against geometry from every owner, including shared borders.
   blockers=[f for f in out if f['kind'] in ('roads','rail','buildings','driveways')]
@@ -371,7 +414,7 @@ def window(seed,rect,settings=None,detail=True):
     if any(intersects(r,b['bounds']) for b in candidates.values()): del filtered[id]
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
-COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655'}
+COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655','bridges':'#525954'}
 def svg(scene,local=False):
  if local:
   # Chromium/Skia clips large absolute coordinates even with a distant viewBox.
@@ -385,12 +428,12 @@ def svg(scene,local=False):
  from html import escape
  x,y,w,h=scene['window']
  out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="#f2f1e6"/>']
- order=['contours','rivers','creeks','towns','lots','roads','rail','driveways','buildings','trees','farms']
+ order=['contours','rivers','creeks','towns','lots','roads','rail','bridges','driveways','buildings','trees','farms']
  for kind in order:
   for f in scene['features']:
    if f['kind']!=kind: continue
    color=COLORS[kind]
-   if kind=='roads': color={'paved':'#525954','gravel':'#b9a17a','dirt':'#9a784c'}[f['surface']]
+   if kind in ('roads','bridges') and f.get('surface')!='rail': color={'paved':'#525954','gravel':'#b9a17a','dirt':'#9a784c'}[f['surface']]
    title=escape(f['id']+' '+str(f.get('use','')))
    out.append('<g><title>'+title+'</title>')
    if kind=='farms':

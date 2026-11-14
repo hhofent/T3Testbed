@@ -302,3 +302,38 @@ def test_correction_lines_shift_north_south_every_twenty_four_miles():
   for line in (23,24,25):
    a=roads[f'road:h:{line}:0']['rect']; b=roads[f'road:h:{line}:1']['rect']
    assert a[0]+a[2]==b[0] and a[1]==b[1]
+
+
+def test_bridges_cover_every_paved_rail_and_gravel_water_crossing():
+ from world import bridges,feature,feature_points,crossing_point
+ from settings import applied
+ with applied(Settings()):
+  rect=(-5*MILE,-4*MILE,12*MILE,12*MILE)
+  features=window(31,rect,Settings({'stages.houses':False}),detail=False)['features']
+  decks={f['id']:f for f in features if f['kind']=='bridges'}
+  assert decks
+  rivers=[f for f in features if f['kind']=='rivers']
+  checked=0
+  for road in features:
+   if road['kind'] not in ('roads','rail'): continue
+   for stream in rivers:
+    if not intersects(road['bounds'],stream['bounds']): continue
+    points=feature_points(road)
+    for a,b in zip(points,points[1:]):
+     for i,(c,d) in enumerate(zip(stream['points'],stream['points'][1:])):
+      hit=crossing_point(a,b,c,d)
+      if hit is None: continue
+      x,y=hit[0]
+      if not rect[0]<x<rect[0]+rect[2] or not rect[1]<y<rect[1]+rect[3]: continue
+      water_id=stream['id']+':segment:'+str(i)
+      id='bridge:'+road['id']+'|'+water_id
+      assert id in decks,(road['id'],water_id)
+      assert decks[id]['owner_id']==road['id']
+      checked+=1
+  assert checked>20
+  simple=[feature('rivers','water',points=[(0,-100),(0,100)],width=20),
+          feature('roads','paved-road',points=[(-100,0),(100,0)],width=12,surface='paved'),
+          feature('rail','train',points=[(-100,50),(100,50)],width=10)]
+  first=bridges(simple); second=bridges(list(reversed(simple)))
+  assert sorted(first,key=lambda f:f['id'])==sorted(second,key=lambda f:f['id'])
+  assert len(first)==2

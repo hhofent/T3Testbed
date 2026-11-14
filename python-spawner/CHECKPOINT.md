@@ -1,3 +1,23 @@
+# Item 4 complete, 2026-11-14
+
+Bridge decks now belong to (carrier road/rail ID, canonical river segment ID).
+Segment intersection locates crossings and interpolates tapered water widths;
+deck length accounts for the crossing angle. All paved roads and rail bridge,
+and gravel/dirt bridge too: this policy preserves every surviving frontage road
+without water closures. Candidate segments use one-mile bins. Deck ownership is
+independent of request/enumeration order, and decks are drawn over water.
+
+Fresh full run: 105 passed in 38.64s. Added an actual 12x12-mile exhaustive
+crossing-to-deck test plus synthetic paved/rail and reversed-order checks.
+Cache lod-v18-owned-bridges. Final bridge screenshot pending fresh final server.
+
+Completed commits: item 1 e7f582d + edc4b44; item 2 f0164fd; item 3 b94b173;
+this commit completes item 4. NEXT item 5 rail in both directions and density /
+angle checks, then 6 towns and 7 farmsteads. Shared style, world rebaselines and
+final requested browser captures remain due. Read only files listed below.
+Push only python-test/spawner, no PR/merge/rewrite.
+
+--- Prior checkpoint ---
 # Item 3 complete, 2026-11-14
 
 All N-S survey roads now shift sideways at globally anchored 24-mile correction
