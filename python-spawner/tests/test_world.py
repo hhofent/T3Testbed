@@ -62,3 +62,20 @@ def test_diagonal_and_parallel_rail_has_square_road_crossings():
   angles=crossing_angles(scene['features'])
   assert angles and min(angles)>=45
   assert sum(a>=75 for a in angles)/len(angles)>=.8
+
+
+def test_missing_roads_both_axes_one_percent_and_cycle_detours():
+ from settings import applied
+ from world import road_type
+ with applied(Settings()):
+  missing={axis:[] for axis in ('h','v')}
+  for axis in missing:
+   for line in range(-100,100):
+    for segment in range(-100,100):
+     if road_type(31,axis,line,segment) is None: missing[axis].append((line,segment))
+   assert .007<len(missing[axis])/40000<.013
+  for axis,edges in missing.items():
+   for line,segment in edges:
+    bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
+    cycle=[('h',2*by,2*bx),('h',2*by+1,2*bx),('v',2*bx,2*by),('v',2*bx+1,2*by)]
+    assert sum(road_type(31,*edge) is None for edge in cycle)==1

@@ -41,7 +41,10 @@ seven outbuilding types, varying counts and sizes, connected bent lanes and
 irregular shelterbelts on different sides. Seven variety controls added. Reference
 parity site plans unchanged. Fix 6 done: seeded diagonal rural rail bends, road-parallel reaches and square
 crossing approaches; configurable bend size and frequency. Minimum/near-square
-checks cover the rendered polylines. Next: fix 7 missing road segments. Completed fix 4 rivers (continuous downhill,
+checks cover the rendered polylines. Fix 7 done: about 1% omissions in both orientations; each removed segment
+has a three-edge detour on an otherwise intact, edge-disjoint cycle, guaranteeing
+unbounded network connectivity. Sampled 80,000 segments and checked every detour.
+Next: fix 8 PNG framing and world export. Completed fix 4 rivers (continuous downhill,
 merging, no crossings/dead ends, verification); 5 rural variety and settings;
 6 diagonal/road-parallel rail, crossings >=45 degrees and >=80% within 15 of square;
 7 random missing road segments in both directions (~1%), connected network;

@@ -18,9 +18,15 @@ def feature(kind,id,**data):
  return result
 
 def road_type(seed,axis,line,segment):
+ # Each removable edge belongs to one disjoint unit-square cycle. At most one
+ # of its four edges is removed, so its other three edges are a guaranteed detour.
+ # Both orientations participate equally; no query-order-dependent repair.
+ if segment%2==0:
+  bx,by=(segment//2,line//2) if axis=='h' else (line//2,segment//2)
+  candidate=(line%2) if axis=='h' else 2+(line%2)
+  if H(seed,'missing-cycle',bx,by)%10000<option('world.missing_pct')*800 and H(seed,'missing-edge',bx,by)%4==candidate: return None
  main=line%option('world.main_spacing_miles')==1
  if main: return 'paved'
- if axis=='h' and H(seed,'missing',line,segment)%10000 < option('world.missing_pct')*200: return None
  return 'dirt' if H(seed,'surface',axis,line,segment)%10000 < option('world.level_b_pct')*100 else 'gravel'
 
 def rail_lanes(seed,rect):
