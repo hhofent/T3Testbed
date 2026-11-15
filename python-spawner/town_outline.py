@@ -169,15 +169,10 @@ def generate_town_outline(seed, town, blocks, faces, alleys, streets, commercial
     Returns:
         List of (x, y) points forming a closed polygon (integer ticks, no repeated closing vertex)
     """
-    import sys
-    print(f'DEBUG outline: blocks={len(blocks)}, streets={len([s for s in streets if s])}, alleys={len(alleys)}, commercial={len(commercial)}, parcels={len(parcels)}, depot={depot is not None}', file=sys.stderr)
     if blocks:
         b0 = blocks[0]
-        print(f'DEBUG outline: block0={b0}', file=sys.stderr)
     if streets:
         s0 = next((s for s in streets if s), None)
-        if s0: print(f'DEBUG outline: street0={s0}', file=sys.stderr)
-    sys.stderr.flush()
     d = Draw(rng(seed, 'town_outline'))
     
     # Collect all content rects

@@ -186,7 +186,6 @@ def _town_scene(seed,site,serialized,detail):
    
    world_blocks = [local_to_world_rect(b['rect']) for b in town['blocks']]
    world_streets = []
-   import sys
    for s in town['streets']:
        if s.get('rect'):
            world_streets.append(local_to_world_rect(s['rect']))
@@ -202,11 +201,7 @@ def _town_scene(seed,site,serialized,detail):
            else:
                rect = (s['c'] - hw, s['lo'], 2 * hw, s['hi'] - s['lo'])
            world_streets.append(local_to_world_rect(rect))
-       else:
-           print(f'DEBUG: street entry has no rect or points: {s}', file=sys.stderr)
    world_streets = [s for s in world_streets if s]
-   print(f'DEBUG: world_streets={len(world_streets)}', file=sys.stderr)
-   sys.stderr.flush()
    world_alleys = [local_to_world_rect(a) for a in town.get('alleys', [])]
    world_commercial = []
    for c in town.get('commercial', []):
