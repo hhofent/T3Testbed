@@ -219,6 +219,8 @@ def choose_businesses(seed, band, year=BASE_YEAR):
     return out
 
 def _wr(F, x0, u, w, h):   # face-local (x0 world x, u = depth from the street edge) -> world rect
+    if F["fa"] == "W": return (F["front_x"] + u, x0, h, w)
+    if F["fa"] == "E": return (F["front_x"] - u - h, x0, h, w)
     return (x0, F["front_y"] + u, w, h) if F["fa"] == "S" else (x0, F["front_y"] - u - h, w, h)
 
 def _main_biz(typ, x0, F, n, seed, vacant_of=None):
@@ -303,14 +305,23 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             bld = (by1 - by0 - al) // number('region.make_town_numbers', 'make_town_295_38')
             blocks.append({"id": f"b{i}{j}", "ij": (i, j), "rect": (bx0, by0, bx1 - bx0, by1 - by0), "lot_d": bld})
             alleys.append((bx0, by0 + bld, bx1 - bx0, al))
+            biz_edge = not option("generation.parity") and not rail_town and rb < 1.5 and (xs[i] == Xc or xs[i + 1] == Xc)
+            edge_width = min(FT(140), max(0, bx1-bx0-FT(100))) if biz_edge else 0
             for half, y0, fa in (("S", by0, "S"), ("N", by1 - bld, "N")):
                 front = ys[j] if half == "S" else ys[j + number('region.make_town_numbers', 'make_town_299_57')]
                 edge = (half == "S" and j == number('region.make_town_numbers', 'make_town_300_45')) or (half == "N" and j == rows - number('region.make_town_numbers', 'make_town_300_80'))
                 if edge and front != Yc and rng(seed, "halfblock", i, j).chance("drop", EDGE_HALF_PCT): continue   # uneven edge depth
                 main = front == Yc and Xc in (xs[i], xs[i + number('region.make_town_numbers', 'make_town_302_60')])
-                faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": bx0, "bx1": bx1, "d": bld,
+                house_bx0 = bx0 + (edge_width if biz_edge and xs[i] == Xc else 0)
+                house_bx1 = bx1 - (edge_width if biz_edge and xs[i + 1] == Xc else 0)
+                faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": house_bx0, "bx1": house_bx1, "d": bld,
                               "front_y": by0 if half == "S" else by1, "main": front == Yc,
                               "dist": min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_305_70')] - Xc)), "from_lo": xs[i] == Xc or (xs[i + number('region.make_town_numbers', 'make_town_305_115')] != Xc and xs[i] < Xc)})
+            if biz_edge and edge_width:
+                side = "W" if xs[i] == Xc else "E"
+                faces.append({"run":f"town:b{i}{j}:{side}","fa":side,"front_x":bx0 if side=="W" else bx1,
+                              "bx0":by0,"bx1":by1,"d":FT(140),"front_y":None,"main":True,"biz_only":True,
+                              "dist":abs((by0+by1)//2-Yc),"from_lo":True})
     kept = {b["ij"] for b in blocks}; streets = []; ds = rng(seed, "streets")
     def segs(cells):
         cells = sorted(cells); out = []
@@ -337,6 +348,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             {"id":"T-MAIN-v","name":"Main Street","axis":"v","type":"paved","c":Xc,"lo":min(r[1] for r in bx)-sw,"hi":max(r[1]+r[3] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
         ])
     def face_lots(F, bx0, bx1):
+        if F.get("biz_only"): return []
         run, y0, fa, bld = F["run"], F["y0"], F["fa"], F["d"]; out = []
         nb = (bx1 - bx0) // BASE_LOT; rest = (bx1 - bx0) - nb * BASE_LOT
         if nb == number('region.make_town_numbers', 'make_town_328_17'): return out
@@ -366,6 +378,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         return out
     houses = sum(len(face_lots(F, F["bx0"], F["bx1"])) for F in faces)          # pass 1: houses before businesses
     pop = round(houses * PEOPLE_PER_HOUSE); band = town_band(force_pop if force_pop else pop)
+    if not option("generation.parity"): band = max(1, band)
     year = region_year(seed); prog = choose_businesses(seed, band, year); db = rng(seed, "bizplace")
     # Ensure a representative 1990 small-town business mix, with deterministic
     # top-ups when the independent probability draws leave a sparse program.
@@ -381,7 +394,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         canonical = {"grocery (highway)":"grocery", "bank (branch)":"bank"}.get(typ, typ)
         if canonical not in present:
             prog.append(typ); present.add(canonical); added.append(typ)
-    mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
+    mains = sorted((F for F in faces if F["main"]), key=lambda F: (not F.get("biz_only",False), F["dist"], F["run"]))[:MAIN_FACES]
     off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
     for F in faces: F["lo"], F["hi"] = F["bx0"], F["bx1"]
     def take(F, w, far=False):
