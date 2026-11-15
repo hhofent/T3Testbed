@@ -455,3 +455,32 @@ def test_farmstead_density_and_world_access_lane_lengths(monkeypatch):
     assert out[0]['shared_lane']==out[1]['shared_lane']
     break
   else: assert False,'no seeded shared-lane cluster'
+
+
+def test_local_svg_rebases_all_features():
+ from world import svg
+ scene={'window':[1000000,2000000,10000,10000], 'features':[
+  {'id':'road','kind':'roads','points':[(1000100,2000100),(1000200,2000200)],'width':10},
+  {'id':'tree','kind':'trees','rect':(1000300,2000300,10,10)}]}
+ assert b'1000100' not in svg(scene,local=True)
+
+
+def test_rail_industry_stays_near_house_lots(monkeypatch):
+ import world
+ from presets import document
+ from settings import applied
+ from spawner import FT
+ skip_river_generation(monkeypatch)
+ settings=Settings()
+ with applied(settings):
+  site=next(s for s in world.town_candidates(14,(-2*MILE,0,2*MILE,2*MILE)) if s[-1])
+  features=world._town_scene(14,site,json.dumps(document(settings),sort_keys=True),True)
+ houses=[f['rect'] for f in features if f['kind']=='lots' and f.get('use') in ('town','house')]
+ assert houses
+ x=min(r[0] for r in houses); y=min(r[1] for r in houses)
+ right=max(r[0]+r[2] for r in houses); top=max(r[1]+r[3] for r in houses)
+ industry=[f for f in features if any(k in f['id'] for k in ('elevator','depot','industry'))]
+ assert industry
+ for f in industry:
+  a,b,w,h=f['rect']
+  assert max(x-a-w,a-right,0)**2+max(y-b-h,b-top,0)**2 < FT(2000)**2

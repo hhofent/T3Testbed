@@ -217,8 +217,8 @@ def _town_scene(seed,site,serialized,detail):
     elif parcel['kind']=='elevator':
      ex,ey,ew,eh=parcel['rect']; office=parcel.get('office')
      if office:
-      ox,oy,ow,oh=office
-      for j,part in enumerate(((ex,ey,max(0,ox-ex),eh),(ox+ow,ey,max(0,ex+ew-ox-ow),eh),(ox,ey,ow,max(0,oy-ey)),(ox,oy+oh,ow,max(0,ey+eh-oy-oh)))):
+      qx,qy,qw,qh=office
+      for j,part in enumerate(((ex,ey,max(0,qx-ex),eh),(qx+qw,ey,max(0,ex+ew-qx-qw),eh),(qx,ey,qw,max(0,qy-ey)),(qx,qy+qh,qw,max(0,ey+eh-qy-qh)))):
        if part[2]>0 and part[3]>0: add('buildings','industry:'+str(i)+':'+str(j),part,use='elevator')
      else: add('buildings','industry:'+str(i),parcel['rect'],use='elevator')
    if reg['depot']: add('buildings','depot',reg['depot'],use='depot')
@@ -1858,8 +1858,10 @@ def svg(scene,local=False):
   for f in scene["features"]:
    if "rect" in f:
     a,b,c,d=f["rect"]; f["rect"]=[a-x,b-y,c,d]
-  for key in ("points","shape","outline","curb_start","water_tower"):
+   for key in ("points","shape","outline","curb_start"):
     if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
+   if "water_tower" in f:
+    a,b=f["water_tower"]; f["water_tower"]=(a-x,b-y)
  from html import escape
  x,y,w,h=scene['window']
  out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{WORLD_STYLE["background"]}"/>']
