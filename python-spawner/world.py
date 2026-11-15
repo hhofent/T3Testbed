@@ -184,12 +184,16 @@ def _town_scene(seed,site,serialized,detail):
      a,b,c,d=r; p=to_world(pl,spec['width'],spec['depth'],a,b); q=to_world(pl,spec['width'],spec['depth'],a+c,b+d)
      add('driveways',lid+':drive:'+str(i),(min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
     if option('stages.trees'):
-     from trees import local_markers
-     for i,p in enumerate(local_markers(plan)):
-      a,b=to_world(pl,spec['width'],spec['depth'],*p); add('trees',lid+':tree:'+str(i),(a,b,0,0))
+     from trees import town_markers
+     markers=town_markers(plan,spec['seed'],street_trees=(H(seed,'street-trees',lid.rsplit(':',1)[0])%100<50))
+     for i,t in enumerate(markers):
+      a,b=to_world(pl,spec['width'],spec['depth'],t['x'],t['y']); add('trees',lid+':tree:'+str(i),(a,b,0,0),species=t['species'],setting=t['setting'],condition=t['condition'],label='simplified')
   if detail:
    for shop in town['commercial']:
+    if shop.get('lot') and shop['type']!='funeral home': add('lots','business:'+shop['id'],shop['lot'],use='business:'+shop['type'])
     if shop.get('bldg'): add('buildings','business:'+shop['id'],shop['bldg'],use=shop['type'])
+   for i,parcel in enumerate(reg['parcels']):
+    if parcel.get('office'): add('buildings','coop-office:'+str(i),parcel['office'],use='co-op office')
    for i,parcel in enumerate(reg['parcels']):
     if parcel['kind'] in ('elevator','industry'): add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
    if reg['depot']: add('buildings','depot',reg['depot'],use='depot')

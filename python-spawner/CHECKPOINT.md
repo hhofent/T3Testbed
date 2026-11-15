@@ -1028,3 +1028,10 @@ Chunk SVGs now rasterize at their displayed CSS size, with screen-space minima f
 
 ## Fix 3, 2026-11-13
 Removed per-mile rail excursions. Canonical straight offset corridors have square crossings and exact shared endpoints. Updated the old diagonal expectation to require straight geometry. Parity: five byte-identical pairs.
+
+## Town bake-off progress
+- Implemented town-specific seeded yard/street markers in `trees.py`; kept `local_markers` intact. Species attributes are emitted on town tree features. This reduced tree-grid conflicts and the all-seed bake-off failures from 41 to 31 (run after lowering the yard count; see final scorer summary).
+- Emitted commercial lot features and co-op office building features from `_town_scene`.
+- Fast requested pytest subset: 70 passed, 1 deselected, 9.43 s.
+- Scorer `--pytest` was started; it printed per-town results but the harness returned before the pytest summary. A preceding full scorer run reported 33 failures; the yard-count adjustment followed.
+- Remaining work: required blobby outline, interior/edge lot fill, business top-ups, exact ROW fixes, and several tree/overlap checks. No river code or files changed. Do not treat the town task as complete.
