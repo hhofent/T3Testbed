@@ -6,9 +6,10 @@ This section overrides all older in-progress notes below. Read this section and
 - Repository: hhofent/T3Testbed. Work only in `python-spawner/`.
 - Branch: `python-test/spawner`. Push ONLY this branch. No merge, rebase,
   history rewrite, force-push or PR.
-- Last completed pushed implementation commit before this handoff:
-  `aff8968b42d42e385e7afac71662057550f78575` (`river A2 part 4: pin measured confluence approaches`).
-- Part 5 is being finalized with accepted implementation scope and deferred QA.
+- Last implementation commit: `3b80fe880127d40a4feacf5bfa59f7db44e241c5`
+  (`river A2 part 5: bounded spacing repair and continuation guards`).
+- Part 4: `aff8968b42d42e385e7afac71662057550f78575`.
+- Part 5 is finalized with accepted implementation scope and deferred QA.
   Geometric zero-spacing acceptance is NOT claimed.
 - Part 6: NOT STARTED. Its uncommitted verification/copy-helper replacement was
   removed before the final part-5 pytest run. Pre-existing part-4 baseline copy
@@ -92,8 +93,9 @@ Requested part-6 PNGs were not produced. Do not generate them in this run.
 
 ## Exact next step
 
-Final pytest is green. Commit part 5 and push ONLY `python-test/spawner`,
-then STOP. No more code edits or checks are authorized in this run. A future model must wait for explicit new work.
+Part 5 implementation is committed as `3b80fe880127d40a4feacf5bfa59f7db44e241c5`; this documentation-only
+handoff commit records that hash. Both are pushed ONLY to `python-test/spawner`.
+STOP. No more code edits, checks, part 6, or new work are authorized in this run. A future model must wait for explicit new work.
 If later authorized to help QA Guy, start from the structured deferred list and
 its saved v4 metrics; reproduce one specified issue before editing anything.
 Do not start part 6 or repeat the five-seed audit without explicit authorization.

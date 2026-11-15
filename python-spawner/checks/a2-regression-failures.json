@@ -315,5 +315,12 @@
       ]
     }
   ],
-  "stop_rule": "Do not chase bypassable bugs beyond about 20 minutes; record and move on. At visible 90% 5-hour or weekly usage, checkpoint, commit/push only python-test/spawner, and stop."
+  "stop_rule": "Do not chase bypassable bugs beyond about 20 minutes; record and move on. At visible 90% 5-hour or weekly usage, checkpoint, commit/push only python-test/spawner, and stop.",
+  "part5_implementation_commit": "3b80fe880127d40a4feacf5bfa59f7db44e241c5",
+  "final_pytest": {
+    "command": "py -m pytest -q",
+    "passed": 125,
+    "seconds": 346.39,
+    "log": "check-results/a2-part5-stop-final-pytest.log"
+  }
 }
