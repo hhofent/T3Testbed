@@ -16,7 +16,7 @@ def town_markers(plan, lot_seed, older=False, street_trees=False):
  blocked=[(x-pad,y-pad,w0+2*pad,h+2*pad) for x,y,w0,h in blocked]
  def free(x,y):
   return pad<=x<=w-pad and pad<=y<=dpth-pad and not any(a<=x<=a+c and b<=y<=b+e for a,b,c,e in blocked)
- pts=[]; gap=FT(option('town.tree_gap_ft'))
+ pts=[]; gap=FT(option('town.tree_gap_ft')+draw.int('yard-gap',10))
  def place(x,y):
   if not free(x,y) or any((x-a)**2+(y-b)**2<gap**2 for a,b in pts): return False
   pts.append((x,y)); return True

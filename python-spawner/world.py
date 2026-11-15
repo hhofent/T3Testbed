@@ -213,7 +213,14 @@ def _town_scene(seed,site,serialized,detail):
    for i,parcel in enumerate(reg['parcels']):
     if parcel.get('office'): add('buildings','coop-office:'+str(i),parcel['office'],use='co-op office')
    for i,parcel in enumerate(reg['parcels']):
-    if parcel['kind'] in ('elevator','industry'): add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
+    if parcel['kind']=='industry': add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
+    elif parcel['kind']=='elevator':
+     ex,ey,ew,eh=parcel['rect']; office=parcel.get('office')
+     if office:
+      ox,oy,ow,oh=office
+      for j,part in enumerate(((ex,ey,max(0,ox-ex),eh),(ox+ow,ey,max(0,ex+ew-ox-ow),eh),(ox,ey,ow,max(0,oy-ey)),(ox,oy+oh,ow,max(0,ey+eh-oy-oh)))):
+       if part[2]>0 and part[3]>0: add('buildings','industry:'+str(i)+':'+str(j),part,use='elevator')
+     else: add('buildings','industry:'+str(i),parcel['rect'],use='elevator')
    if reg['depot']: add('buildings','depot',reg['depot'],use='depot')
   return out
 

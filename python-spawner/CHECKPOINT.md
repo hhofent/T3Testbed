@@ -11,7 +11,7 @@
 - G: partly done — non-parity ribbon vacancies are restored, ragged edge gaps remain as a visual edge, and town lots respect `alley_rear`; outward edge lots remain. Fast 70 passed (8.43 s); scorer 20 failing checks; milestone 122 passed (95.48 s). Lot-fill scorer readings remain below target (previous report: 18.6–59.8% depending on town after outline change). Next: H.
 - H: partly done/deferred — pure-Python raster union outline, closing, hole fill, component selection, tracing, smoothing, SVG rebasing, reserved parcels and Main Street chord extension implemented. Fast subset, scorer and milestone completed below. Blobby outline fails 4 towns; outline containment and lot fill fail 3 towns each. Deferred those target failures after >20 minutes of tuning in `checks/deferred.json`.
 - I: done — added an SVG water tower landmark and weathered tint for vacant storefronts; both changes are non-parity.
-- J: not started.
+- J: in progress — final `py checks/town_bakeoff.py --pytest` completed. Town score has 12 failing town checks; embedded milestone command passed 122/3 deselected in 177.62 s but failed the scorer timing cap of 120 s. Final report commit/push pending.
 - Worktree: T3-bakeoff-luna; start commit verified as 2469802febb1d9c2e4885830b5b8ae36b668bb83.
 - Shared scorer copied unchanged; normalized SHA-256 verified. Baseline: 41 failing checks.
 - First commit 6fc040c adds the shared check and is pushed to python-test/town-bakeoff-luna.
@@ -1075,3 +1075,9 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 
 - Step I improvement 2: town scene now carries a non-parity acant flag for storefronts and renders vacant storefronts in a weathered gray-brown tint. Reason: visible fading storefronts in a 1990s town; evidence: scorer remains 16 failing checks (no new failures), label: simplified/unsourced. Fast 70 passed (34.52 s); milestone 122 passed (115.17 s).
 - Step I complete with two improvements; next: J.
+
+## Step J final report (being assembled)
+- Fast subset: 70 passed, 1 deselected (23.16 s).
+- Milestone subset: 122 passed, 3 deselected (142.02 s in the separate final code run).
+- Final scorer --pytest: 12 town checks fail; embedded pytest passed 122, 3 deselected in 177.62 s (exit 0) but exceeded the scorer's 120 s timing target, so the scorer exits 1 with 13 failures including that timing check.
+- Remaining deferrals are listed in checks/deferred.json: outline shape, outline containment, and lot fill.

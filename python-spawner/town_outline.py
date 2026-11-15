@@ -15,7 +15,7 @@ def _ring(cells, cell, ox, oy):
         if (x, y + 1) not in cells: edges.add(((x + 1, y + 1), (x, y + 1)))
         if (x - 1, y) not in cells: edges.add(((x, y + 1), (x, y)))
     by_start = {}
-    for a, b in edges: by_start.setdefault(a, []).append(b)
+    for a, b in sorted(edges): by_start.setdefault(a, []).append(b)
     first = min(edges); start, cur = first; points = [start]; prev = start
     for _ in range(len(edges) + 1):
         points.append(cur)
@@ -29,7 +29,7 @@ def _ring(cells, cell, ox, oy):
             cross = dx * ndy - dy * ndx
             dot = dx * ndx + dy * ndy
             return (0 if cross > 0 else 1 if dot > 0 else 2 if cross < 0 else 3)
-        nxt = min(opts, key=rank)
+        nxt = min(opts, key=lambda p: (rank(p), p))
         edges.remove((cur, nxt)); prev, cur = cur, nxt
     if points[-1] == start: points.pop()
     world = [(ox + x * cell, oy + y * cell) for x, y in points]
@@ -118,11 +118,11 @@ def outline(rects, cell, buffer, close_cells):
     marked |= holes
     comps=[]; remain=set(marked)
     while remain:
-        seed=remain.pop(); comp={seed}; q=[seed]
+        seed=min(remain); remain.remove(seed); comp={seed}; q=[seed]
         while q:
             x,y=q.pop()
             for p in ((x+1,y),(x-1,y),(x,y+1),(x,y-1)):
                 if p in remain: remain.remove(p); comp.add(p); q.append(p)
         comps.append(comp)
-    largest=max(comps,key=len)
+    largest=min(comps,key=lambda c:(-len(c),min(c)))
     return _smooth(_ring(largest,cell,minx,miny),1.5*cell)

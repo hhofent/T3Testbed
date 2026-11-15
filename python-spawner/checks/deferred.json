@@ -1,29 +1,32 @@
 ﻿[
   {
     "test": "blobby_outline",
-    "commit": "f94b9e6",
+    "commit": "d5b5d4d",
     "seed": 14,
-    "coordinates": [2027520, 2027520],
-    "measured_vs_threshold": "s14-tiny-rail-h hull_ratio 0.531 (<0.60), Polsby-Popper 0.251 (<0.35); vertices 36",
-    "what_you_tried": "Replaced the temporary scalloped rectangle with the specified pure-Python raster union, square morphological closing, hole fill, largest four-connected component, boundary tracing, Chaikin smoothing and Douglas-Peucker simplification. Tuned smoothing and simplification; metrics worsened when simplifying more aggressively. The other blobby failures are s14-big-rail-v 0.759/0.283, s30-big-rail-h 0.747/0.265, and s31-mid-rail-v 0.687/0.286 (hull ratio / Polsby-Popper).",
+    "coordinates": [[-1.05,1.0],[0.95,7.0],[9.95,7.0],[0.94,1.0],[1.05,-1.0]],
+    "coordinate_units": "town scorer anchor miles (s14 tiny, s14 big, s14 highway, s30 big, s31 mid)",
+    "measured_vs_threshold": "Hull ratio / Polsby-Popper: s14 tiny 0.531/0.251; s14 big 0.759/0.283; s14 highway 0.851/0.439 (pass); s30 big 0.747/0.265; s31 mid 0.687/0.286. Targets hull 0.60-0.95 and PP 0.35-0.90, >=8 vertices.",
+    "what_you_tried": "Implemented a pure-Python raster union outline, square morphological closing, hole fill, largest four-connected component, deterministic boundary tracing, Chaikin smoothing and Douglas-Peucker simplification. Tried more smoothing and stronger simplification; both worsened the required shape metrics. Outline is simple and closed for all five.",
     "status": "deferred to QA Guy"
   },
   {
     "test": "outline_contains_town",
-    "commit": "f94b9e6",
+    "commit": "d5b5d4d",
     "seed": 14,
-    "coordinates": [2027520, 2027520],
-    "measured_vs_threshold": "s14-tiny-rail-h 96.9% (<99%); s14-mid-highway-v 98.37% (<99%); s31-mid-rail-v 98.96% (<99%)",
-    "what_you_tried": "Built the outline from town and commercial lots, parcels, depot, streets and a highway strip; applied closing/fill and boundary smoothing. Increasing simplification and smoothing caused containment to worsen. Other fixed towns meet the containment threshold.",
+    "coordinates": [[-1.05,1.0],[0.95,7.0],[9.95,7.0],[0.94,1.0],[1.05,-1.0]],
+    "coordinate_units": "town scorer anchor miles (s14 tiny, s14 big, s14 highway, s30 big, s31 mid)",
+    "measured_vs_threshold": "s14 tiny 64.57%, s14 big 96.28%, s14 highway 98.42%, s30 big 96.61%, s31 mid 92.12%; each below 99%.",
+    "what_you_tried": "Built the outline from town and commercial lots, parcels, depot, non-main streets and highway strip; applied buffer, closing, hole fill, component selection, deterministic tracing and smoothing. More smoothing/simplification lost additional lot area. Corrective fixes then split commercial frontage around alleys and elevator shell geometry around the co-op office; the current raster boundary still clips content.",
     "status": "deferred to QA Guy"
   },
   {
     "test": "lot_fill",
-    "commit": "f94b9e6",
+    "commit": "d5b5d4d",
     "seed": 14,
-    "coordinates": [2027520, 2027520],
-    "measured_vs_threshold": "s14-tiny-rail-h 57.8% (<75%); s14-mid-highway-v 62.7% (<75%); s31-mid-rail-v 72.1% (<75%)",
-    "what_you_tried": "Emitted business lots and alleys, restored ribbon-dropped interior blocks, and measured fill within the raster outline. Current fill passes for the big rail towns but these three remain below threshold; a larger outline buffer reduced fill.",
+    "coordinates": [[-1.05,1.0],[9.95,7.0],[1.05,-1.0]],
+    "coordinate_units": "town scorer anchor miles (s14 tiny, s14 highway, s31 mid)",
+    "measured_vs_threshold": "s14 tiny 57.8%, s14 highway 63.4%, s31 mid 72.1%; target >=75%. s14 big and s30 big pass at 75.6% and 81.7%.",
+    "what_you_tried": "Emitted business lots and alleys, restored ribbon-dropped interior blocks, and measured fill against the raster outline. Reducing outline margins improved fill but broke containment. Remaining gaps are the trade-off between shape containment and buildable-area coverage.",
     "status": "deferred to QA Guy"
   }
 ]

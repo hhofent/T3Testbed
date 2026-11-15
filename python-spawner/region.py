@@ -325,9 +325,12 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                               "dist": min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_305_70')] - Xc)), "from_lo": xs[i] == Xc or (xs[i + number('region.make_town_numbers', 'make_town_305_115')] != Xc and xs[i] < Xc)})
             if biz_edge and edge_width:
                 side = "W" if xs[i] == Xc else "E"
-                faces.append({"run":f"town:b{i}{j}:{side}","fa":side,"front_x":bx0 if side=="W" else bx1,
-                              "bx0":by0,"bx1":by1,"d":FT(140),"front_y":None,"main":True,"biz_only":True,
-                              "dist":abs((by0+by1)//2-Yc),"from_lo":True})
+                spans=((by0,by0+bld),(by0+bld+al,by1))
+                for part,(fy0,fy1) in enumerate(spans):
+                    if fy1-fy0<FT(25): continue
+                    faces.append({"run":f"town:b{i}{j}:{side}:{part}","fa":side,"front_x":bx0 if side=="W" else bx1,
+                                  "bx0":fy0,"bx1":fy1,"d":FT(140),"front_y":None,"main":True,"biz_only":True,
+                                  "dist":abs((fy0+fy1)//2-Yc),"from_lo":True})
     kept = {b["ij"] for b in blocks}; streets = []; ds = rng(seed, "streets")
     def segs(cells):
         cells = sorted(cells); out = []
