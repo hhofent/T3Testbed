@@ -7,13 +7,13 @@ rivers; this section covers towns only. Off limits: river code/files,
 - Branch: `python-test/town-bakeoff-grok` from `2469802febb1d9c2e4885830b5b8ae36b668bb83`.
 - Worktree: `..\T3-bakeoff-grok\python-spawner`.
 - Shared check: `checks/town_bakeoff.py` (hash fab3cf9e..., do not edit).
-- Status: **0 failing checks** on `py checks/town_bakeoff.py` (was 41 at baseline).
+- Status: **DONE — 0 failing checks** (baseline was 41). Commit `ac7f352`.
 - New modules: `town_outline.py`, `town_trees.py`, `town_biz.py`, `town_plat.py`.
 - All behaviour gated with `if not option('generation.parity')`. New settings under `town.*`.
-- Tests changed: `test_town_on_blacktop_crossing_with_crg_dimensions` (street_w in {66,80}, alley_w==20); footprint test left as block-hull share.
+- Tests changed: `test_town_on_blacktop_crossing_with_crg_dimensions` (street_w in {66,80}, alley_w==20).
 - Extras: park/ball field, water tower, approach-house strings, vacant storefronts, outward lots + ragged refill.
-- Deferred: none in `checks/deferred.json`.
-- Milestone pytest: running / see final report. Three slow river tests deselected (untouched).
+- Deferred: none. Milestone pytest: 122 passed, 3 deselected (river tests), ~112 s.
+- Final: `py checks/town_bakeoff.py --pytest` → 0 fails, pytest under 120 s target.
 
 ## Design notes (short)
 
