@@ -1,3 +1,13 @@
+# ACTIVE: town bake-off on python-test/town-bakeoff-grok
+
+Authorized town-improvement bake-off. Sol's river STOP below still applies to
+rivers; this section covers towns only. Off limits: river code/files,
+`tests/town_baseline.json`, `trees.local_markers`.
+
+- Branch: `python-test/town-bakeoff-grok` from `2469802febb1d9c2e4885830b5b8ae36b668bb83`.
+- Worktree: `..\T3-bakeoff-grok\python-spawner`.
+- Shared check: `checks/town_bakeoff.py` (hash fab3cf9e..., do not edit).
+- Status: setup — check copied, baseline not yet measured.
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
 
 This section overrides all older in-progress notes below. Read this section and
