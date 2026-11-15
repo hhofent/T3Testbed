@@ -1,3 +1,11 @@
+
+# ACTIVE: town bake-off on python-test/town-bakeoff-luna
+
+- Worktree: T3-bakeoff-luna; start commit verified as 2469802febb1d9c2e4885830b5b8ae36b668bb83.
+- Shared scorer copied unchanged; normalized SHA-256 verified. Baseline: 41 failing checks.
+- First commit 6fc040c adds the shared check and is pushed to python-test/town-bakeoff-luna.
+- Town task is active. The river handoff below remains unchanged and continues to prohibit river edits.
+
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
 
 This section overrides all older in-progress notes below. Read this section and
