@@ -1,0 +1,29 @@
+﻿[
+  {
+    "test": "blobby_outline",
+    "commit": "f94b9e6",
+    "seed": 14,
+    "coordinates": [2027520, 2027520],
+    "measured_vs_threshold": "s14-tiny-rail-h hull_ratio 0.531 (<0.60), Polsby-Popper 0.251 (<0.35); vertices 36",
+    "what_you_tried": "Replaced the temporary scalloped rectangle with the specified pure-Python raster union, square morphological closing, hole fill, largest four-connected component, boundary tracing, Chaikin smoothing and Douglas-Peucker simplification. Tuned smoothing and simplification; metrics worsened when simplifying more aggressively. The other blobby failures are s14-big-rail-v 0.759/0.283, s30-big-rail-h 0.747/0.265, and s31-mid-rail-v 0.687/0.286 (hull ratio / Polsby-Popper).",
+    "status": "deferred to QA Guy"
+  },
+  {
+    "test": "outline_contains_town",
+    "commit": "f94b9e6",
+    "seed": 14,
+    "coordinates": [2027520, 2027520],
+    "measured_vs_threshold": "s14-tiny-rail-h 96.9% (<99%); s14-mid-highway-v 98.37% (<99%); s31-mid-rail-v 98.96% (<99%)",
+    "what_you_tried": "Built the outline from town and commercial lots, parcels, depot, streets and a highway strip; applied closing/fill and boundary smoothing. Increasing simplification and smoothing caused containment to worsen. Other fixed towns meet the containment threshold.",
+    "status": "deferred to QA Guy"
+  },
+  {
+    "test": "lot_fill",
+    "commit": "f94b9e6",
+    "seed": 14,
+    "coordinates": [2027520, 2027520],
+    "measured_vs_threshold": "s14-tiny-rail-h 57.8% (<75%); s14-mid-highway-v 62.7% (<75%); s31-mid-rail-v 72.1% (<75%)",
+    "what_you_tried": "Emitted business lots and alleys, restored ribbon-dropped interior blocks, and measured fill within the raster outline. Current fill passes for the big rail towns but these three remain below threshold; a larger outline buffer reduced fill.",
+    "status": "deferred to QA Guy"
+  }
+]

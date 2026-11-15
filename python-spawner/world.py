@@ -160,32 +160,7 @@ def _town_scene(seed,site,serialized,detail):
    out.append(feature(kind,id+':'+suffix,rect=(min(a,c),min(b,d),abs(c-a),abs(d-b)),**kw))
   town=reg['town']; highway_local=town.get('highway_local','h'); highway_axis=highway_local if axis=='v' else ('h' if highway_local=='v' else 'v')
   add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis,highway_axis=highway_axis)
-  # Organic boundary with shallow repeated bites; the bbox remains available
-  # to the legacy town finder while geometry consumers use the polygon.
-  bx,by,bw,bh=town['box']
-  owned=[world_rect(l['place'],l['w'],l['d']) for l in town.get('lots',[])]
-  owned += [world_rect(l['place'],l['spec']['width'],l['spec']['depth']) for l in reg['lots']]
-  owned += [c['lot'] for c in town.get('commercial',[]) if c.get('lot')]
-  if owned:
-   bx=min(bx,min(r[0] for r in owned)); by=min(by,min(r[1] for r in owned))
-   ex=max(bx+bw,max(r[0]+r[2] for r in owned)); ey=max(by+bh,max(r[1]+r[3] for r in owned))
-   bw,bh=ex-bx,ey-by
-  margin=FT(24)
-  x0,y0,x1,y1=bx-margin,by-margin,bx+bw+margin,by+bh+margin
-  local_ring=[]
-  for k in range(5):
-   xx=x0+(x1-x0)*k/4
-   local_ring.append((xx,y0 + (bh*.055 if k in (1,3) else 0)))
-  for k in range(1,5):
-   yy=y0+(y1-y0)*k/4
-   local_ring.append((x1-(bw*.055 if k in (1,3) else 0),yy))
-  for k in range(3,-1,-1):
-   xx=x0+(x1-x0)*k/4
-   local_ring.append((xx,y1-(bh*.055 if k in (1,3) else 0)))
-  for k in range(3,0,-1):
-   yy=y0+(y1-y0)*k/4
-   local_ring.append((x0+(bw*.055 if k in (1,3) else 0),yy))
-  out[-1]['outline']=[absolute(int(a),int(b)) for a,b in local_ring]
+  out[-1]['outline']=[absolute(a,b) for a,b in town.get('outline',[])]
   px=[p[0] for p in out[-1]['outline']]; py_=[p[1] for p in out[-1]['outline']]
   out[-1]['rect']=(min(px),min(py_),max(px)-min(px),max(py_)-min(py_))
   reserved=[p['rect'] for p in reg['parcels'] if p['kind'] in ('elevator','industry')]+([reg['depot']] if reg['depot'] else [])

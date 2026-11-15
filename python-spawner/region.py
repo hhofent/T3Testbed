@@ -475,12 +475,13 @@ def place_rail_features(seed, town, rail, occupied, bar=None):
 
 def _edge_slot(town, ew, lw, ld, rail, occupied, order=(-number('region.invariants_numbers', '_edge_slot_426_57'), number('region.invariants_numbers', '_edge_slot_426_60'))):
     b = town["box"]; top = N_MI * MILE
+    main_row=FT(option("town.main_row_ft")) if not option("generation.parity") else ROW
     for step in range(number('region.invariants_numbers', '_edge_slot_428_22')):
         for sx in order if order != (number('region.invariants_numbers', '_edge_slot_429_37'), number('region.invariants_numbers', '_edge_slot_429_40')) else (number('region.invariants_numbers', '_edge_slot_429_49'), -number('region.invariants_numbers', '_edge_slot_429_53')):
             for sy in (number('region.invariants_numbers', '_edge_slot_430_23'), -number('region.invariants_numbers', '_edge_slot_430_27')):
                 gap = FT(number('region.invariants_numbers', '_edge_slot_431_25')) + step * FT(number('region.invariants_numbers', '_edge_slot_431_41'))
                 x0 = b[number('region.invariants_numbers', '_edge_slot_432_23')] - gap - lw if sx < number('region.invariants_numbers', '_edge_slot_432_45') else b[number('region.invariants_numbers', '_edge_slot_432_54')] + b[number('region.invariants_numbers', '_edge_slot_432_61')] + gap
-                y0 = ew["c"] + ROW // number('region.invariants_numbers', '_edge_slot_433_38') if sy > number('region.invariants_numbers', '_edge_slot_433_48') else ew["c"] - ROW // number('region.invariants_numbers', '_edge_slot_433_72') - ld
+                y0 = ew["c"] + main_row // 2 if sy > 0 else ew["c"] - main_row // 2 - ld
                 lot = (x0, y0, lw, ld)
                 if x0 < number('region.invariants_numbers', '_edge_slot_435_24') or x0 + lw > top or y0 < number('region.invariants_numbers', '_edge_slot_435_51') or y0 + ld > top: continue
                 if rail_hits(rail, lot) or any(overlaps(lot, o) for o in occupied): continue
@@ -490,6 +491,7 @@ def _edge_slot(town, ew, lw, ld, rail, occupied, order=(-number('region.invarian
 def place_edge_biz(seed, town, roads, rail, occupied):
     """Edge-of-town / highway businesses fronting the E-W blacktop just past the town edge (CRG siting; PLACEHOLDER sizes)."""
     ew = next(r for r in roads if r["type"] == "paved" and r["axis"] == "h"); b = town["box"]; top = N_MI * MILE
+    main_row=FT(option("town.main_row_ft")) if not option("generation.parity") else ROW
     for k, typ in enumerate(town["edge_want"]):
         lw, ld, bw, bd, sb = (FT(v) for v in EDGE_FP[typ]); done = False
         for step in range(number('region.place_edge_biz_numbers', 'place_edge_biz_445_26')):
@@ -497,7 +499,7 @@ def place_edge_biz(seed, town, roads, rail, occupied):
                 for sy in (number('region.place_edge_biz_numbers', 'place_edge_biz_447_27'), -number('region.place_edge_biz_numbers', 'place_edge_biz_447_31')):
                     gap = FT(number('region.place_edge_biz_numbers', 'place_edge_biz_448_29')) + step * FT(number('region.place_edge_biz_numbers', 'place_edge_biz_448_45'))
                     x0 = b[number('region.place_edge_biz_numbers', 'place_edge_biz_449_27')] - gap - lw if sx < number('region.place_edge_biz_numbers', 'place_edge_biz_449_49') else b[number('region.place_edge_biz_numbers', 'place_edge_biz_449_58')] + b[number('region.place_edge_biz_numbers', 'place_edge_biz_449_65')] + gap
-                    y0 = ew["c"] + ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_450_42') if sy > number('region.place_edge_biz_numbers', 'place_edge_biz_450_52') else ew["c"] - ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_450_76') - ld
+                    y0 = ew["c"] + main_row // 2 if sy > 0 else ew["c"] - main_row // 2 - ld
                     lot = (x0, y0, lw, ld)
                     if x0 < number('region.place_edge_biz_numbers', 'place_edge_biz_452_28') or x0 + lw > top or y0 < number('region.place_edge_biz_numbers', 'place_edge_biz_452_55') or y0 + ld > top: continue
                     if rail_hits(rail, lot) or any(overlaps(lot, o) for o in occupied): continue
@@ -505,7 +507,7 @@ def place_edge_biz(seed, town, roads, rail, occupied):
                     bx = (lw - bw) // number('region.place_edge_biz_numbers', 'place_edge_biz_455_38')
                     rec = {"id": f"edge{k}", "type": typ, "site": "edge of town on " + ew["name"], "lot": lot, "bldg": L(bx, sb, bw, bd),
                            "parking": [L(number('region.place_edge_biz_numbers', 'place_edge_biz_457_41'), number('region.place_edge_biz_numbers', 'place_edge_biz_457_44'), lw, sb)] if typ in ("implement dealer", "lumberyard") else [L(max(number('region.place_edge_biz_numbers', 'place_edge_biz_457_113'), bx - FT(number('region.place_edge_biz_numbers', 'place_edge_biz_457_124'))), number('region.place_edge_biz_numbers', 'place_edge_biz_457_130'), min(lw, bw + FT(number('region.place_edge_biz_numbers', 'place_edge_biz_457_149'))), sb)],
-                           "curb": None, "canopy": None, "pumps": [], "storefront": False, "vacant": False, "front_y": ew["c"] + sy * (ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_458_142'))}
+                           "curb": None, "canopy": None, "pumps": [], "storefront": False, "vacant": False, "front_y": ew["c"] + sy * (main_row // 2)}
                     if typ == "school": rec["field"] = L(FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_60')), sb + bd + FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_78')), FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_86')), min(FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_99')), ld - sb - bd - FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_123'))))
                     if typ in ("implement dealer", "lumberyard"): rec["yard"] = "gravel"
                     town["commercial"].append(rec); occupied.append(lot); done = True; break
@@ -676,6 +678,35 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
             "road_miles": tot / MILE}
     from commercial_layout import arrange
     arrange(result)
+    if town and not option("generation.parity"):
+        owned=[world_rect(l["place"],l["w"],l["d"]) for l in town["lots"]]
+        owned += [c["lot"] for c in town["commercial"] if c.get("lot")]
+        owned += [p["rect"] for p in parcels if p["kind"] in ("elevator","industry")]
+        if depot: owned.append(depot)
+        owned += [road_rect(r) for r in town["streets"] if not r.get("main")]
+        if owned:
+            x0=min(r[0] for r in owned); y0=min(r[1] for r in owned)
+            x1=max(r[0]+r[2] for r in owned); y1=max(r[1]+r[3] for r in owned)
+            main_row=FT(option("town.main_row_ft"))
+            if town["highway_local"] == "h": owned.append((x0,town["Yc"]-main_row//2,x1-x0,main_row))
+            else: owned.append((town["Xc"]-main_row//2,y0,main_row,y1-y0))
+            from town_outline import outline
+            town["outline"]=outline(owned,FT(option("town.outline_cell_ft")),FT(10),option("town.outline_close_ft")//option("town.outline_cell_ft"))
+            # Let both explicitly tagged Main Street segments cover the outline chord.
+            ring=town["outline"]
+            for street in town["streets"]:
+                if street.get("id")=="T-MAIN-h":
+                    vals=[]; c=street["c"]
+                    for a,b in zip(ring,ring[1:]+ring[:1]):
+                        if (a[1]<=c<=b[1]) or (b[1]<=c<=a[1]):
+                            if a[1]!=b[1]: vals.append(a[0]+(c-a[1])*(b[0]-a[0])/(b[1]-a[1]))
+                    if vals: street["lo"],street["hi"]=int(min(vals)),int(max(vals))
+                if street.get("id")=="T-MAIN-v":
+                    vals=[]; c=street["c"]
+                    for a,b in zip(ring,ring[1:]+ring[:1]):
+                        if (a[0]<=c<=b[0]) or (b[0]<=c<=a[0]):
+                            if a[0]!=b[0]: vals.append(a[1]+(c-a[0])*(b[1]-a[1])/(b[0]-a[0]))
+                    if vals: street["lo"],street["hi"]=int(min(vals)),int(max(vals))
     return result
 
 # ---------- rule 35 ----------
