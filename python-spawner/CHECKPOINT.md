@@ -1,10 +1,11 @@
-﻿# ACTIVE: rural trees/windbreaks/crossings on python-test/rural-trees-culverts-grok
+# ACTIVE: rural trees/windbreaks/crossings on python-test/rural-trees-culverts-grok
 
 - Branch: `python-test/rural-trees-culverts-grok` in worktree `..\T3-rural-grok`
 - Start commit: `2469802febb1d9c2e4885830b5b8ae36b668bb83` (verified)
-- Off limits: river geometry (`BASIN_MILES` through `rivers()`, route offsets, `river_*.py`, river checks/tests)
-- Gate new behaviour with `if not option('generation.parity'):`; new settings `rural.*` / `crossing.*`
-- Item 1 in progress: rural lot yard trees via new `rural_trees.py`
+- Off limits: river geometry
+- Item 1 done (`863af98`): yard trees. pytest 123 passed / 3 deselected in 119s.
+- Item 2 done: N/W windbreaks (ISU Pm-1716), building clearance, rural_markers. Fast pytest 123 passed / 3 deselected in 94s.
+- Item 3 next: culvert-or-bridge classification + distinct drawing
 - Do not run the frozen rural_check; Cal scores afterward
 
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred

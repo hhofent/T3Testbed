@@ -20,6 +20,19 @@ def layout(seed,spec,plan,access_fraction=None,place=None):
   lo=max(margin,FT(250)-lateral-hd/2)
   hi=min(D-hd-margin,FT(830)-lateral-hd/2)
   hy=lo+max(0,hi-lo)*access_fraction
+ # Keep the house out of the N/W windbreak belt so rows can form (world N/W, not region.grove_sides).
+ if not option('generation.parity') and place is not None and spec['kind']=='farmstead':
+  from rural_trees import world_nw_local_sides
+  north,west=world_nw_local_sides(place)
+  belt=FT(6)+3*FT(option('rural.windbreak_row_ft'))+FT(option('rural.windbreak_clear_ft'))
+  def clear_house(side):
+   nonlocal hx,hy
+   if side=='front': hy=max(hy,belt)
+   elif side=='rear': hy=min(hy,D-hd-belt)
+   elif side=='left': hx=max(hx,belt)
+   else: hx=min(hx,W-hw-belt)
+  clear_house(north); clear_house(west)
+  hx=max(margin,min(hx,W-hw-margin)); hy=max(margin,min(hy,D-hd-margin))
  dx,dy=hx-x0,hy-y0
  buildings=[]; drives=[]; trees=[]
  count=round(option('rural.outbuildings_min')+rand('count')*(option('rural.outbuildings_max')-option('rural.outbuildings_min')))
@@ -34,6 +47,13 @@ def layout(seed,spec,plan,access_fraction=None,place=None):
   buildings.append((typ,(x,y,w,h)))
   # Connected apron and access spur, with a separate front-house connection.
   drives.extend([(margin,y-gap,max(lane,x+w-margin),lane),(x,y-gap,lane,gap+lane)])
+ if not option('generation.parity') and place is not None and spec['kind']=='farmstead':
+  from rural_trees import shift_buildings_from_belts
+  buildings=shift_buildings_from_belts(seed,spec,place,buildings,(hx,hy,hw,hd))
+  # Rebuild aprons after any belt shove so drives still touch the buildings.
+  drives=[]
+  for _,(x,y,w,h) in buildings:
+   drives.extend([(margin,y-gap,max(lane,x+w-margin),lane),(x,y-gap,lane,gap+lane)])
  end=max([hy+hd]+[r[1]+r[3] for _,r in buildings])
  turn=max(lane,hy*.45)
  entry_index=len(drives)
@@ -43,8 +63,8 @@ def layout(seed,spec,plan,access_fraction=None,place=None):
  if option('stages.trees'):
   if not option('generation.parity'):
    site=dict(offset=(dx,dy),buildings=buildings,driveways=drives,shape=shape)
-   from rural_trees import yard_trees
-   trees=yard_trees(seed,spec,plan,site,place)
+   from rural_trees import rural_markers
+   trees=rural_markers(seed,spec,plan,site,place)
   else:
    side=H(seed,'grove-side',salt)%3
    spacing=FT(option('trees.spacing_ft')); density=option('rural.grove_density')
