@@ -206,7 +206,10 @@ def _town_scene(seed,site,serialized,detail):
   if detail:
    for shop in town['commercial']:
     if shop.get('lot') and shop['type']!='funeral home': add('lots','business:'+shop['id'],shop['lot'],use='business:'+shop['type'])
-    if shop.get('bldg'): add('buildings','business:'+shop['id'],shop['bldg'],use=shop['type'])
+    if shop.get('bldg'):
+     attrs={'use':shop['type']}
+     if not option('generation.parity'): attrs['vacant']=bool(shop.get('vacant'))
+     add('buildings','business:'+shop['id'],shop['bldg'],**attrs)
    for i,parcel in enumerate(reg['parcels']):
     if parcel.get('office'): add('buildings','coop-office:'+str(i),parcel['office'],use='co-op office')
    for i,parcel in enumerate(reg['parcels']):
@@ -1857,7 +1860,7 @@ def svg(scene,local=False):
  for kind in order:
   for f in scene['features']:
    if f['kind']!=kind: continue
-   style=feature_style(f); color=style['color']
+   style=feature_style(f); color='#82786b' if f.get('vacant') else style['color']
    title=escape(f['id']+' '+str(f.get('use','')))
    out.append(f'<g data-kind="{kind}" data-minimum-px="{style["minimum_px"]}" data-hide-above-mi="{style["hide_above_mi"]}"><title>'+title+'</title>')
    if kind=='farms':
