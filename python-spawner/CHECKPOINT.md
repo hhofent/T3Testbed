@@ -2,6 +2,7 @@
 
 Setup verified clean required commit and scorer hash. Baseline v2: 14 failures.
 CHECKPOINT step 0: implementation commit follows | v2 failing 12 | fast 70/70 37.01s | office shadowing and SVG rebasing fixed; two regression tests pass (0.74s). Milestone collected before second regression was appended: 123 passed, 3 deselected, 138.00s; both new tests separately pass.
+CHECKPOINT step 1: commit follows | v2 failing 11 | fast 70/70 35.71s | corrected Main Street axis names/addressing and one-sided frontage orientation; no block-segment generator added in this increment.
 Remaining failures: s14-tiny blobby_outline, outline_contains_town, lot_fill, lot_fill_in_outline; s14-big blobby_outline; s14-mid-highway outline_contains_town, lot_fill, lot_fill_in_outline; s30-big blobby_outline; s31-mid blobby_outline, outline_contains_town, lot_fill.
 Steps 1-5 NOT STARTED. No final acceptance claim. Next: implement town_plat segments per full prompt; do not rerun unchanged audits.
 

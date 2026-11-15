@@ -353,8 +353,8 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     if not option("generation.parity") and blocks:
         bx = [b["rect"] for b in blocks]
         streets.extend([
-            {"id":"T-MAIN-h","name":"Main Street","axis":"h","type":"paved","c":Yc,"lo":min(r[0] for r in bx)-sw,"hi":max(r[0]+r[2] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
-            {"id":"T-MAIN-v","name":"Main Street","axis":"v","type":"paved","c":Xc,"lo":min(r[1] for r in bx)-sw,"hi":max(r[1]+r[3] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
+            {"id":"T-MAIN-h","name":"Main Street" if rail_town else "Broadway","axis":"h","type":"paved","c":Yc,"lo":min(r[0] for r in bx)-sw,"hi":max(r[0]+r[2] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
+            {"id":"T-MAIN-v","name":"Railroad Street" if rail_town else "Main Street","axis":"v","type":"paved","c":Xc,"lo":min(r[1] for r in bx)-sw,"hi":max(r[1]+r[3] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
         ])
     def face_lots(F, bx0, bx1):
         if F.get("biz_only"): return []
@@ -402,7 +402,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         if canonical not in present:
             prog.append(typ); present.add(canonical); added.append(typ)
     mains = sorted((F for F in faces if F["main"]), key=lambda F: (not F.get("biz_only",False), F["dist"], F["run"]))[:MAIN_FACES]
-    off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
+    off = sorted((F for F in faces if not F["main"] and F.get("front_y") is not None and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
     for F in faces: F["lo"], F["hi"] = F["bx0"], F["bx1"]
     def take(F, w, far=False):
         if F["hi"] - F["lo"] < w: return None
@@ -462,10 +462,10 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                 depth=ld*(120+draw.int(f"depth{nedge}",81))//100
                 if pos+width>street["hi"]: break
                 if axis=="h":
-                    y0=c-half if side=="S" else c+half-depth
+                    y0=c-half-depth if side=="S" else c+half
                     place={"x0":pos,"y0":y0,"facing":side}
                 else:
-                    x0=c-half if side=="W" else c+half-depth
+                    x0=c-half-depth if side=="W" else c+half
                     place={"x0":x0,"y0":pos,"facing":side}
                 rect=world_rect(place,width,depth)
                 if not rail_hits(list(creeks),rect) and not any(overlaps(rect,world_rect(L["place"],L["w"],L["d"])) for L in lots):
@@ -671,7 +671,8 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
             if rail_hits(bar, wr): continue
             # address street = the street the lot faces
             fx, fy = to_world(L["place"], L["w"], L["d"], L["w"] // number('region.make_region_numbers', 'make_region_577_68'), -FT(number('region.make_region_numbers', 'make_region_577_75')))
-            L["road"] = next((x for x in allroads if not x.get("main") and inside((fx, fy), road_rect(x))), None)
+            cands=[x for x in allroads if inside((fx, fy), road_rect(x))]
+            L["road"] = min(cands, key=lambda x: bool(x.get("main"))) if cands else None
             if L["road"] is None: continue  # no lot without a surviving frontage street
             raw.append(L)
     year = region_year(seed)
@@ -720,7 +721,7 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
     from commercial_layout import arrange
     arrange(result)
     if town and not option("generation.parity"):
-        owned=[world_rect(l["place"],l["w"],l["d"]) for l in town["lots"]]
+        owned=[world_rect(l["place"],l["w"],l["d"]) for l in raw if l.get("kind")=="town"]
         owned += [c["lot"] for c in town["commercial"] if c.get("lot")]
         owned += [p["rect"] for p in parcels if p["kind"] in ("elevator","industry")]
         if depot: owned.append(depot)
