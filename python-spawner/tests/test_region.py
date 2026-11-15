@@ -39,7 +39,7 @@ def test_town_on_blacktop_crossing_with_crg_dimensions(reg):
     paved = [r for r in reg["grid_roads"] if r["type"] == "paved"]
     assert any(r["axis"] == "v" and r["c"] == t["Xc"] for r in paved) and any(r["axis"] == "h" and r["c"] == t["Yc"] for r in paved)
     assert 4 <= t["cols"] * t["rows"] <= 9 and FT(380) <= t["cx"] <= FT(445)
-    assert FT(60) <= t["street_w"] <= FT(66) and FT(16) <= t["alley_w"] <= FT(20)
+    assert t["street_w"] in (FT(66), FT(80)) and t["alley_w"] == FT(20)
     for b in t["blocks"]: assert FT(130) <= b["lot_d"] <= FT(150)
     sb = t["setbacks"]
     assert FT(20) <= sb["front"] <= FT(30) and FT(5) <= sb["side"] <= FT(8) and FT(20) <= sb["rear"] <= FT(25) and FT(10) <= sb["corner"] <= FT(15)

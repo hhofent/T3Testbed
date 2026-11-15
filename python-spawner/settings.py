@@ -2644,3 +2644,7 @@ define('rural.lot_corner_fraction',0.15,0,0.3,0.01,'fraction','Maximum corner cu
 
 define('world.rail_diagonal_pct',65,0,100,1,'percent','Share of eligible rural rail sections with diagonal bends; road crossings stay square.')
 define('world.rail_bend_miles',0.25,0,0.5,0.05,'mi','Rail deviation between square crossing approaches and road-parallel sections.')
+
+define('town.main_row',100,80,120,5,'ft','Town Main Street ROW width.','Spencer 100-ft Main Street, Naumann 2004')
+define('town.alley_row',20,16,24,2,'ft','Town alley ROW width.','Cushing 1983 / Naumann 2004')
+define('town.row_80_pct',25,0,100,5,'percent','Share of towns platted with 80-ft residential ROW instead of 66-ft.','Cushing 1983 / Naumann 2004')

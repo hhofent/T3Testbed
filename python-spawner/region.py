@@ -262,10 +262,17 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     ns = next((r for r in roads if r["type"] == "paved" and r["axis"] == "v"), None)
     rail_town = bool(rail) and (d.chance("railtown", RAILTOWN_PCT) or bool(force_town))
     if not rail_town and not (ew and ns and (d.chance("town", NORAIL_TOWN_PCT) or force_town)): return None
-    cx = FT(d.choice("cx", list(BLOCK_CX))); sw = FT(d.choice("sw", list(STREET_W)))
-    al = FT(d.choice("al", list(ALLEY_W))); ld = FT(d.choice("ld", list(LOT_D)))
-    cy = number('region.make_town_numbers', 'make_town_263_9') * ld + al + sw
+    cx = FT(d.choice("cx", list(BLOCK_CX)))
     size = d.weighted("size", TOWN_SIZE)
+    if not option("generation.parity"):
+        from town_streets import get_town_widths, get_half_widths, build_streets
+        sw, al, main_w = get_town_widths(d, size)
+        ld = FT(d.choice("ld", list(LOT_D)))
+        cy = 2 * ld + al + sw
+    else:
+        sw = FT(d.choice("sw", list(STREET_W)))
+        al = FT(d.choice("al", list(ALLEY_W))); ld = FT(d.choice("ld", list(LOT_D)))
+        cy = number('region.make_town_numbers', 'make_town_263_9') * ld + al + sw
     if rail_town:
         Xc, Yc = rail["site"]; cols, rows = d.choice("grid", GRIDS[size][number('region.make_town_numbers', 'make_town_266_73')]); sd = rail["side"]
         xs = sorted(Xc - sd * k * cx for k in range(cols + number('region.make_town_numbers', 'make_town_267_59')))
@@ -282,7 +289,10 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     for k, y in enumerate(ys):
         if y != Yc: streets.append({"id": f"T-S{k}", "name": names_h[k % number('region.make_town_numbers', 'make_town_279_73')], "axis": "h", "type": "paved", "c": y,
                                      "lo": xs[number('region.make_town_numbers', 'make_town_280_46')], "hi": xs[-number('region.make_town_numbers', 'make_town_280_60')], "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_280_87')})
-    hw = lambda v, c: ROW // number('region.make_town_numbers', 'make_town_281_29') if v == c else sw // number('region.make_town_numbers', 'make_town_281_52')
+    if not option("generation.parity"):
+        hw_x, hw_y = get_half_widths(rail_town, Xc, Yc, sw, main_w)
+    else:
+        hw_x = hw_y = lambda v, c: ROW // number('region.make_town_numbers', 'make_town_281_29') if v == c else sw // number('region.make_town_numbers', 'make_town_281_52')
     sb = {k: FT(v[number('region.make_town_numbers', 'make_town_282_18')] + d.int("sb" + k, v[number('region.make_town_numbers', 'make_town_282_41')] - v[number('region.make_town_numbers', 'make_town_282_48')] + number('region.make_town_numbers', 'make_town_282_53'))) for k, v in TOWN_SB.items()}
     blocks, alleys, lots, faces = [], [], [], []
     for i in range(cols):
@@ -290,8 +300,10 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             outer = i in (number('region.make_town_numbers', 'make_town_286_26'), cols - number('region.make_town_numbers', 'make_town_286_36')) or j in (number('region.make_town_numbers', 'make_town_286_48'), rows - number('region.make_town_numbers', 'make_town_286_58'))
             on_main = Yc in (ys[j], ys[j + number('region.make_town_numbers', 'make_town_287_43')]) and min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_287_83')] - Xc)) < number('region.make_town_numbers', 'make_town_287_95') * cx
             if size != "tiny" and outer and not on_main and rng(seed, "ragged", i, j).chance("skip", RAGGED_PCT): continue
-            bx0, bx1 = xs[i] + hw(xs[i], Xc), xs[i + number('region.make_town_numbers', 'make_town_289_53')] - hw(xs[i + number('region.make_town_numbers', 'make_town_289_68')], Xc)
-            by0, by1 = ys[j] + hw(ys[j], Yc), ys[j + number('region.make_town_numbers', 'make_town_290_53')] - hw(ys[j + number('region.make_town_numbers', 'make_town_290_68')], Yc)
+            bx0 = xs[i] + (hw_x(xs[i]) if not option("generation.parity") else hw_x(xs[i], Xc))
+            bx1 = xs[i + 1] - (hw_x(xs[i + 1]) if not option("generation.parity") else hw_x(xs[i + 1], Xc))
+            by0 = ys[j] + (hw_y(ys[j]) if not option("generation.parity") else hw_y(ys[j], Yc))
+            by1 = ys[j + 1] - (hw_y(ys[j + 1]) if not option("generation.parity") else hw_y(ys[j + 1], Yc))
             if rail_hits(list(creeks), (bx0, by0, bx1 - bx0, by1 - by0)): continue        # town stops at the floodplain
             # ribbon growth: blocks on the main paved roads always grow; others thin out with distance from both roads
             ra = min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_293_49')] - Xc)) / cx; rb = min(abs(ys[j] - Yc), abs(ys[j + number('region.make_town_numbers', 'make_town_293_102')] - Yc)) / cy
@@ -307,25 +319,28 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                 faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": bx0, "bx1": bx1, "d": bld,
                               "front_y": by0 if half == "S" else by1, "main": front == Yc,
                               "dist": min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_305_70')] - Xc)), "from_lo": xs[i] == Xc or (xs[i + number('region.make_town_numbers', 'make_town_305_115')] != Xc and xs[i] < Xc)})
-    kept = {b["ij"] for b in blocks}; streets = []; ds = rng(seed, "streets")
-    def segs(cells):
-        cells = sorted(cells); out = []
-        for a, b in cells:
-            if out and out[-number('region.make_town_numbers', 'make_town_310_28')][number('region.make_town_numbers', 'make_town_310_31')] >= a: out[-number('region.make_town_numbers', 'make_town_310_45')][number('region.make_town_numbers', 'make_town_310_48')] = max(out[-number('region.make_town_numbers', 'make_town_310_62')][number('region.make_town_numbers', 'make_town_310_65')], b)
-            else: out.append([a, b])
-        return out
-    for k, x in enumerate(xs):
-        if x == Xc: continue
-        for n_, (lo, hi) in enumerate(segs([(ys[j], ys[j + number('region.make_town_numbers', 'make_town_315_59')]) for (i, j) in kept if i in (k - number('region.make_town_numbers', 'make_town_315_95'), k)])):
-            if ds.chance(f"v{k}{n_}", FRINGE_PCT) and hi + cy <= ys[-number('region.make_town_numbers', 'make_town_316_69')] + cy: hi += cy // number('region.make_town_numbers', 'make_town_316_90')       # dead-end fringe stub
-            streets.append({"id": f"T-A{k}-{n_}", "name": f"{k + number('region.make_town_numbers', 'make_town_317_65')}{'st' if k == number('region.make_town_numbers', 'make_town_317_81') else 'nd' if k == number('region.make_town_numbers', 'make_town_317_101') else 'rd' if k == number('region.make_town_numbers', 'make_town_317_121') else 'th'} Ave",
-                            "axis": "v", "type": "paved", "c": x, "lo": lo, "hi": hi, "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_318_109')})
-    for k, y in enumerate(ys):
-        if y == Yc: continue
-        for n_, (lo, hi) in enumerate(segs([(xs[i], xs[i + number('region.make_town_numbers', 'make_town_321_59')]) for (i, j) in kept if j in (k - number('region.make_town_numbers', 'make_town_321_95'), k)])):
-            if ds.chance(f"h{k}{n_}", FRINGE_PCT): lo -= cx // number('region.make_town_numbers', 'make_town_322_63')
-            streets.append({"id": f"T-S{k}-{n_}", "name": names_h[k % number('region.make_town_numbers', 'make_town_323_70')], "axis": "h", "type": "paved", "c": y,
-                            "lo": lo, "hi": hi, "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_324_71')})
+    if not option("generation.parity"):
+        streets = build_streets(seed, rail_town, Xc, Yc, xs, ys, blocks, sw, main_w, names_h)
+    else:
+        kept = {b["ij"] for b in blocks}; streets = []; ds = rng(seed, "streets")
+        def segs(cells):
+            cells = sorted(cells); out = []
+            for a, b in cells:
+                if out and out[-number('region.make_town_numbers', 'make_town_310_28')][number('region.make_town_numbers', 'make_town_310_31')] >= a: out[-number('region.make_town_numbers', 'make_town_310_45')][number('region.make_town_numbers', 'make_town_310_48')] = max(out[-number('region.make_town_numbers', 'make_town_310_62')][number('region.make_town_numbers', 'make_town_310_65')], b)
+                else: out.append([a, b])
+            return out
+        for k, x in enumerate(xs):
+            if x == Xc: continue
+            for n_, (lo, hi) in enumerate(segs([(ys[j], ys[j + number('region.make_town_numbers', 'make_town_315_59')]) for (i, j) in kept if i in (k - number('region.make_town_numbers', 'make_town_315_95'), k)])):
+                if ds.chance(f"v{k}{n_}", FRINGE_PCT) and hi + cy <= ys[-number('region.make_town_numbers', 'make_town_316_69')] + cy: hi += cy // number('region.make_town_numbers', 'make_town_316_90')       # dead-end fringe stub
+                streets.append({"id": f"T-A{k}-{n_}", "name": f"{k + number('region.make_town_numbers', 'make_town_317_65')}{'st' if k == number('region.make_town_numbers', 'make_town_317_81') else 'nd' if k == number('region.make_town_numbers', 'make_town_317_101') else 'rd' if k == number('region.make_town_numbers', 'make_town_317_121') else 'th'} Ave",
+                                "axis": "v", "type": "paved", "c": x, "lo": lo, "hi": hi, "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_318_109')})
+        for k, y in enumerate(ys):
+            if y == Yc: continue
+            for n_, (lo, hi) in enumerate(segs([(xs[i], xs[i + number('region.make_town_numbers', 'make_town_321_59')]) for (i, j) in kept if j in (k - number('region.make_town_numbers', 'make_town_321_95'), k)])):
+                if ds.chance(f"h{k}{n_}", FRINGE_PCT): lo -= cx // number('region.make_town_numbers', 'make_town_322_63')
+                streets.append({"id": f"T-S{k}-{n_}", "name": names_h[k % number('region.make_town_numbers', 'make_town_323_70')], "axis": "h", "type": "paved", "c": y,
+                                "lo": lo, "hi": hi, "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_324_71')})
     def face_lots(F, bx0, bx1):
         run, y0, fa, bld = F["run"], F["y0"], F["fa"], F["d"]; out = []
         nb = (bx1 - bx0) // BASE_LOT; rest = (bx1 - bx0) - nb * BASE_LOT

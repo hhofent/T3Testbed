@@ -1,7 +1,8 @@
 # ACTIVE: town bake-off on python-test/town-bakeoff-gemini
 
-- Baseline: 41 failing checks on 2469802 (40 town checks + 1 global missing implement dealer)
-- Milestone pytest: 122 passed, 3 deselected
+- Baseline: 41 failing checks on 2469802
+- Item 5/6 (streets, alleys, 100-ft Main Street): 35 failing checks (street_row_widths passes across all 5 towns, 0 road conflicts, 0 orphans)
+- Milestone pytest: 122 passed, 3 deselected in 105.6s
 - River code/files off limits
 
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
