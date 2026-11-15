@@ -1,3 +1,9 @@
+# ACTIVE: town bake-off on python-test/town-bakeoff-gemini
+
+- Baseline: 41 failing checks on 2469802 (40 town checks + 1 global missing implement dealer)
+- Milestone pytest: 122 passed, 3 deselected
+- River code/files off limits
+
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
 
 This section overrides all older in-progress notes below. Read this section and
