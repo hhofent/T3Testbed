@@ -264,6 +264,10 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     if not rail_town and not (ew and ns and (d.chance("town", NORAIL_TOWN_PCT) or force_town)): return None
     cx = FT(d.choice("cx", list(BLOCK_CX))); sw = FT(d.choice("sw", list(STREET_W)))
     al = FT(d.choice("al", list(ALLEY_W))); ld = FT(d.choice("ld", list(LOT_D)))
+    if not option("generation.parity"):
+        sw = FT(option("town.wide_street_ft")) if d.chance("wideplat", option("town.wide_street_pct")) else FT(option("town.street_row_ft"))
+        al = FT(option("town.alley_ft"))
+    MAIN = FT(option("town.main_row_ft")) if not option("generation.parity") else ROW
     cy = number('region.make_town_numbers', 'make_town_263_9') * ld + al + sw
     size = d.weighted("size", TOWN_SIZE)
     if rail_town:
@@ -282,7 +286,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     for k, y in enumerate(ys):
         if y != Yc: streets.append({"id": f"T-S{k}", "name": names_h[k % number('region.make_town_numbers', 'make_town_279_73')], "axis": "h", "type": "paved", "c": y,
                                      "lo": xs[number('region.make_town_numbers', 'make_town_280_46')], "hi": xs[-number('region.make_town_numbers', 'make_town_280_60')], "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_280_87')})
-    hw = lambda v, c: ROW // number('region.make_town_numbers', 'make_town_281_29') if v == c else sw // number('region.make_town_numbers', 'make_town_281_52')
+    hw = lambda v, c: MAIN // 2 if v == c else sw // number('region.make_town_numbers', 'make_town_281_52')
     sb = {k: FT(v[number('region.make_town_numbers', 'make_town_282_18')] + d.int("sb" + k, v[number('region.make_town_numbers', 'make_town_282_41')] - v[number('region.make_town_numbers', 'make_town_282_48')] + number('region.make_town_numbers', 'make_town_282_53'))) for k, v in TOWN_SB.items()}
     blocks, alleys, lots, faces = [], [], [], []
     for i in range(cols):
@@ -326,6 +330,12 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             if ds.chance(f"h{k}{n_}", FRINGE_PCT): lo -= cx // number('region.make_town_numbers', 'make_town_322_63')
             streets.append({"id": f"T-S{k}-{n_}", "name": names_h[k % number('region.make_town_numbers', 'make_town_323_70')], "axis": "h", "type": "paved", "c": y,
                             "lo": lo, "hi": hi, "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_324_71')})
+    if not option("generation.parity") and blocks:
+        bx = [b["rect"] for b in blocks]
+        streets.extend([
+            {"id":"T-MAIN-h","name":"Main Street","axis":"h","type":"paved","c":Yc,"lo":min(r[0] for r in bx)-sw,"hi":max(r[0]+r[2] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
+            {"id":"T-MAIN-v","name":"Main Street","axis":"v","type":"paved","c":Xc,"lo":min(r[1] for r in bx)-sw,"hi":max(r[1]+r[3] for r in bx)+sw,"w":MAIN,"surface_ft":22,"main":True},
+        ])
     def face_lots(F, bx0, bx1):
         run, y0, fa, bld = F["run"], F["y0"], F["fa"], F["d"]; out = []
         nb = (bx1 - bx0) // BASE_LOT; rest = (bx1 - bx0) - nb * BASE_LOT
@@ -420,7 +430,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     box = (min(r[number('region.make_town_numbers', 'make_town_401_17')] for r in bx) - sw, min(r[number('region.make_town_numbers', 'make_town_401_45')] for r in bx) - sw, number('region.make_town_numbers', 'make_town_401_67'), number('region.make_town_numbers', 'make_town_401_70'))
     box = (box[number('region.make_town_numbers', 'make_town_402_15')], box[number('region.make_town_numbers', 'make_town_402_23')], max(r[number('region.make_town_numbers', 'make_town_402_33')] + r[number('region.make_town_numbers', 'make_town_402_40')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_67')], max(r[number('region.make_town_numbers', 'make_town_402_77')] + r[number('region.make_town_numbers', 'make_town_402_84')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_111')])
     return {"Xc": Xc, "Yc": Yc, "cols": cols, "rows": rows, "cx": cx, "cy": cy, "street_w": sw, "alley_w": al,
-            "setbacks": sb, "blocks": blocks, "alleys": alleys, "streets": streets, "lots": lots, "box": box, "rail_town": rail_town, "commercial": commercial,
+            "setbacks": sb, "blocks": blocks, "alleys": alleys, "streets": streets, "lots": lots, "box": box, "rail_town": rail_town, "commercial": commercial, **({"highway_local": "h" if rail_town else "v"} if not option("generation.parity") else {}),
             "year": year, "size": size, "pop_est": pop, "houses_est": houses, "band": band, "program": prog, **({"topup": added} if not option("generation.parity") else {}), "edge_want": edge_want, "unplaced": unplaced}
 
 def place_rail_features(seed, town, rail, occupied, bar=None):
@@ -598,7 +608,7 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
             if rail_hits(bar, wr): continue
             # address street = the street the lot faces
             fx, fy = to_world(L["place"], L["w"], L["d"], L["w"] // number('region.make_region_numbers', 'make_region_577_68'), -FT(number('region.make_region_numbers', 'make_region_577_75')))
-            L["road"] = next((x for x in allroads if inside((fx, fy), road_rect(x))), None)
+            L["road"] = next((x for x in allroads if not x.get("main") and inside((fx, fy), road_rect(x))), None)
             if L["road"] is None: continue  # no lot without a surviving frontage street
             raw.append(L)
     year = region_year(seed)
@@ -609,7 +619,7 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
         others = [x for x in allroads if x is not L["road"]]
         corner, side_street = None, None
         for side, x in (("left", -FT(number('region.make_region_numbers', 'make_region_587_37'))), ("right", W + FT(number('region.make_region_numbers', 'make_region_587_59')))):
-            hit = [x2 for x2 in others if inside(to_world(pl, W, Dp, x, Dp // number('region.make_region_numbers', 'make_region_588_78')), road_rect(x2))]
+            hit = [x2 for x2 in others if not x2.get("main") and inside(to_world(pl, W, Dp, x, Dp // number('region.make_region_numbers', 'make_region_588_78')), road_rect(x2))]
             if hit: corner, side_street = side, hit[number('region.make_region_numbers', 'make_region_589_52')]["name"]
         spec = make_lot(L["id"], W / FT(number('region.make_region_numbers', 'make_region_590_40')), seed, Dp / FT(number('region.make_region_numbers', 'make_region_590_58')), corner_side=corner, year=year, address_street=L["road"]["name"],
                         side_street=side_street, road_type=L["road"]["type"], setting=L["setting"])

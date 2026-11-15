@@ -4,7 +4,7 @@
 ## Town bake-off step status (re-read 2026-11-14)
 - A: done — isolated worktree/branch and scorer hash verified, baseline 41 failures, baseline inner subset and milestone recorded in run history.
 - B: done — added the ten `town.*` settings. Fast subset 70 passed, 1 deselected (8.30 s); scorer 27 failing checks; milestone 122 passed, 3 deselected (104.20 s). Next: C.
-- C: not started.
+- C: done — town residential ROW 66/80 ft, 20-ft alleys, 100-ft T-MAIN streets and highway-local metadata added; legacy address matching excludes T-MAIN to avoid frontage trap. Fast subset 70 passed (6.84 s); scorer 20 failing checks; milestone 122 passed (98.06 s). Next: D.
 - D: not started.
 - E: partly done — business variety/top-ups and feature emission exist; must be reconciled with ordered step E requirements.
 - F: partly done — seeded tree markers exist; settings and exact step F placement still need reconciliation.
@@ -1058,3 +1058,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Milestone pytest subset subsequently completed: 122 passed, 3 deselected in 95.73 s. Deselections are the instructed slow river tests; no river files were changed.
 
 - Step B committed/pushed after the required fast subset, scorer, and milestone runs; no settings consumer changed in B.
+
+- Step C committed/pushed after fast subset, scorer, and milestone. Scorer confirms street_row_widths passes all five towns.

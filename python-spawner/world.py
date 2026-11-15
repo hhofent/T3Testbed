@@ -158,7 +158,8 @@ def _town_scene(seed,site,serialized,detail):
   def add(kind,suffix,r,**kw):
    a,b=absolute(r[0],r[1]); c,d=absolute(r[0]+r[2],r[1]+r[3])
    out.append(feature(kind,id+':'+suffix,rect=(min(a,c),min(b,d),abs(c-a),abs(d-b)),**kw))
-  town=reg['town']; add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis)
+  town=reg['town']; highway_local=town.get('highway_local','h'); highway_axis=highway_local if axis=='v' else ('h' if highway_local=='v' else 'v')
+  add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis,highway_axis=highway_axis)
   # Organic boundary with shallow repeated bites; the bbox remains available
   # to the legacy town finder while geometry consumers use the polygon.
   bx,by,bw,bh=town['box']
@@ -194,14 +195,15 @@ def _town_scene(seed,site,serialized,detail):
    out[-1]['reserved'].append((min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
   for road in reg['roads']:
    if road in reg['grid_roads']: continue
-   add('roads','street:'+road['id'],road_rect(road),surface='paved',axis=road['axis'] if axis=='v' else ('h' if road['axis']=='v' else 'v'),history=['town plat','paved'])
+   add('roads','street:'+road['id'],road_rect(road),surface='paved',axis=road['axis'] if axis=='v' else ('h' if road['axis']=='v' else 'v'),road_class='main_street' if road.get('main') else 'town_street',row_ft=road['w']/FT(1),history=['town plat','paved'])
   for i,alley in enumerate(town.get('alleys',[])):
-   add('roads','alley:'+str(i),alley,surface='alley',axis='h',history=['town plat','alley'])
+   add('roads','alley:'+str(i),alley,surface='gravel',road_class='alley',row_ft=option('town.alley_ft'),axis=('h' if axis=='v' else 'v'),history=['town plat','alley'])
   # The main-street frontage becomes paved only inside the town envelope.
   bx,by,bw,bh=town['box']
-  for a in ('h','v'):
-   r=(bx,MILE-option('region.row')/2,bw,option('region.row')) if a=='h' else (MILE-option('region.row')/2,by,option('region.row'),bh)
-   add('roads','street:main-'+a,r,surface='paved',axis=a if axis=='v' else ('h' if a=='v' else 'v'),history=['town main street'])
+  if not any(r.get('main') for r in town['streets']):
+   for a in ('h','v'):
+    r=(bx,MILE-option('region.row')/2,bw,option('region.row')) if a=='h' else (MILE-option('region.row')/2,by,option('region.row'),bh)
+    add('roads','street:main-'+a,r,surface='paved',axis=a if axis=='v' else ('h' if a=='v' else 'v'),history=['town main street'])
   for lot in reg['lots']:
    spec=lot['spec']; pl=lot['place']; lid=spec['id']
    if detail: add('lots',lid,world_rect(pl,spec['width'],spec['depth']),use='town')
