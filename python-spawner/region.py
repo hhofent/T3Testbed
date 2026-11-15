@@ -439,6 +439,40 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             if x0 is not None: F["church"] = True; commercial.append(_church(x0, cnt * BASE_LOT, F, c, cnt)); break
         else: unplaced.append("church")
     for F in faces: lots.extend(face_lots(F, F["lo"], F["hi"]))
+    if not option("generation.parity"):
+        # Add seeded, outward-facing lots along town streets that serve kept
+        # blocks on only one side.  The gaps keep the plat edge irregular.
+        for street in streets:
+            if street.get("main"): continue
+            axis=street["axis"]; c=street["c"]; half=street["w"]//2
+            if axis=="h":
+                north=any(abs(b["rect"][1]-(c+half))<=1 for b in blocks if b["rect"][0]<street["hi"] and b["rect"][0]+b["rect"][2]>street["lo"])
+                south=any(abs(b["rect"][1]+b["rect"][3]-(c-half))<=1 for b in blocks if b["rect"][0]<street["hi"] and b["rect"][0]+b["rect"][2]>street["lo"])
+                side="S" if north and not south else "N" if south and not north else None
+            else:
+                east=any(abs(b["rect"][0]-(c+half))<=1 for b in blocks if b["rect"][1]<street["hi"] and b["rect"][1]+b["rect"][3]>street["lo"])
+                west=any(abs(b["rect"][0]+b["rect"][2]-(c-half))<=1 for b in blocks if b["rect"][1]<street["hi"] and b["rect"][1]+b["rect"][3]>street["lo"])
+                side="E" if west and not east else "W" if east and not west else None
+            if not side: continue
+            draw=rng(seed,"town-edge",street["id"],side); pos=street["lo"]; nedge=0
+            while pos+2*BASE_LOT<=street["hi"]:
+                pos += draw.int(f"gap{nedge}",3)*BASE_LOT
+                if pos+2*BASE_LOT>street["hi"]: break
+                mult=2+draw.int(f"width{nedge}",2); width=mult*BASE_LOT
+                depth=ld*(120+draw.int(f"depth{nedge}",81))//100
+                if pos+width>street["hi"]: break
+                if axis=="h":
+                    y0=c-half if side=="S" else c+half-depth
+                    place={"x0":pos,"y0":y0,"facing":side}
+                else:
+                    x0=c-half if side=="W" else c+half-depth
+                    place={"x0":x0,"y0":pos,"facing":side}
+                rect=world_rect(place,width,depth)
+                if not rail_hits(list(creeks),rect) and not any(overlaps(rect,world_rect(L["place"],L["w"],L["d"])) for L in lots):
+                    lots.append({"id":f"town:edge:{street['id']}:{side}:{nedge}","w":width,"d":depth,"setting":"town","kind":"town","place":place,"along":pos,
+                                 "base_lots":mult,"house_type":"stick","use":"house","alley_rear":False})
+                    nedge+=1
+                pos += width
     if "funeral home" in prog:                              # converted house near main street
         cand = [L for L in lots if L["house_type"] == "stick" and any(L["id"].startswith(F["run"] + ":") for F in mains + off)]
         if cand:
@@ -537,6 +571,10 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
     parcels, depot, siding = [], None, None
     if town:
         occupied.append(town["box"])
+        bx,by,bw,bh=town["box"]
+        for L in town["lots"]:
+            lr=world_rect(L["place"],L["w"],L["d"])
+            if lr[0]<bx or lr[1]<by or lr[0]+lr[2]>bx+bw or lr[1]+lr[3]>by+bh: occupied.append(lr)
         if town["rail_town"]:
             el, depot, siding = place_rail_features(seed, town, rail, occupied, bar)
             if el: parcels.append(el); occupied.append(el["rect"])
