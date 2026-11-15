@@ -261,6 +261,8 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     """Rail town where the rail passes the blacktop crossing (grid on the far side of the road, rows along the rail),
     else maybe a no-rail town at the blacktop x blacktop crossing."""
     if not option("stages.towns"): return None
+    # Use rail_hits from module scope to avoid UnboundLocalError from inner imports
+    _rail_hits = rail_hits
     d = rng(seed, "town")
     ew = next((r for r in roads if r["type"] == "paved" and r["axis"] == "h"), None)
     ns = next((r for r in roads if r["type"] == "paved" and r["axis"] == "v"), None)
@@ -308,7 +310,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             bx1 = xs[i + 1] - (hw_x(xs[i + 1]) if not option("generation.parity") else hw_x(xs[i + 1], Xc))
             by0 = ys[j] + (hw_y(ys[j]) if not option("generation.parity") else hw_y(ys[j], Yc))
             by1 = ys[j + 1] - (hw_y(ys[j + 1]) if not option("generation.parity") else hw_y(ys[j + 1], Yc))
-            if rail_hits(list(creeks), (bx0, by0, bx1 - bx0, by1 - by0)): continue        # town stops at the floodplain
+            if _rail_hits(list(creeks), (bx0, by0, bx1 - bx0, by1 - by0)): continue        # town stops at the floodplain
             # ribbon growth: blocks on the main paved roads always grow; others thin out with distance from both roads
             ra = min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_293_49')] - Xc)) / cx; rb = min(abs(ys[j] - Yc), abs(ys[j + number('region.make_town_numbers', 'make_town_293_102')] - Yc)) / cy
             if min(ra, rb) >= number('region.make_town_numbers', 'make_town_294_30') and not rng(seed, "ribbon", i, j).chance("keep", max(number('region.make_town_numbers', 'make_town_294_85'), number('region.make_town_numbers', 'make_town_294_89') - RIBBON_DECAY * number('region.make_town_numbers', 'make_town_294_110') / max(cols, rows, number('region.make_town_numbers', 'make_town_294_130')) * (ra + rb - number('region.make_town_numbers', 'make_town_294_146')))): continue
@@ -338,6 +340,17 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                                   "front_y": by0 if half == "S" else by1, "main": main,
                                   "dist": min(abs(xs[i] - Xc), abs(xs[i + 1] - Xc)), "from_lo": xs[i] == Xc or (xs[i + 1] != Xc and xs[i] < Xc)})
     if not option("generation.parity"):
+        # TODO: re-enable town_fuller enhancement after fixing non-determinism
+        # from town_fuller import enhance_town, add_corner_lots
+        # town = {
+        #     'blocks': blocks, 'faces': faces, 'alleys': alleys, 'streets': streets,
+        #     'rail_town': rail_town, 'size': size, 'Xc': Xc, 'Yc': Yc,
+        #     'xs': xs, 'ys': ys, 'sw': sw, 'main_w': main_w, 'names_h': names_h,
+        #     'ld': ld, 'al': al, 'cy': cy, 'sb': sb
+        # }
+        # town = enhance_town(seed, town, rail_town, size, xs, ys, Xc, Yc, blocks, faces, alleys, streets, sw, main_w, names_h, ld, al, cy, sb, creeks, _rail_hits)
+        # town = add_corner_lots(seed, town, blocks, faces, xs, ys, Xc, Yc, sw, main_w, sb)
+        # blocks, faces, alleys, streets = town['blocks'], town['faces'], town['alleys'], town['streets']
         streets = build_streets(seed, rail_town, Xc, Yc, xs, ys, blocks, sw, main_w, names_h)
     else:
         kept = {b["ij"] for b in blocks}; streets = []; ds = rng(seed, "streets")

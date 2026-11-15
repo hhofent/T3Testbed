@@ -161,6 +161,7 @@ def _town_scene(seed,site,serialized,detail):
   town=reg['town']
   highway_axis = axis if not on_rail else ('h' if axis == 'v' else 'v')
   curb_start = []
+  outline = []
   if not option('generation.parity'):
    # Find edge of commercial area along highway axis
    comm = [c['bldg'] for c in town.get('commercial', []) if c.get('bldg')]
@@ -171,7 +172,66 @@ def _town_scene(seed,site,serialized,detail):
     else:
      xs_ = [r[0] for r in comm] + [r[0] + r[2] for r in comm]
      curb_start = [(min(xs_), y), (max(xs_), y)]
-  add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis,highway_axis=highway_axis,curb_start=curb_start)
+   # Generate blobby outline
+   from town_outline import generate_town_outline
+   # Content is in LOCAL coordinates (relative to ox, oy). Convert to world coords for outline.
+   # The outline will be added to the feature which is in world coords.
+   ox, oy = (x - MILE, y - MILE) if axis == 'v' else (y - MILE, x - MILE)
+   def local_to_world_rect(rect):
+       rx, ry, rw, rh = rect
+       if axis == 'v':
+           return (rx + ox, ry + oy, rw, rh)
+       else:
+           return (ry + oy, rx + ox, rh, rw)
+   
+   world_blocks = [local_to_world_rect(b['rect']) for b in town['blocks']]
+   world_streets = []
+   import sys
+   for s in town['streets']:
+       if s.get('rect'):
+           world_streets.append(local_to_world_rect(s['rect']))
+       elif s.get('points') and s.get('width'):
+           # Polyline: convert each point
+           pts = [(local_to_world_rect((p[0], p[1], 0, 0))[0], local_to_world_rect((p[0], p[1], 0, 0))[1]) for p in s['points']]
+           world_streets.append({'points': pts, 'width': s['width']})
+       elif s.get('c') is not None and s.get('lo') is not None and s.get('hi') is not None and s.get('w') is not None:
+           # Road definition: convert to rect
+           hw = s['w'] // 2
+           if s['axis'] == 'h':
+               rect = (s['lo'], s['c'] - hw, s['hi'] - s['lo'], 2 * hw)
+           else:
+               rect = (s['c'] - hw, s['lo'], 2 * hw, s['hi'] - s['lo'])
+           world_streets.append(local_to_world_rect(rect))
+       else:
+           print(f'DEBUG: street entry has no rect or points: {s}', file=sys.stderr)
+   world_streets = [s for s in world_streets if s]
+   print(f'DEBUG: world_streets={len(world_streets)}', file=sys.stderr)
+   sys.stderr.flush()
+   world_alleys = [local_to_world_rect(a) for a in town.get('alleys', [])]
+   world_commercial = []
+   for c in town.get('commercial', []):
+       if c.get('bldg'):
+           world_commercial.append({'bldg': local_to_world_rect(c['bldg'])})
+       if c.get('lot'):
+           world_commercial.append({'lot': local_to_world_rect(c['lot'])})
+   
+   # Parcels and depot are already in world coords? Check...
+   # In _town_scene, parcels come from reg['parcels'] which are in local coords.
+   world_parcels = [local_to_world_rect(p['rect']) for p in reg['parcels']]
+   world_depot = local_to_world_rect(reg['depot']) if reg['depot'] else None
+   
+   outline = generate_town_outline(
+       H(seed, 'town_outline', id),
+       town,
+       world_blocks,
+       town.get('faces', []),
+       world_alleys,
+       world_streets,
+       world_commercial,
+       world_parcels,
+       world_depot
+   )
+  add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis,highway_axis=highway_axis,curb_start=curb_start,outline=outline)
   reserved=[p['rect'] for p in reg['parcels'] if p['kind'] in ('elevator','industry')]+([reg['depot']] if reg['depot'] else [])
   out[-1]['reserved']=[]
   for a,b,c,d in reserved:
@@ -1879,7 +1939,7 @@ def svg(scene,local=False):
   for f in scene["features"]:
    if "rect" in f:
     a,b,c,d=f["rect"]; f["rect"]=[a-x,b-y,c,d]
-   for key in ("points","shape"):
+   for key in ("points","shape","outline"):
     if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
  from html import escape
  x,y,w,h=scene['window']
