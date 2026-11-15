@@ -1043,3 +1043,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Non-parity town programs top up business types to minimum program counts (over-target to allow for unplaced lots); all five scorer business-variety checks now pass. Top-up is disabled in parity mode so the reference-town byte fixtures remain stable.
 - Fast subset after parity fix: 70 passed, 1 deselected, 7.14 s.
 - Latest scorer: 27 failing checks. Remaining target failures include outline containment and lot fill. Some previously existing street/tree/frontage/overlap checks also fail.
+
+- Milestone pytest subset subsequently completed: 122 passed, 3 deselected in 95.73 s. Deselections are the instructed slow river tests; no river files were changed.
