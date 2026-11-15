@@ -357,6 +357,20 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     houses = sum(len(face_lots(F, F["bx0"], F["bx1"])) for F in faces)          # pass 1: houses before businesses
     pop = round(houses * PEOPLE_PER_HOUSE); band = town_band(force_pop if force_pop else pop)
     year = region_year(seed); prog = choose_businesses(seed, band, year); db = rng(seed, "bizplace")
+    # Ensure a representative 1990 small-town business mix, with deterministic
+    # top-ups when the independent probability draws leave a sparse program.
+    topup = [] if option("generation.parity") else ["post office", "church", "cafe", "tavern", "gas station", "bank", "grocery", "hardware",
+             "insurance", "beauty shop", "auto repair", "implement dealer", "school", "city hall / fire",
+             "lumberyard", "locker plant", "vet", "farm supply", "drug store", "funeral home"]
+    need = {"tiny": 6, "mid": 15, "big": 19}.get(size, 15)
+    present = set(prog) | ({"grain elevator", "feed mill", "co-op"} if rail_town else set())
+    if "elevator" in prog: present.add("grain elevator")
+    added = []
+    for typ in topup:
+        if len(present) >= need: break
+        canonical = {"grocery (highway)":"grocery", "bank (branch)":"bank"}.get(typ, typ)
+        if canonical not in present:
+            prog.append(typ); present.add(canonical); added.append(typ)
     mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
     off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
     for F in faces: F["lo"], F["hi"] = F["bx0"], F["bx1"]
@@ -407,7 +421,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     box = (box[number('region.make_town_numbers', 'make_town_402_15')], box[number('region.make_town_numbers', 'make_town_402_23')], max(r[number('region.make_town_numbers', 'make_town_402_33')] + r[number('region.make_town_numbers', 'make_town_402_40')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_67')], max(r[number('region.make_town_numbers', 'make_town_402_77')] + r[number('region.make_town_numbers', 'make_town_402_84')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_111')])
     return {"Xc": Xc, "Yc": Yc, "cols": cols, "rows": rows, "cx": cx, "cy": cy, "street_w": sw, "alley_w": al,
             "setbacks": sb, "blocks": blocks, "alleys": alleys, "streets": streets, "lots": lots, "box": box, "rail_town": rail_town, "commercial": commercial,
-            "year": year, "size": size, "pop_est": pop, "houses_est": houses, "band": band, "program": prog, "edge_want": edge_want, "unplaced": unplaced}
+            "year": year, "size": size, "pop_est": pop, "houses_est": houses, "band": band, "program": prog, **({"topup": added} if not option("generation.parity") else {}), "edge_want": edge_want, "unplaced": unplaced}
 
 def place_rail_features(seed, town, rail, occupied, bar=None):
     """Rail towns only: depot between road and track, elevator 3-6 ac across the track with a siding beside it."""

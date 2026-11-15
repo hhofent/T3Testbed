@@ -1037,3 +1037,9 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Remaining work: required blobby outline, interior/edge lot fill, business top-ups, exact ROW fixes, and several tree/overlap checks. No river code or files changed. Do not treat the town task as complete.
 
 - Follow-up confirmation: final full scorer on committed town tree/feature changes reports 32 failing checks (5 towns); the exit code is 1 because checks fail. py checks/town_bakeoff.py --pytest likewise exits early with scorer failures, without the milestone pytest summary. The separate fast subset passed; the 122-test milestone was started but its run did not complete with a captured summary. A temporary street-width experiment increased conflicts and was reverted.
+
+## Follow-up: outline, fill and business mix
+- world._town_scene now emits a 16-point organic outline, preserves its bounding rect, rebases outline coordinates for local SVGs, and emits alleys as road features. Scorer passes lobby_outline on all five towns, but fails outline_contains_town on all five and lot fill remains below 75%.
+- Non-parity town programs top up business types to minimum program counts (over-target to allow for unplaced lots); all five scorer business-variety checks now pass. Top-up is disabled in parity mode so the reference-town byte fixtures remain stable.
+- Fast subset after parity fix: 70 passed, 1 deselected, 7.14 s.
+- Latest scorer: 27 failing checks. Remaining target failures include outline containment and lot fill. Some previously existing street/tree/frontage/overlap checks also fail.
