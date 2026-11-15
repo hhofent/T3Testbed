@@ -1035,3 +1035,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Fast requested pytest subset: 70 passed, 1 deselected, 9.43 s.
 - Scorer `--pytest` was started; it printed per-town results but the harness returned before the pytest summary. A preceding full scorer run reported 33 failures; the yard-count adjustment followed.
 - Remaining work: required blobby outline, interior/edge lot fill, business top-ups, exact ROW fixes, and several tree/overlap checks. No river code or files changed. Do not treat the town task as complete.
+
+- Follow-up confirmation: final full scorer on committed town tree/feature changes reports 32 failing checks (5 towns); the exit code is 1 because checks fail. py checks/town_bakeoff.py --pytest likewise exits early with scorer failures, without the milestone pytest summary. The separate fast subset passed; the 122-test milestone was started but its run did not complete with a captured summary. A temporary street-width experiment increased conflicts and was reverted.
