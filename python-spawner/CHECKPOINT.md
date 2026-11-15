@@ -10,7 +10,7 @@
 - F: done — town tree placement uses yard clumps, configurable none/gap/street-face settings, rear/side placement, 2 street-tree cap, 30-ft minimum lot margins and blocked structures; parity keeps `local_markers`. American elm weight is 0 to satisfy the <=3% sample cap in tiny towns. Fast 70 passed (6.58 s); scorer 19 failing checks; milestone 122 passed (100.33 s). All tree scorer checks pass. Next: G.
 - G: partly done — non-parity ribbon vacancies are restored, ragged edge gaps remain as a visual edge, and town lots respect `alley_rear`; outward edge lots remain. Fast 70 passed (8.43 s); scorer 20 failing checks; milestone 122 passed (95.48 s). Lot-fill scorer readings remain below target (previous report: 18.6–59.8% depending on town after outline change). Next: H.
 - H: partly done/deferred — pure-Python raster union outline, closing, hole fill, component selection, tracing, smoothing, SVG rebasing, reserved parcels and Main Street chord extension implemented. Fast subset, scorer and milestone completed below. Blobby outline fails 4 towns; outline containment and lot fill fail 3 towns each. Deferred those target failures after >20 minutes of tuning in `checks/deferred.json`.
-- I: not started.
+- I: in progress — Improvement 1 adds a tiny, SVG-rendered non-parity water tower landmark to town scenes. Fast subset 70 passed (27.28 s); scorer remains 16 failing checks (no new failures); milestone 122 passed (174.71 s).
 - J: not started.
 - Worktree: T3-bakeoff-luna; start commit verified as 2469802febb1d9c2e4885830b5b8ae36b668bb83.
 - Shared scorer copied unchanged; normalized SHA-256 verified. Baseline: 41 failing checks.
@@ -1070,3 +1070,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Step G progress committed/pushed. The outline-dependent lot-fill threshold is not met; evaluate/defer under H after the bounded outline attempt.
 
 - Step H tests: fast subset 70 passed, 1 deselected (32.96 s); scorer 16 failing checks; milestone 122 passed, 3 deselected (121.68 s). checks/deferred.json records blobby outline, containment and lot-fill failures. Next: I.
+
+- Step I improvement 1 committed/pushed; scorer count unchanged, so continuing to improvement 2.

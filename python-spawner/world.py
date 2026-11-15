@@ -160,6 +160,7 @@ def _town_scene(seed,site,serialized,detail):
    out.append(feature(kind,id+':'+suffix,rect=(min(a,c),min(b,d),abs(c-a),abs(d-b)),**kw))
   town=reg['town']; highway_local=town.get('highway_local','h'); highway_axis=highway_local if axis=='v' else ('h' if highway_local=='v' else 'v')
   add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis,highway_axis=highway_axis)
+  if not option('generation.parity'): out[-1]['water_tower']=(x+FT(180),y+FT(180))
   out[-1]['outline']=[absolute(a,b) for a,b in town.get('outline',[])]
   px=[p[0] for p in out[-1]['outline']]; py_=[p[1] for p in out[-1]['outline']]
   out[-1]['rect']=(min(px),min(py_),max(px)-min(px),max(py_)-min(py_))
@@ -1847,7 +1848,7 @@ def svg(scene,local=False):
   for f in scene["features"]:
    if "rect" in f:
     a,b,c,d=f["rect"]; f["rect"]=[a-x,b-y,c,d]
-  for key in ("points","shape","outline","curb_start"):
+  for key in ("points","shape","outline","curb_start","water_tower"):
     if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
  from html import escape
  x,y,w,h=scene['window']
@@ -1868,6 +1869,8 @@ def svg(scene,local=False):
    elif 'rect' in f:
     a,b,c,d=f['rect']; stroke='#b5c0ab' if kind in ('towns','lots') else '#687060'
     out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="{0.9 if kind=="roads" else 0.3}" vector-effect="non-scaling-stroke"/>')
+    if kind=='towns' and f.get('water_tower'):
+     tx,ty=f['water_tower']; out.append(f'<path d="M {tx-FT(10)} {ty} L {tx-FT(6)} {ty-FT(24)} L {tx+FT(6)} {ty-FT(24)} L {tx+FT(10)} {ty} M {tx-FT(12)} {ty-FT(24)} Q {tx} {ty-FT(34)} {tx+FT(12)} {ty-FT(24)} L {tx+FT(8)} {ty-FT(12)} L {tx-FT(8)} {ty-FT(12)} Z" fill="#8b7657" stroke="#3f4039" stroke-width="0.6" vector-effect="non-scaling-stroke"/>')
    else:
     points=' '.join(f'{a},{b}' for a,b in f['points'])
     width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' or (kind=='bridges' and f.get('surface')=='rail') else f.get('width',FT(1))
