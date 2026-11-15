@@ -2644,3 +2644,12 @@ define('rural.lot_corner_fraction',0.15,0,0.3,0.01,'fraction','Maximum corner cu
 
 define('world.rail_diagonal_pct',65,0,100,1,'percent','Share of eligible rural rail sections with diagonal bends; road crossings stay square.')
 define('world.rail_bend_miles',0.25,0,0.5,0.05,'mi','Rail deviation between square crossing approaches and road-parallel sections.')
+
+# Town bake-off settings (new keys only; do not change region.* defaults).
+define('town.wide_street_pct',25,0,100,1,'percent','Share of towns with 80-ft residential ROW (Cushing 1983); else 66 ft (Spencer). Verified Naumann 2004 / Cushing 1983.')
+define('town.alley_w_ft',20,20,20,1,'ft','Town alley ROW; emitted as gravel. Verified pattern target for bake-off.')
+define('town.main_row_ft',100,100,100,1,'ft','Main Street ROW through town (research/iowa-1990-roads-lots-trees.md). Rural region.row stays 66 ft.')
+define('town.avenue_face_pct',25,0,100,1,'percent','Share of blocks with lots facing N-S avenues (LUNA overhaul-2 C3). Simplified for the game.')
+define('town.outward_gap_pct',30,20,40,5,'percent','Gap share on outward-facing outer-street lots (overhaul-2 C1). Simplified for the game.')
+define('town.street_tree_pct',40,30,50,5,'percent','Share of residential frontages with a street tree. Simplified for the game.')
+define('town.refill_pct',55,0,100,1,'percent','Chance to restore an interior block dropped by ragged/ribbon rules. Simplified for the game.')

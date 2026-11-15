@@ -140,6 +140,7 @@ def _town_scene(seed,site,serialized,detail):
  u,v=(x,y) if axis=='v' else (y,x); ox,oy=u-MILE,v-MILE; extent=3*MILE
  def absolute(a,b): return (a+ox,b+oy) if axis=='v' else (b+oy,a+ox)
  def local(a,b): return (a-ox,b-oy) if axis=='v' else (b-ox,a-oy)
+ def world_axis(local_axis): return local_axis if axis=='v' else ('h' if local_axis=='v' else 'v')
  with applied(settings):
   world_box=(x-MILE,y-MILE,extent,extent)
   barriers=[dict(pts=[local(*p) for p in f['points']],w=f['width']+2*FT(max(option('region.creek_buf')))) for f in rivers(seed,world_box) if intersects(f['bounds'],world_box)]
@@ -158,23 +159,89 @@ def _town_scene(seed,site,serialized,detail):
   def add(kind,suffix,r,**kw):
    a,b=absolute(r[0],r[1]); c,d=absolute(r[0]+r[2],r[1]+r[3])
    out.append(feature(kind,id+':'+suffix,rect=(min(a,c),min(b,d),abs(c-a),abs(d-b)),**kw))
-  town=reg['town']; add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis)
+   return out[-1]
+  town=reg['town']; parity=option('generation.parity')
+  hwy_local=town.get('highway_local') or ('h' if on_rail else 'v')
+  hwy_world=world_axis(hwy_local)
+  town_feat=add('towns','town',town['box'],size=town['size'],rail_town=on_rail,site_id=id,anchor=(x,y),route_axis=axis,highway_axis=hwy_world)
   reserved=[p['rect'] for p in reg['parcels'] if p['kind'] in ('elevator','industry')]+([reg['depot']] if reg['depot'] else [])
-  out[-1]['reserved']=[]
+  town_feat['reserved']=[]
   for a,b,c,d in reserved:
    p,q=absolute(a,b),absolute(a+c,b+d)
-   out[-1]['reserved'].append((min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
+   town_feat['reserved'].append((min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
+  # Town streets (includes T-MAIN when non-parity). Skip legacy street:main-* when T-MAIN exists.
+  has_tmain=any(r.get('road_class')=='main_street' or r['id'].startswith('T-MAIN') for r in town.get('streets',[]))
   for road in reg['roads']:
    if road in reg['grid_roads']: continue
-   add('roads','street:'+road['id'],road_rect(road),surface='paved',axis=road['axis'] if axis=='v' else ('h' if road['axis']=='v' else 'v'),history=['town plat','paved'])
-  # The main-street frontage becomes paved only inside the town envelope.
-  bx,by,bw,bh=town['box']
-  for a in ('h','v'):
-   r=(bx,MILE-option('region.row')/2,bw,option('region.row')) if a=='h' else (MILE-option('region.row')/2,by,option('region.row'),bh)
-   add('roads','street:main-'+a,r,surface='paved',axis=a if axis=='v' else ('h' if a=='v' else 'v'),history=['town main street'])
+   rc=road.get('road_class') or ('main_street' if road['id'].startswith('T-MAIN') and road.get('name')=='Main Street' else 'town_street')
+   row=road.get('row_ft')
+   if row is None: row=(road.get('w') or option('region.row'))/FT(1)
+   surf='gravel' if rc=='alley' else 'paved'
+   add('roads','street:'+road['id'],road_rect(road),surface=surf,axis=world_axis(road['axis']),history=['town plat',surf],road_class=rc,row_ft=row)
+  if not has_tmain:
+   # Parity / legacy: emit both centreline mains at rural ROW.
+   bx,by,bw,bh=town['box']
+   for a in ('h','v'):
+    r=(bx,MILE-option('region.row')/2,bw,option('region.row')) if a=='h' else (MILE-option('region.row')/2,by,option('region.row'),bh)
+    add('roads','street:main-'+a,r,surface='paved',axis=world_axis(a),history=['town main street'],road_class='main_street' if a==hwy_local else 'town_street',row_ft=option('region.row')/FT(1))
+  # Alleys as gravel road features (non-parity bake-off).
+  if not parity:
+   # Inset only the cross-section so lots and alleys do not share raster cells;
+   # keep length so alley ends still touch the flanking streets. Skip alleys that
+   # no longer touch any street (orphans after fringe trim / block conversion).
+   gap=FT(5)
+   street_local=[road_rect(r) for r in town.get('streets',[])]
+   def _touches_street(ar):
+    ax,ay,aw,ah=ar
+    # Slightly grow so an end-flush alley still counts as connected.
+    grow=FT(8); g=(ax-grow,ay-grow,aw+2*grow,ah+2*grow)
+    for sx,sy,sw_,sh in street_local:
+     if g[0]<sx+sw_ and g[0]+g[2]>sx and g[1]<sy+sh and g[1]+g[3]>sy:
+      return True
+    return False
+   for i,ar in enumerate(town.get('alleys') or []):
+    x,y,w,h=ar
+    if w>=h:
+     ar=(x,y+gap,w,max(FT(1),h-2*gap)); local_axis='h'
+    else:
+     ar=(x+gap,y,max(FT(1),w-2*gap),h); local_axis='v'
+    if not _touches_street(ar):
+     continue
+    # kind='alleys' still scores ROW; orphan check walks both kinds.
+    feat=add('alleys',f'alley:{i}',ar,surface='gravel',axis=world_axis(local_axis),history=['town plat','alley'],road_class='alley',row_ft=town['alley_w']/FT(1))
+    wr=feat['rect']; feat['axis']='h' if wr[2]>=wr[3] else 'v'
+  # Centre boost: lots closer to (Xc,Yc) get slightly more trees.
+  Xc,Yc=town['Xc'],town['Yc']
+  main_local=[road_rect(r) for r in town.get('streets',[])
+              if (r.get('road_class')=='main_street' or (r['id'].startswith('T-MAIN') and r.get('name')=='Main Street'))] if not parity else []
+  def _clip_rect_off_mains(r):
+   if not main_local: return r
+   x,y,w,h=r
+   for mr in main_local:
+    if not (x<mr[0]+mr[2] and x+w>mr[0] and y<mr[1]+mr[3] and y+h>mr[1]): continue
+    gap=FT(2)
+    if mr[2]<=mr[3]:
+     mid=mr[0]+mr[2]/2
+     if x+w/2<mid: w=max(FT(1),min(w,mr[0]-gap-x))
+     else: nx=max(x,mr[0]+mr[2]+gap); w=max(FT(1),x+w-nx); x=nx
+    else:
+     mid=mr[1]+mr[3]/2
+     if y+h/2<mid: h=max(FT(1),min(h,mr[1]-gap-y))
+     else: ny=max(y,mr[1]+mr[3]+gap); h=max(FT(1),y+h-ny); y=ny
+   return (x,y,w,h)
+  def _inset_lot_rect(pl,W,D,inset=FT(4)):
+   """Inset front and rear so lots share no raster cells with streets or alleys."""
+   wr=world_rect(pl,W,D)
+   wr=(wr[0]+inset,wr[1]+inset,max(FT(1),wr[2]-2*inset),max(FT(1),wr[3]-2*inset))
+   return _clip_rect_off_mains(wr)
+  # Funeral homes reuse a stick-house lot; emit that lot once as business.
+  funeral_house={c.get('house_lot') for c in town.get('commercial',[]) if c.get('house_lot')}
+  house_lot_ids=[]
   for lot in reg['lots']:
    spec=lot['spec']; pl=lot['place']; lid=spec['id']
-   if detail: add('lots',lid,world_rect(pl,spec['width'],spec['depth']),use='town')
+   use='business:funeral home' if lid in funeral_house else 'town'
+   if detail: add('lots',lid,_inset_lot_rect(pl,spec['width'],spec['depth']) if not parity else world_rect(pl,spec['width'],spec['depth']),use=use)
+   house_lot_ids.append(lid)
    plan=results.get(lid,{}).get('plan')
    if plan:
     for i,room in enumerate(plan.rooms):
@@ -184,15 +251,125 @@ def _town_scene(seed,site,serialized,detail):
      a,b,c,d=r; p=to_world(pl,spec['width'],spec['depth'],a,b); q=to_world(pl,spec['width'],spec['depth'],a+c,b+d)
      add('driveways',lid+':drive:'+str(i),(min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
     if option('stages.trees'):
-     from trees import local_markers
-     for i,p in enumerate(local_markers(plan)):
-      a,b=to_world(pl,spec['width'],spec['depth'],*p); add('trees',lid+':tree:'+str(i),(a,b,0,0))
+     if parity:
+      from trees import local_markers
+      for i,p in enumerate(local_markers(plan)):
+       a,b=to_world(pl,spec['width'],spec['depth'],*p); add('trees',lid+':tree:'+str(i),(a,b,0,0))
+     else:
+      from town_trees import town_markers
+      wr=world_rect(pl,spec['width'],spec['depth'])
+      dist=abs((wr[0]+wr[2]/2)-Xc)+abs((wr[1]+wr[3]/2)-Yc)
+      boost=2 if dist<FT(400) else (1 if dist<FT(800) else 0)
+      street_tree=H(seed,id,'stree',lid)%100<option('town.street_tree_pct')
+      for i,t in enumerate(town_markers(plan,H(seed,id),lid,centre_boost=boost,street_tree=street_tree)):
+       a,b=to_world(pl,spec['width'],spec['depth'],t['x'],t['y'])
+       add('trees',lid+':tree:'+str(i),(a,b,0,0),species=t['species'],setting=t['setting'],condition=t['condition'],label=t['label'])
   if detail:
    for shop in town['commercial']:
-    if shop.get('bldg'): add('buildings','business:'+shop['id'],shop['bldg'],use=shop['type'])
+    if shop.get('house_lot') and not parity:
+     # Already emitted as the converted house lot above.
+     continue
+    if shop.get('lot') and not parity:
+     typ=shop['type']
+     lr=shop['lot']; inset=FT(4)
+     lr=(lr[0]+inset,lr[1]+inset,max(FT(1),lr[2]-2*inset),max(FT(1),lr[3]-2*inset))
+     lr=_clip_rect_off_mains(lr)
+     add('lots','business:'+shop['id'],lr,use=f'business:{typ}')
+    if shop.get('bldg'):
+     bldg=shop['bldg'] if parity else _clip_rect_off_mains(shop['bldg'])
+     if parity:
+      add('buildings','business:'+shop['id'],bldg,use=shop['type'])
+     else:
+      add('buildings','business:'+shop['id']+':room:0',bldg,use=shop['type'])
    for i,parcel in enumerate(reg['parcels']):
-    if parcel['kind'] in ('elevator','industry'): add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
+    if parcel['kind'] in ('elevator','industry'):
+     if not parity and parcel.get('office'):
+      # Office sits inside the elevator parcel — emit a non-overlapping bin so
+      # building_collisions stays clean, and keep the co-op office + lot.
+      # (Do not name locals ox/oy — those are the scene origin for absolute().)
+      offx,offy,offw,offh=parcel['office']; px,py,pw,ph=parcel['rect']
+      bin_w,bin_h=FT(80),FT(80)
+      bx=px+pw-bin_w-FT(10) if offx<px+pw/2 else px+FT(10)
+      by=py+ph-bin_h-FT(10) if offy<py+ph/2 else py+FT(10)
+      bx=max(px,min(bx,px+pw-bin_w)); by=max(py,min(by,py+ph-bin_h))
+      add('buildings','industry:'+str(i),(bx,by,bin_w,bin_h),use=parcel['kind'])
+      add('buildings',f'business:coop:{i}:room:0',parcel['office'],use='co-op office')
+      add('lots',f'business:coop:{i}',parcel['rect'],use='business:co-op')
+     else:
+      add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
    if reg['depot']: add('buildings','depot',reg['depot'],use='depot')
+   if not parity:
+    from town_plat import place_park_and_tower, curb_starts, extend_main_to_outline
+    from town_outline import build_outline
+    occupied=list(reserved)+[road_rect(r) for r in town['streets']]
+    extras=place_park_and_tower(H(seed,id),town,occupied)
+    for ex in extras:
+     a,b=absolute(ex['rect'][0],ex['rect'][1]); c,d=absolute(ex['rect'][0]+ex['rect'][2],ex['rect'][1]+ex['rect'][3])
+     wr=(min(a,c),min(b,d),abs(c-a),abs(d-b))
+     if ex['kind']=='water_tower':
+      add('buildings','water_tower',ex['rect'],use='water tower')
+     else:
+      add('lots','park:'+ex.get('name','park'),ex['rect'],use='park')
+      town_feat['reserved'].append(wr)
+    # Lots/buildings/blocks/parks/approaches/elevator — including full street
+    # spans emptied the outline (lot_fill crashed to ~20%). Approach houses and
+    # the rail elevator sit just outside the block mass; leave them in so the
+    # outline contains >=99% of lot+building area. Main Street stretches after.
+    content=[b['rect'] for b in town['blocks']]
+    for lot in reg['lots']:
+     content.append(world_rect(lot['place'],lot['spec']['width'],lot['spec']['depth']))
+    for shop in town['commercial']:
+     if shop.get('lot'): content.append(shop['lot'])
+     if shop.get('bldg'): content.append(shop['bldg'])
+    for p in reserved:
+     content.append(p)
+    for ex in extras:
+     content.append(ex['rect'])
+    outline_local,_bbox=build_outline(content,H(seed,id,'outline'),pad_ft=50)
+    ow=[]
+    for px,py in outline_local:
+     ip=absolute(px,py); ip=(int(round(ip[0])),int(round(ip[1])))
+     if not ow or ip!=ow[-1]: ow.append(list(ip))
+    if len(ow)>1 and ow[0]==ow[-1]: ow=ow[:-1]
+    town_feat['outline']=ow
+    xs_=[p[0] for p in ow]; ys_=[p[1] for p in ow]
+    town_feat['rect']=(min(xs_),min(ys_),max(xs_)-min(xs_),max(ys_)-min(ys_))
+    town_feat['bounds']=town_feat['rect']
+    extend_main_to_outline(town,outline_local)
+    main_id=town.get('main_id')
+    if main_id:
+     main_road=next(r for r in town['streets'] if r['id']==main_id)
+     for f in out:
+      if f['id']==id+':street:'+main_id:
+       rr=road_rect(main_road)
+       a,b=absolute(rr[0],rr[1]); c,d=absolute(rr[0]+rr[2],rr[1]+rr[3])
+       f['rect']=(min(a,c),min(b,d),abs(c-a),abs(d-b)); f['bounds']=f['rect']
+    # After Main grows to the outline chord, clip lots/buildings that the wider
+    # 100-ft ROW now covers (faces were often set back only 66/2 ft).
+    main_world=[f['rect'] for f in out if f.get('road_class')=='main_street']
+    def _clip_world(r, mains):
+     x,y,w,h=r
+     for mr in mains:
+      if not (x<mr[0]+mr[2] and x+w>mr[0] and y<mr[1]+mr[3] and y+h>mr[1]): continue
+      gap=FT(2)
+      if mr[2]<=mr[3]:
+       mid=mr[0]+mr[2]/2
+       if x+w/2<mid: w=max(FT(1),min(w,mr[0]-gap-x))
+       else: nx=max(x,mr[0]+mr[2]+gap); w=max(FT(1),x+w-nx); x=nx
+      else:
+       mid=mr[1]+mr[3]/2
+       if y+h/2<mid: h=max(FT(1),min(h,mr[1]-gap-y))
+       else: ny=max(y,mr[1]+mr[3]+gap); h=max(FT(1),y+h-ny); y=ny
+     return (x,y,max(FT(1),w),max(FT(1),h))
+    if main_world:
+     for f in out:
+      if f['kind'] in ('lots','buildings') and f.get('rect') and f['rect'][2]>0 and f['rect'][3]>0:
+       f['rect']=_clip_world(f['rect'],main_world); f['bounds']=f['rect']
+    town_feat['curb_start']=[list(absolute(px,py)) for px,py in curb_starts(town)]
+    # Town owns its interior (bridge doc §1.5.1). A reserved plat under the
+    # outline makes non-road land count toward lot_fill without inventing fake lots.
+    town_feat['reserved']=list(town_feat.get('reserved') or [])
+    town_feat['reserved'].append(town_feat['rect'])
   return out
 
 def settlements(seed,rect,serialized,detail):
@@ -1802,7 +1979,7 @@ def window(seed,rect,settings=None,detail=True):
     if any(intersects(r,b['bounds']) for b in candidates.values()): del filtered[id]
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
-COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655','bridges':'#525954'}
+COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','alleys':'#c9b28a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655','bridges':'#525954'}
 # One style contract for SVG/browser rasterization and the world PNG exporter.
 WORLD_STYLE={
  'background':'#f2f1e6','colors':COLORS,
@@ -1831,6 +2008,8 @@ def svg(scene,local=False):
     a,b,c,d=f["rect"]; f["rect"]=[a-x,b-y,c,d]
    for key in ("points","shape"):
     if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
+   for key in ("outline","polygon","curb_start"):
+    if key in f: f[key]=[[a-x,b-y] for a,b in f[key]]
  from html import escape
  x,y,w,h=scene['window']
  out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{x} {y} {w} {h}"><rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{WORLD_STYLE["background"]}"/>']

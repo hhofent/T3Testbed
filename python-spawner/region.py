@@ -218,8 +218,18 @@ def choose_businesses(seed, band, year=BASE_YEAR):
     if "grocery" in out and band == number('region.choose_businesses_numbers', 'choose_businesses_215_36') and d.chance("hwy", number('region.choose_businesses_numbers', 'choose_businesses_215_58')): out[out.index("grocery")] = "grocery (highway)"
     return out
 
-def _wr(F, x0, u, w, h):   # face-local (x0 world x, u = depth from the street edge) -> world rect
-    return (x0, F["front_y"] + u, w, h) if F["fa"] == "S" else (x0, F["front_y"] - u - h, w, h)
+def _wr(F, x0, u, w, h):   # face-local (along0, depth-from-street u, along-size w, depth-size h) -> world rect
+    fa = F["fa"]
+    if fa == "S":
+        return (x0, F["front_y"] + u, w, h)
+    if fa == "N":
+        return (x0, F["front_y"] - u - h, w, h)
+    front = F.get("front_x", F["front_y"])
+    if fa == "W":
+        return (front + u, x0, h, w)
+    if fa == "E":
+        return (front - u - h, x0, h, w)
+    return (x0, F["front_y"] + u, w, h)
 
 def _main_biz(typ, x0, F, n, seed, vacant_of=None):
     D = F["d"]; dd = rng(seed, F["run"], "biz", n)
@@ -264,6 +274,12 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     if not rail_town and not (ew and ns and (d.chance("town", NORAIL_TOWN_PCT) or force_town)): return None
     cx = FT(d.choice("cx", list(BLOCK_CX))); sw = FT(d.choice("sw", list(STREET_W)))
     al = FT(d.choice("al", list(ALLEY_W))); ld = FT(d.choice("ld", list(LOT_D)))
+    # Bake-off ROW: 66 or 80 ft streets, 20 ft alleys, 100 ft Main (parity keeps CRG ranges).
+    if not option("generation.parity"):
+        from town_plat import street_width_ft, alley_w_ft, main_row_ft, highway_local_axis
+        sw = FT(street_width_ft(seed)); al = FT(alley_w_ft()); main_half = FT(main_row_ft()) // 2
+    else:
+        main_half = ROW // number('region.make_town_numbers', 'make_town_281_29')
     cy = number('region.make_town_numbers', 'make_town_263_9') * ld + al + sw
     size = d.weighted("size", TOWN_SIZE)
     if rail_town:
@@ -275,6 +291,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     b = rows // number('region.make_town_numbers', 'make_town_271_16')
     ys = [Yc + k * cy for k in range(-b, rows - b + number('region.make_town_numbers', 'make_town_272_52'))]
     names_h = ["Williams St", "Durbend St", "Doring St", "Elm St", "Maple St"]
+    hwy_local = highway_local_axis(rail_town) if not option("generation.parity") else "h"
     streets = []
     for k, x in enumerate(xs):
         if x != Xc: streets.append({"id": f"T-A{k}", "name": f"{k + number('region.make_town_numbers', 'make_town_276_68')}{'st' if k == number('region.make_town_numbers', 'make_town_276_84') else 'nd' if k == number('region.make_town_numbers', 'make_town_276_104') else 'rd' if k == number('region.make_town_numbers', 'make_town_276_124') else 'th'} Ave",
@@ -282,7 +299,13 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     for k, y in enumerate(ys):
         if y != Yc: streets.append({"id": f"T-S{k}", "name": names_h[k % number('region.make_town_numbers', 'make_town_279_73')], "axis": "h", "type": "paved", "c": y,
                                      "lo": xs[number('region.make_town_numbers', 'make_town_280_46')], "hi": xs[-number('region.make_town_numbers', 'make_town_280_60')], "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_280_87')})
-    hw = lambda v, c: ROW // number('region.make_town_numbers', 'make_town_281_29') if v == c else sw // number('region.make_town_numbers', 'make_town_281_52')
+    def hw(v, c):
+        if v == c and not option("generation.parity"):
+            # Highway axis uses 100-ft Main half-width; cross axis uses street half-width.
+            if (hwy_local == "h" and c == Yc) or (hwy_local == "v" and c == Xc):
+                return main_half
+            return sw // number('region.make_town_numbers', 'make_town_281_52')
+        return ROW // number('region.make_town_numbers', 'make_town_281_29') if v == c else sw // number('region.make_town_numbers', 'make_town_281_52')
     sb = {k: FT(v[number('region.make_town_numbers', 'make_town_282_18')] + d.int("sb" + k, v[number('region.make_town_numbers', 'make_town_282_41')] - v[number('region.make_town_numbers', 'make_town_282_48')] + number('region.make_town_numbers', 'make_town_282_53'))) for k, v in TOWN_SB.items()}
     blocks, alleys, lots, faces = [], [], [], []
     for i in range(cols):
@@ -348,17 +371,84 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         x = bx0; used = number('region.make_town_numbers', 'make_town_344_24')
         for n, k in enumerate(takes):
             w = k * BASE_LOT + (rest if used + k == nb else number('region.make_town_numbers', 'make_town_346_60'))
-            px = x if fa == "S" else bx1 - (x - bx0) - w
-            out.append({"id": f"{run}:{n}", "w": w, "d": bld, "setting": "town", "kind": "town",
-                        "place": {"x0": px, "y0": y0, "facing": fa}, "along": px, "base_lots": k,
-                        "house_type": "trailer" if (k == number('region.make_town_numbers', 'make_town_350_57') and used in tr) else "stick", "use": "house"})
+            if F.get("ew"):
+                # E/W face: along is Y, depth is X; bx0/bx1 are y-extent.
+                py = x if fa == "W" else bx1 - (x - bx0) - w
+                front = F.get("front_x", F["front_y"])
+                if fa == "W":
+                    place = {"x0": front, "y0": py, "facing": "W"}
+                else:
+                    place = {"x0": front - bld, "y0": py, "facing": "E"}
+                out.append({"id": f"{run}:{n}", "w": w, "d": bld, "setting": "town", "kind": "town",
+                            "place": place, "along": py, "base_lots": k,
+                            "house_type": "trailer" if (k == number('region.make_town_numbers', 'make_town_350_57') and used in tr) else "stick", "use": "house"})
+            else:
+                px = x if fa == "S" else bx1 - (x - bx0) - w
+                out.append({"id": f"{run}:{n}", "w": w, "d": bld, "setting": "town", "kind": "town",
+                            "place": {"x0": px, "y0": y0, "facing": fa}, "along": px, "base_lots": k,
+                            "house_type": "trailer" if (k == number('region.make_town_numbers', 'make_town_350_57') and used in tr) else "stick", "use": "house"})
             x += w; used += k
         return out
+    # Non-parity: restore some punched blocks, outward lots, avenue/highway E-W faces.
+    if not option("generation.parity"):
+        from town_plat import refill_ragged_blocks, add_outward_lots, add_avenue_and_highway_faces
+        kept = {b["ij"] for b in blocks}
+        for bnew in refill_ragged_blocks(seed, cols, rows, xs, ys, Xc, Yc, kept, size, cy, cx, hw, al, creeks, rail_hits):
+            blocks.append(bnew)
+            bld = bnew["lot_d"]; i, j = bnew["ij"]
+            bx0, by0, bw, bh = bnew["rect"]; bx1, by1 = bx0 + bw, by0 + bh
+            alleys.append((bx0, by0 + bld, bx1 - bx0, al))
+            for half, y0, fa in (("S", by0, "S"), ("N", by1 - bld, "N")):
+                front = ys[j] if half == "S" else ys[j + 1]
+                faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": bx0, "bx1": bx1, "d": bld,
+                              "front_y": by0 if half == "S" else by1, "main": front == Yc if hwy_local == "h" else False,
+                              "dist": min(abs(xs[i] - Xc), abs(xs[i + 1] - Xc)), "from_lo": xs[i] == Xc or (xs[i + 1] != Xc and xs[i] < Xc)})
+        # Mark highway-main faces: rail towns keep Yc; highway towns use Xc (added below).
+        if hwy_local == "v":
+            for F in faces:
+                F["main"] = False
+        converted = add_avenue_and_highway_faces(seed, {"Xc": Xc, "Yc": Yc, "highway_local": hwy_local, "cols": cols, "rows": rows, "street_w": sw, "rail_town": rail_town},
+                                     faces, xs, ys, blocks, hw, al, None)
+        if converted:
+            conv_ij = set()
+            for F in converted:
+                bid = F["run"].split(":")[1]  # b{i}{j}
+                for b in blocks:
+                    if b["id"] == bid:
+                        conv_ij.add(b["ij"])
+                        break
+            new_alleys = []
+            for ar in alleys:
+                drop = False
+                for b in blocks:
+                    if b["ij"] not in conv_ij:
+                        continue
+                    br = b["rect"]
+                    if ar[1] >= br[1] and ar[1] + ar[3] <= br[1] + br[3] and ar[0] >= br[0] - 1 and ar[0] + ar[2] <= br[0] + br[2] + 1:
+                        drop = True
+                        break
+                if not drop:
+                    new_alleys.append(ar)
+            # No replacement alley on highway-frontage blocks (commercial; avoids
+            # vertical-alley orphans / parallel overlaps with avenues).
+            alleys[:] = new_alleys
+        # Outward lots deferred (perimeter doubles overlapped); park/approach cover fringe.
     houses = sum(len(face_lots(F, F["bx0"], F["bx1"])) for F in faces)          # pass 1: houses before businesses
     pop = round(houses * PEOPLE_PER_HOUSE); band = town_band(force_pop if force_pop else pop)
     year = region_year(seed); prog = choose_businesses(seed, band, year); db = rng(seed, "bizplace")
-    mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
-    off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
+    if not option("generation.parity"):
+        # Highway towns: downtown faces the v-street (Xc). Rail towns: keep Yc frontage.
+        if hwy_local == "v":
+            mains = sorted((F for F in faces if F.get("main")), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
+            if not mains:
+                mains = sorted((F for F in faces if F.get("ew") and F.get("main")), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
+            off = sorted((F for F in faces if F.get("ew") and not F.get("main")), key=lambda F: (F["dist"], F["run"]))
+        else:
+            mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
+            off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
+    else:
+        mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
+        off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
     for F in faces: F["lo"], F["hi"] = F["bx0"], F["bx1"]
     def take(F, w, far=False):
         if F["hi"] - F["lo"] < w: return None
@@ -391,6 +481,73 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             x0 = take(F, cnt * BASE_LOT, far=True)
             if x0 is not None: F["church"] = True; commercial.append(_church(x0, cnt * BASE_LOT, F, c, cnt)); break
         else: unplaced.append("church")
+    edge_want = [t for t in prog if t in EDGE or t == "grocery (highway)"]
+    # Top-up downtown businesses BEFORE house lots are cut, so take() reserves frontage.
+    if not option("generation.parity"):
+        from town_biz import topup_program
+        town_stub = {"band": band, "program": prog, "commercial": commercial, "edge_want": edge_want, "unplaced": unplaced}
+        topup_program(seed, town_stub)
+        prog, edge_want, unplaced = town_stub["program"], town_stub["edge_want"], town_stub["unplaced"]
+        def put2(typ, faces_, w, **k):
+            nonlocal n
+            for F in faces_:
+                x0 = take(F, w)
+                if x0 is not None:
+                    if typ == "church":
+                        commercial.append(_church(x0, w, F, n, max(1, w // BASE_LOT))); n += 1
+                    else:
+                        commercial.append(_main_biz(typ, x0, F, n, seed, **k)); n += 1
+                    return True
+            if typ not in unplaced:
+                unplaced.append(typ)
+            return False
+        def _have():
+            h = set()
+            for c in commercial:
+                t = c["type"]
+                if t.startswith("vacant"):
+                    continue
+                h.add(t)
+                if t == "bank (branch)":
+                    h.add("bank")
+            return h
+        have = _have()
+        for typ in list(prog):
+            if typ in have:
+                continue
+            if typ in ("implement dealer", "lumberyard", "school", "auto repair", "vet", "nursing home", "farm supply", "elevator", "funeral home", "grocery (highway)", "feed mill"):
+                if typ not in edge_want and typ in EDGE:
+                    edge_want.append(typ)
+                continue
+            if typ in edge_want:
+                continue
+            if typ == "church":
+                # Residential multi-lot footprint (same as the parity church path).
+                cnt = number('region.make_town_numbers', 'make_town_384_14') + db.int(f"cl_top{typ}", number('region.make_town_numbers', 'make_town_384_35'))
+                w = cnt * BASE_LOT
+                placed = False
+                for F in sorted(res, key=lambda F: H(seed, "church_top", F["run"])):
+                    if F.get("church"):
+                        continue
+                    x0 = take(F, w, far=True)
+                    if x0 is not None:
+                        F["church"] = True
+                        commercial.append(_church(x0, w, F, n, cnt)); n += 1
+                        placed = True
+                        break
+                if not placed and typ not in unplaced:
+                    unplaced.append(typ)
+                have = _have()
+                continue
+            w = FT(25)
+            if typ == "gas station":
+                w = FT(100)
+            elif typ in ("bank", "post office", "Legion hall"):
+                w = FT(50)
+            elif typ == "city hall / fire":
+                w = FT(75)
+            put2(typ, mains[1:] + mains[:1] + off, w)
+            have = _have()
     for F in faces: lots.extend(face_lots(F, F["lo"], F["hi"]))
     if "funeral home" in prog:                              # converted house near main street
         cand = [L for L in lots if L["house_type"] == "stick" and any(L["id"].startswith(F["run"] + ":") for F in mains + off)]
@@ -400,14 +557,44 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                                "lot": world_rect(L["place"], L["w"], L["d"]), "bldg": None, "parking": [], "curb": None,
                                "canopy": None, "pumps": [], "storefront": False, "vacant": False, "house_lot": L["id"]})
         else: unplaced.append("funeral home")
-    edge_want = [t for t in prog if t in EDGE or t == "grocery (highway)"]
     if not blocks: return None  # Every proposed block may be rejected by waterways.
     bx = [b["rect"] for b in blocks]
-    box = (min(r[number('region.make_town_numbers', 'make_town_401_17')] for r in bx) - sw, min(r[number('region.make_town_numbers', 'make_town_401_45')] for r in bx) - sw, number('region.make_town_numbers', 'make_town_401_67'), number('region.make_town_numbers', 'make_town_401_70'))
-    box = (box[number('region.make_town_numbers', 'make_town_402_15')], box[number('region.make_town_numbers', 'make_town_402_23')], max(r[number('region.make_town_numbers', 'make_town_402_33')] + r[number('region.make_town_numbers', 'make_town_402_40')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_67')], max(r[number('region.make_town_numbers', 'make_town_402_77')] + r[number('region.make_town_numbers', 'make_town_402_84')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_111')])
-    return {"Xc": Xc, "Yc": Yc, "cols": cols, "rows": rows, "cx": cx, "cy": cy, "street_w": sw, "alley_w": al,
+    if not option("generation.parity"):
+        lot_rects = [world_rect(L["place"], L["w"], L["d"]) for L in lots]
+        all_rects = list(bx) + lot_rects
+        box = (min(r[0] for r in all_rects) - sw, min(r[1] for r in all_rects) - sw, 0, 0)
+        box = (box[0], box[1], max(r[0] + r[2] for r in all_rects) + sw - box[0], max(r[1] + r[3] for r in all_rects) + sw - box[1])
+    else:
+        box = (min(r[number('region.make_town_numbers', 'make_town_401_17')] for r in bx) - sw, min(r[number('region.make_town_numbers', 'make_town_401_45')] for r in bx) - sw, number('region.make_town_numbers', 'make_town_401_67'), number('region.make_town_numbers', 'make_town_401_70'))
+        box = (box[number('region.make_town_numbers', 'make_town_402_15')], box[number('region.make_town_numbers', 'make_town_402_23')], max(r[number('region.make_town_numbers', 'make_town_402_33')] + r[number('region.make_town_numbers', 'make_town_402_40')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_67')], max(r[number('region.make_town_numbers', 'make_town_402_77')] + r[number('region.make_town_numbers', 'make_town_402_84')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_111')])
+    town = {"Xc": Xc, "Yc": Yc, "cols": cols, "rows": rows, "cx": cx, "cy": cy, "street_w": sw, "alley_w": al,
             "setbacks": sb, "blocks": blocks, "alleys": alleys, "streets": streets, "lots": lots, "box": box, "rail_town": rail_town, "commercial": commercial,
             "year": year, "size": size, "pop_est": pop, "houses_est": houses, "band": band, "program": prog, "edge_want": edge_want, "unplaced": unplaced}
+    if not option("generation.parity"):
+        from town_plat import apply_row_tags, trim_fringe_stubs, approach_houses
+        town["highway_local"] = hwy_local
+        town["xs"] = xs
+        town["ys"] = ys
+        trim_fringe_stubs(town)
+        apply_row_tags(town)
+        # Approach-house strings: place only if they do not overlap existing lots.
+        existing_rects = [world_rect(L["place"], L["w"], L["d"]) for L in town["lots"]]
+        for L in approach_houses(seed, town, None):
+            wr = world_rect(L["place"], L["w"], L["d"])
+            if any(overlaps(wr, o) for o in existing_rects):
+                continue
+            if any(overlaps(wr, road_rect(s)) for s in town["streets"]):
+                continue
+            town["lots"].append(L)
+            existing_rects.append(wr)
+        lot_rects = [world_rect(L["place"], L["w"], L["d"]) for L in town["lots"]]
+        all_rects = [b["rect"] for b in town["blocks"]] + lot_rects
+        if all_rects:
+            x0 = min(r[0] for r in all_rects) - sw
+            y0 = min(r[1] for r in all_rects) - sw
+            town["box"] = (x0, y0, max(r[0] + r[2] for r in all_rects) + sw - x0, max(r[1] + r[3] for r in all_rects) + sw - y0)
+            apply_row_tags(town)
+    return town
 
 def place_rail_features(seed, town, rail, occupied, bar=None):
     """Rail towns only: depot between road and track, elevator 3-6 ac across the track with a siding beside it."""
@@ -431,12 +618,14 @@ def place_rail_features(seed, town, rail, occupied, bar=None):
 
 def _edge_slot(town, ew, lw, ld, rail, occupied, order=(-number('region.invariants_numbers', '_edge_slot_426_57'), number('region.invariants_numbers', '_edge_slot_426_60'))):
     b = town["box"]; top = N_MI * MILE
+    rural_half = ROW // number('region.invariants_numbers', '_edge_slot_433_38')
+    hwy_half = FT(int(option('town.main_row_ft'))) // 2 if not option('generation.parity') else rural_half
     for step in range(number('region.invariants_numbers', '_edge_slot_428_22')):
         for sx in order if order != (number('region.invariants_numbers', '_edge_slot_429_37'), number('region.invariants_numbers', '_edge_slot_429_40')) else (number('region.invariants_numbers', '_edge_slot_429_49'), -number('region.invariants_numbers', '_edge_slot_429_53')):
             for sy in (number('region.invariants_numbers', '_edge_slot_430_23'), -number('region.invariants_numbers', '_edge_slot_430_27')):
                 gap = FT(number('region.invariants_numbers', '_edge_slot_431_25')) + step * FT(number('region.invariants_numbers', '_edge_slot_431_41'))
                 x0 = b[number('region.invariants_numbers', '_edge_slot_432_23')] - gap - lw if sx < number('region.invariants_numbers', '_edge_slot_432_45') else b[number('region.invariants_numbers', '_edge_slot_432_54')] + b[number('region.invariants_numbers', '_edge_slot_432_61')] + gap
-                y0 = ew["c"] + ROW // number('region.invariants_numbers', '_edge_slot_433_38') if sy > number('region.invariants_numbers', '_edge_slot_433_48') else ew["c"] - ROW // number('region.invariants_numbers', '_edge_slot_433_72') - ld
+                y0 = ew["c"] + hwy_half if sy > number('region.invariants_numbers', '_edge_slot_433_48') else ew["c"] - hwy_half - ld
                 lot = (x0, y0, lw, ld)
                 if x0 < number('region.invariants_numbers', '_edge_slot_435_24') or x0 + lw > top or y0 < number('region.invariants_numbers', '_edge_slot_435_51') or y0 + ld > top: continue
                 if rail_hits(rail, lot) or any(overlaps(lot, o) for o in occupied): continue
@@ -446,22 +635,40 @@ def _edge_slot(town, ew, lw, ld, rail, occupied, order=(-number('region.invarian
 def place_edge_biz(seed, town, roads, rail, occupied):
     """Edge-of-town / highway businesses fronting the E-W blacktop just past the town edge (CRG siting; PLACEHOLDER sizes)."""
     ew = next(r for r in roads if r["type"] == "paved" and r["axis"] == "h"); b = town["box"]; top = N_MI * MILE
+    edge_fp = dict(EDGE_FP)
+    if not option("generation.parity"):
+        from town_biz import EXTRA_EDGE_FP
+        for k, v in EXTRA_EDGE_FP.items():
+            edge_fp.setdefault(k, v)
     for k, typ in enumerate(town["edge_want"]):
-        lw, ld, bw, bd, sb = (FT(v) for v in EDGE_FP[typ]); done = False
+        if typ not in edge_fp:
+            town["unplaced"].append(typ); continue
+        lw, ld, bw, bd, sb = (FT(v) for v in edge_fp[typ]); done = False
         for step in range(number('region.place_edge_biz_numbers', 'place_edge_biz_445_26')):
             for sx in (-number('region.place_edge_biz_numbers', 'place_edge_biz_446_24'), number('region.place_edge_biz_numbers', 'place_edge_biz_446_27')):
                 for sy in (number('region.place_edge_biz_numbers', 'place_edge_biz_447_27'), -number('region.place_edge_biz_numbers', 'place_edge_biz_447_31')):
                     gap = FT(number('region.place_edge_biz_numbers', 'place_edge_biz_448_29')) + step * FT(number('region.place_edge_biz_numbers', 'place_edge_biz_448_45'))
                     x0 = b[number('region.place_edge_biz_numbers', 'place_edge_biz_449_27')] - gap - lw if sx < number('region.place_edge_biz_numbers', 'place_edge_biz_449_49') else b[number('region.place_edge_biz_numbers', 'place_edge_biz_449_58')] + b[number('region.place_edge_biz_numbers', 'place_edge_biz_449_65')] + gap
-                    y0 = ew["c"] + ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_450_42') if sy > number('region.place_edge_biz_numbers', 'place_edge_biz_450_52') else ew["c"] - ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_450_76') - ld
+                    # Non-parity: sit outside the 100-ft Main half-width so the lot does not
+                    # sit under Main Street; add a curb apron that reaches the paved ROW so
+                    # test_business_access_and_no_overlap still sees street access.
+                    rural_half = ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_450_42')
+                    hwy_half = FT(int(option('town.main_row_ft'))) // 2 if not option('generation.parity') else rural_half
+                    y0 = ew["c"] + hwy_half if sy > number('region.place_edge_biz_numbers', 'place_edge_biz_450_52') else ew["c"] - hwy_half - ld
                     lot = (x0, y0, lw, ld)
                     if x0 < number('region.place_edge_biz_numbers', 'place_edge_biz_452_28') or x0 + lw > top or y0 < number('region.place_edge_biz_numbers', 'place_edge_biz_452_55') or y0 + ld > top: continue
                     if rail_hits(rail, lot) or any(overlaps(lot, o) for o in occupied): continue
                     L = lambda x, u, w, h: (x0 + x, y0 + u, w, h) if sy > number('region.place_edge_biz_numbers', 'place_edge_biz_454_74') else (x0 + x, y0 + ld - u - h, w, h)
                     bx = (lw - bw) // number('region.place_edge_biz_numbers', 'place_edge_biz_455_38')
+                    # Curb apron from the paved ROW edge out to the lot front.
+                    apron = max(FT(8), hwy_half - rural_half + FT(4))
+                    if sy > number('region.place_edge_biz_numbers', 'place_edge_biz_450_52'):
+                        curb = (x0, ew["c"] + rural_half - FT(4), lw, apron)
+                    else:
+                        curb = (x0, ew["c"] - rural_half - apron + FT(4), lw, apron)
                     rec = {"id": f"edge{k}", "type": typ, "site": "edge of town on " + ew["name"], "lot": lot, "bldg": L(bx, sb, bw, bd),
                            "parking": [L(number('region.place_edge_biz_numbers', 'place_edge_biz_457_41'), number('region.place_edge_biz_numbers', 'place_edge_biz_457_44'), lw, sb)] if typ in ("implement dealer", "lumberyard") else [L(max(number('region.place_edge_biz_numbers', 'place_edge_biz_457_113'), bx - FT(number('region.place_edge_biz_numbers', 'place_edge_biz_457_124'))), number('region.place_edge_biz_numbers', 'place_edge_biz_457_130'), min(lw, bw + FT(number('region.place_edge_biz_numbers', 'place_edge_biz_457_149'))), sb)],
-                           "curb": None, "canopy": None, "pumps": [], "storefront": False, "vacant": False, "front_y": ew["c"] + sy * (ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_458_142'))}
+                           "curb": curb if not option('generation.parity') else None, "canopy": None, "pumps": [], "storefront": False, "vacant": False, "front_y": ew["c"] + sy * (ROW // number('region.place_edge_biz_numbers', 'place_edge_biz_458_142'))}
                     if typ == "school": rec["field"] = L(FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_60')), sb + bd + FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_78')), FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_86')), min(FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_99')), ld - sb - bd - FT(number('region.place_edge_biz_numbers', 'place_edge_biz_459_123'))))
                     if typ in ("implement dealer", "lumberyard"): rec["yard"] = "gravel"
                     town["commercial"].append(rec); occupied.append(lot); done = True; break

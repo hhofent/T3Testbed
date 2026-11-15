@@ -1,6 +1,6 @@
 """Main-street storefronts with a controlled highway strip (N12)."""
 from settings import option
-from region import FT,overlaps,rail_hits,_edge_slot
+from region import FT, overlaps, rail_hits, _edge_slot, ROW
 from spawner import H
 
 def arrange(reg):
@@ -15,6 +15,7 @@ def arrange(reg):
  road=next((r for r in reg['grid_roads'] if r['type']=='paved' and r['axis']=='h'),None)
  if not road: return
  occupied=[town['box']]+[p['rect'] for p in reg['parcels'] if not p.get('in_town')]+[c['lot'] for c in town['commercial'] if c['site'].startswith('edge')]
+ rural_half=ROW//2
  for shop in town['commercial']:
   if not shop.get('storefront') and shop['type']!='gas station': continue
   if H(reg['seed'],shop['id'],'highway')/2**64 < share: continue
@@ -24,9 +25,17 @@ def arrange(reg):
   if not slot: continue
   lot,local,side=slot; old=shop['lot']; dx,dy=lot[0]-old[0],lot[1]-old[1]
   def shift(rect): return (rect[0]+dx,rect[1]+dy,rect[2],rect[3]) if rect else None
-  for key in ('bldg','curb','canopy'): shop[key]=shift(shop.get(key))
+  for key in ('bldg','canopy'): shop[key]=shift(shop.get(key))
   for key in ('parking','pumps'): shop[key]=[shift(r) for r in shop.get(key,[])]
   shop['lot']=lot; shop['site']='highway strip'; occupied.append(lot)
+  # Fresh curb apron that reaches the paved ROW (shifted downtown curb often misses).
+  x0,y0,lw,ld=lot
+  if side>0:
+   cy0=road['c']+rural_half-FT(4)
+   shop['curb']=(x0, cy0, lw, max(FT(8), y0-cy0))
+  else:
+   cy1=road['c']-rural_half+FT(4)
+   shop['curb']=(x0, y0+ld, lw, max(FT(8), cy1-(y0+ld)))
   if shop['type']=='gas station':
    for parcel in reg['parcels']:
     if parcel['kind']=='fuel' and parcel.get('in_town'): parcel['rect']=lot
