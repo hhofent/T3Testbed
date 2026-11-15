@@ -2647,6 +2647,10 @@ define('rural.windbreak_row_ft',16,10,30,1,'ft','Spacing between windbreak rows 
 define('rural.windbreak_spacing_ft',14,8,24,1,'ft','In-row spacing of windbreak plants.')
 define('rural.windbreak_extend_ft',100,40,200,10,'ft','Windbreak extension past the last main building toward S/E.')
 define('rural.windbreak_clear_ft',75,40,120,5,'ft','Ideal clearance from inner windbreak row to buildings.')
+define('crossing.cmp_max_ft',6,2,12,1,'ft','CMP culvert when channel width is under this (NBI-style width rule).')
+define('crossing.box_max_ft',20,10,40,1,'ft','Box culvert from cmp_max_ft up to this; bridges above (NBI 20 ft threshold).')
+define('crossing.bridge_min_ft',20,10,40,1,'ft','Minimum bridge span_ft; matches the NBI bridge-length threshold.')
+define('crossing.culvert_mark_ft',24,8,60,2,'ft','Drawn length of CMP/box culvert marks (short pipe/box, not a deck).')
 
 define('world.rail_diagonal_pct',65,0,100,1,'percent','Share of eligible rural rail sections with diagonal bends; road crossings stay square.')
 define('world.rail_bend_miles',0.25,0,0.5,0.05,'mi','Rail deviation between square crossing approaches and road-parallel sections.')

@@ -112,13 +112,20 @@ def world_png(scene,width=1440):
                     line=minimum or WORLD_STYLE['outline_px']
                     ax.add_patch(Rectangle((a,b),c,d,facecolor=color,edgecolor=edge,linewidth=line*.72,snap=False,zorder=layer+1))
                 else:
-                    points=ftr['points']; widths=ftr.get('widths')
+                    points=ftr.get('draw_points') or ftr['points']; widths=ftr.get('widths')
                     raw=ftr.get('width',FT(1))
                     if kind=='rail' or (kind=='bridges' and ftr.get('surface')=='rail'): raw=FT(__import__('settings').option('world.rail_draw_ft'))
+                    raw=raw*style.get('width_scale',1)
                     if widths:
-                        segments=list(zip(points,points[1:])); strokes=[max(minimum,(a+b)/2/w*width)*.72 for a,b in zip(widths,widths[1:])]
+                        segments=list(zip(ftr['points'],ftr['points'][1:])); strokes=[max(minimum,(a+b)/2/w*width)*.72 for a,b in zip(widths,widths[1:])]
                     else: segments=[points]; strokes=[max(minimum,raw/w*width)*.72]
-                    ax.add_collection(LineCollection(segments,colors=color,linewidths=strokes,capstyle='round' if widths or kind in ('rivers','creeks') else 'butt',snap=False,zorder=layer+1))
+                    dashes=style.get('dash') or None
+                    if dashes:
+                        seq=tuple(max(0.5,float(x)) for x in dashes.split())
+                        line_style=(0,seq) if seq else 'solid'
+                    else:
+                        line_style='solid'
+                    ax.add_collection(LineCollection(segments,colors=color,linewidths=strokes,linestyles=line_style,capstyle='round' if widths or kind in ('rivers','creeks') else 'butt',snap=False,zorder=layer+1))
         ax.set_xlim(x,x+w); ax.set_ylim(y+h,y); ax.set_aspect('equal',adjustable='box');ax.set_axis_off()
         buf=io.BytesIO();fig.savefig(buf,format='png',dpi=100,facecolor=fig.get_facecolor(),metadata={'Software':'Python spawner'});return buf.getvalue()
     finally: plt.close(fig)

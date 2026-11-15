@@ -1736,7 +1736,57 @@ def crossing_point(a,b,c,d):
  if not (0<=t<=1 and 0<=s<=1): return None
  return (a[0]+t*u[0],a[1]+t*u[1]),t,s,abs(det)/(math.hypot(*u)*math.hypot(*v))
 
-def bridges(features):
+# January 1989 Iowa COUNTY NBI mix (HR-323, 1990, Fig. 1), re-normalized:
+# drop FHWA 119 concrete culvert (4.84%) and the unlisted remainder (~10.45%);
+# divide the remaining top-ten shares (sum 84.71%) by 84.71.
+# Weights are tenths of a percent and sum to 1000.
+COUNTY_BRIDGE_TYPES=(
+ ('steel_stringer',302,331),
+ ('timber_stringer',702,246),
+ ('concrete_slab',201,153),  # FHWA 201+101 combined
+ ('steel_pony_truss',380,105),
+ ('prestressed_concrete',502,80),  # FHWA 502+504 combined
+ ('steel_continuous_stringer',402,54),
+ ('steel_thru_truss',310,31),
+)
+
+def _pick_county_bridge_type(seed,crossing_id):
+ r=H(seed,'bridge-type',crossing_id)%1000
+ for name,fhwa,weight in COUNTY_BRIDGE_TYPES:
+  if r<weight: return name,fhwa
+  r-=weight
+ return COUNTY_BRIDGE_TYPES[-1][0],COUNTY_BRIDGE_TYPES[-1][1]
+
+def _classify_crossing(seed,crossing_id,channel_ticks,deck_ticks,carrier):
+ """Width rule + 1989 Iowa county bridge mix. channel_ft is never altered."""
+ channel_ft=channel_ticks/FT(1)
+ deck_len_ft=deck_ticks/FT(1)
+ # deck_ft 16-66: unsourced except 1991 grader guide 26-28 ft gravel top; label simplified.
+ deck_ft=16+(H(seed,'deck-ft',crossing_id)%51)
+ if carrier=='roads' and not option('generation.parity'):
+  if channel_ft<option('crossing.cmp_max_ft'):
+   structure,structure_class,fhwa='cmp_culvert','culvert',None
+   span_ft=max(channel_ft,option('crossing.cmp_max_ft')-0.5)
+  elif channel_ft<=option('crossing.box_max_ft'):
+   structure,structure_class,fhwa='box_culvert','culvert',None
+   span_ft=max(channel_ft,channel_ft)  # at least the channel; box up to 20 ft
+  else:
+   structure,fhwa=_pick_county_bridge_type(seed,crossing_id)
+   structure_class='bridge'
+   span_ft=min(deck_len_ft,max(option('crossing.bridge_min_ft'),channel_ft))
+ else:
+  # Rail (and parity): keep a working crossing mark; rail is left out of the mix.
+  if channel_ft<option('crossing.cmp_max_ft'):
+   structure,structure_class,fhwa='cmp_culvert','culvert',None
+  elif channel_ft<=option('crossing.box_max_ft'):
+   structure,structure_class,fhwa='box_culvert','culvert',None
+  else:
+   structure,structure_class,fhwa='steel_stringer','bridge',302
+  span_ft=min(deck_len_ft,max(option('crossing.bridge_min_ft') if structure_class=='bridge' else channel_ft,channel_ft))
+ return dict(structure=structure,structure_class=structure_class,channel_ft=channel_ft,
+             span_ft=span_ft,deck_ft=deck_ft,fhwa_type=fhwa,label='simplified')
+
+def bridges(features,seed=0):
  # Every carrier/water-segment pair owns its deck, independent of query order.
  cells={}; segments={}
  def keys(a,b):
@@ -1764,7 +1814,17 @@ def bridges(features):
     ux,uy=(b[0]-a[0])/length,(b[1]-a[1])/length
     points=[(p[0]-half*ux,p[1]-half*uy),(p[0]+half*ux,p[1]+half*uy)]
     id='bridge:'+road['id']+'|'+water_id
-    decks[id]=feature('bridges',id,points=points,width=road.get('width',option('region.row')),owner_id=road['id'],river_segment_id=water_id,carrier=road['kind'],surface=road.get('surface','rail'),crossing=p)
+    kw=dict(points=points,width=road.get('width',option('region.row')),owner_id=road['id'],river_segment_id=water_id,carrier=road['kind'],surface=road.get('surface','rail'),crossing=p)
+    if not option('generation.parity'):
+     deck_ticks=math.dist(points[0],points[1])
+     kw.update(_classify_crossing(seed,id,water_width,deck_ticks,road['kind']))
+     # Culverts draw as short pipe/box marks centered on the crossing; bridges keep the full deck.
+     if kw.get('structure_class')=='culvert':
+      mark=FT(option('crossing.culvert_mark_ft'))/2
+      kw['draw_points']=[(p[0]-mark*ux,p[1]-mark*uy),(p[0]+mark*ux,p[1]+mark*uy)]
+     else:
+      kw['draw_points']=points
+    decks[id]=feature('bridges',id,**kw)
  # Gravel always bridges in this version: no water closure can orphan frontage.
  return list(decks.values())
 
@@ -1808,7 +1868,7 @@ def window(seed,rect,settings=None,detail=True):
     rejected=[f['id'] for f in tile if f['kind'] in ('lots','farms') and any(intersects(f['bounds'],e) for e in envelopes)]
     countryside.extend(f for f in tile if not any(f['id']==id or f['id'].startswith(id+':') for id in rejected))
   out.extend(countryside); out.extend(urban)
-  out.extend(bridges(out))
+  out.extend(bridges(out,seed))
   filtered={f['id']:f for f in out if intersects(f['bounds'],rect)}
   # A marker is rejected against geometry from every owner, including shared borders.
   blockers=[f for f in out if f['kind'] in ('roads','rail','buildings','driveways')]
@@ -1826,23 +1886,40 @@ def window(seed,rect,settings=None,detail=True):
   return {'seed':seed,'window':rect,'features':copy.deepcopy(sorted(filtered.values(),key=lambda f:(f['kind'],f['id'])))}
 
 COLORS={'contours':'#b5ba9b','rivers':'#509bc6','creeks':'#67a9cc','rail':'#685553','roads':'#b9a17a','buildings':'#d6dfc4','driveways':'#c8bea9','trees':'#3c6946','towns':'none','lots':'none','farms':'#8b7655','bridges':'#525954'}
+# Distinct stroke per crossing structure (Iowa county NBI types + culverts).
+CROSSING_STYLE={
+ 'cmp_culvert':{'color':'#6e5b4a','dash':'8 10','width_scale':.55},
+ 'box_culvert':{'color':'#4a4a4a','dash':'','width_scale':.9},
+ 'steel_stringer':{'color':'#3d4f5f','dash':'','width_scale':1},
+ 'timber_stringer':{'color':'#7a5a32','dash':'14 6','width_scale':1},
+ 'concrete_slab':{'color':'#6a6e72','dash':'','width_scale':1.15},
+ 'steel_pony_truss':{'color':'#2f5d4a','dash':'4 6 12 6','width_scale':1.05},
+ 'prestressed_concrete':{'color':'#5a6270','dash':'18 4','width_scale':1.1},
+ 'steel_continuous_stringer':{'color':'#34485a','dash':'2 4','width_scale':1},
+ 'steel_thru_truss':{'color':'#1f3d2f','dash':'6 3 2 3','width_scale':1.2},
+}
 # One style contract for SVG/browser rasterization and the world PNG exporter.
 WORLD_STYLE={
  'background':'#f2f1e6','colors':COLORS,
  'roads':{'paved':'#525954','gravel':'#b9a17a','dirt':'#9a784c'},
  'minimum_px':{'paved':1.2,'gravel':.65,'dirt':.65,'rail':1.2,'river':1.5,'tributary':.8,'towns':.8},
  'gravel_hide_above_mi':48,'outline':'#687060','parcel_outline':'#b5c0ab','outline_px':.3,
+ 'crossings':CROSSING_STYLE,
  'order':['contours','rivers','creeks','towns','lots','roads','rail','bridges','driveways','buildings','trees','farms']}
 
 def feature_style(f):
- kind=f['kind']; color=COLORS[kind]; minimum=0; hide=0
- if kind in ('roads','bridges'):
+ kind=f['kind']; color=COLORS[kind]; minimum=0; hide=0; dash=''; width_scale=1
+ if kind=='bridges' and f.get('structure') in CROSSING_STYLE:
+  cs=CROSSING_STYLE[f['structure']]; color=cs['color']; dash=cs['dash']; width_scale=cs['width_scale']
+  surface=f.get('surface','paved'); minimum=WORLD_STYLE['minimum_px'].get(surface,1.2)
+  if surface in ('gravel','dirt'): hide=WORLD_STYLE['gravel_hide_above_mi']
+ elif kind in ('roads','bridges'):
   surface=f.get('surface','paved'); color=COLORS['rail'] if surface=='rail' else WORLD_STYLE['roads'][surface]
   minimum=WORLD_STYLE['minimum_px'][surface]
   if surface in ('gravel','dirt'): hide=WORLD_STYLE['gravel_hide_above_mi']
  elif kind=='rivers': minimum=WORLD_STYLE['minimum_px']['tributary' if f.get('stream_order',3)<3 else 'river']
  elif kind in ('rail','towns'): minimum=WORLD_STYLE['minimum_px'][kind]
- return dict(color=color,minimum_px=minimum,hide_above_mi=hide)
+ return dict(color=color,minimum_px=minimum,hide_above_mi=hide,dash=dash,width_scale=width_scale)
 
 def svg(scene,local=False):
  if local:
@@ -1852,7 +1929,7 @@ def svg(scene,local=False):
   for f in scene["features"]:
    if "rect" in f:
     a,b,c,d=f["rect"]; f["rect"]=[a-x,b-y,c,d]
-   for key in ("points","shape"):
+   for key in ("points","shape","draw_points"):
     if key in f: f[key]=[(a-x,b-y) for a,b in f[key]]
  from html import escape
  x,y,w,h=scene['window']
@@ -1862,8 +1939,10 @@ def svg(scene,local=False):
   for f in scene['features']:
    if f['kind']!=kind: continue
    style=feature_style(f); color=style['color']
-   title=escape(f['id']+' '+str(f.get('use','')))
-   out.append(f'<g data-kind="{kind}" data-minimum-px="{style["minimum_px"]}" data-hide-above-mi="{style["hide_above_mi"]}"><title>'+title+'</title>')
+   title=escape(f['id']+' '+str(f.get('use',f.get('structure',''))))
+   dash_attr=f' stroke-dasharray="{style["dash"]}"' if style.get('dash') else ''
+   struct_attr=f' data-structure="{f["structure"]}"' if f.get('structure') else ''
+   out.append(f'<g data-kind="{kind}" data-minimum-px="{style["minimum_px"]}" data-hide-above-mi="{style["hide_above_mi"]}"{struct_attr}><title>'+title+'</title>')
    if kind=='farms':
     a,b,c,d=f['rect']; out.append(f'<circle cx="{a+c/2}" cy="{b+d/2}" r="{FT(45)}" fill="{color}"/>')
    elif kind=='trees':
@@ -1874,13 +1953,15 @@ def svg(scene,local=False):
     a,b,c,d=f['rect']; stroke='#b5c0ab' if kind in ('towns','lots') else '#687060'
     out.append(f'<rect x="{a}" y="{b}" width="{c}" height="{d}" fill="{color}" stroke="{stroke}" stroke-width="{0.9 if kind=="roads" else 0.3}" vector-effect="non-scaling-stroke"/>')
    else:
-    points=' '.join(f'{a},{b}' for a,b in f['points'])
+    geom=f.get('draw_points') or f['points']
+    points=' '.join(f'{a},{b}' for a,b in geom)
     width=f.get('width',FT(1)) if kind in ('rivers','creeks') else FT(option('world.rail_draw_ft')) if kind=='rail' or (kind=='bridges' and f.get('surface')=='rail') else f.get('width',FT(1))
+    width=width*style.get('width_scale',1)
     if 'widths' in f:
      for a,b,wa,wb in zip(f['points'],f['points'][1:],f['widths'],f['widths'][1:]):
       out.append(f'<polyline points="{a[0]},{a[1]} {b[0]},{b[1]}" fill="none" stroke="{color}" stroke-width="{(wa+wb)/2}" stroke-linecap="round"/>')
     else:
      cap='round' if kind in ('rivers','creeks') else 'butt'
-     out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}" stroke-linecap="{cap}"/>')
+     out.append(f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="{width}" stroke-linecap="{cap}"{dash_attr}/>')
    out.append('</g>')
  out.append('</svg>'); return ''.join(out).encode()
