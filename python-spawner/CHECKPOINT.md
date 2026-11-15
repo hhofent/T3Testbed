@@ -6,7 +6,7 @@
 - B: done — added the ten `town.*` settings. Fast subset 70 passed, 1 deselected (8.30 s); scorer 27 failing checks; milestone 122 passed, 3 deselected (104.20 s). Next: C.
 - C: done — town residential ROW 66/80 ft, 20-ft alleys, 100-ft T-MAIN streets and highway-local metadata added; legacy address matching excludes T-MAIN to avoid frontage trap. Fast subset 70 passed (6.84 s); scorer 20 failing checks; milestone 122 passed (98.06 s). Next: D.
 - D: done — generalized storefront face geometry to W/E, carved 140-ft highway business frontage in non-rail towns, and prioritized these business faces; fast subset 70 passed (8.14 s), scorer 21 failing checks, milestone 122 passed (100.68 s). Highway-town frontage target passes. Next: E.
-- E: partly done — business variety/top-ups and feature emission exist; reconciliation with ordered E placement and global required-type union remains.
+- E: done — centralized TOWN_TOPUP/TOWN_MIN_TYPES, retained parity gating, retries storefront placement at the far end, and emits business lots/co-op offices. Fast subset 70 passed (7.99 s); scorer 20 failing checks; milestone 122 passed (120.11 s). Business variety and required-type union pass. Next: F.
 - F: partly done — seeded tree markers exist; settings and exact step F placement still need reconciliation.
 - G: partly done — alley emission exists; interior recovery and outer lots remain.
 - H: partly done — SVG outline polygon is present but required raster outline and containment/fill targets are incomplete.
@@ -1062,3 +1062,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Step C committed/pushed after fast subset, scorer, and milestone. Scorer confirms street_row_widths passes all five towns.
 
 - Step D committed/pushed after the required fast subset, scorer, and milestone. It introduces one extra scorer failure overall (road conflict) but resolves highway-town frontage.
+
+- Step E committed/pushed after all three required checks. Scorer report remains in check-results/town-bakeoff/python-test_town-bakeoff-luna/summary.md.

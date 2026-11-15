@@ -192,6 +192,10 @@ STOREFRONT = DEFAULTS['region.storefront']
 EDGE = DEFAULTS['region.edge']
 # edge parcels: (lot w, lot d, bldg w, bldg d, front setback) ft
 EDGE_FP = DEFAULTS['region.edge_fp']
+TOWN_TOPUP = ["post office", "church", "cafe", "tavern", "gas station", "bank", "grocery", "hardware",
+              "insurance", "beauty shop", "auto repair", "implement dealer", "school", "city hall / fire",
+              "lumberyard", "locker plant", "vet", "farm supply", "drug store", "funeral home", "nursing home"]
+TOWN_MIN_TYPES = {"tiny": 6, "mid": 12, "big": 15}
 COMM_COUNT = DEFAULTS['region.comm_count']
 
 def town_band(pop): return number('region.invariants_numbers', 'town_band_194_27') if pop < BANDS[number('region.invariants_numbers', 'town_band_194_44')] else number('region.invariants_numbers', 'town_band_194_52') if pop < BANDS[number('region.invariants_numbers', 'town_band_194_69')] else number('region.invariants_numbers', 'town_band_194_77')
@@ -382,10 +386,8 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     year = region_year(seed); prog = choose_businesses(seed, band, year); db = rng(seed, "bizplace")
     # Ensure a representative 1990 small-town business mix, with deterministic
     # top-ups when the independent probability draws leave a sparse program.
-    topup = [] if option("generation.parity") else ["post office", "church", "cafe", "tavern", "gas station", "bank", "grocery", "hardware",
-             "insurance", "beauty shop", "auto repair", "implement dealer", "school", "city hall / fire",
-             "lumberyard", "locker plant", "vet", "farm supply", "drug store", "funeral home"]
-    need = {"tiny": 6, "mid": 15, "big": 19}.get(size, 15)
+    topup = [] if option("generation.parity") else TOWN_TOPUP
+    need = TOWN_MIN_TYPES.get(size, 12) + (0 if size == "tiny" else 3)
     present = set(prog) | ({"grain elevator", "feed mill", "co-op"} if rail_town else set())
     if "elevator" in prog: present.add("grain elevator")
     added = []
@@ -408,6 +410,9 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         nonlocal n
         for F in faces_:
             x0 = take(F, w)
+            if x0 is not None: commercial.append(_main_biz(typ, x0, F, n, seed, **k)); n += number('region.make_town_numbers', 'make_town_370_92'); return True
+        for F in faces_:
+            x0 = take(F, w, far=True)
             if x0 is not None: commercial.append(_main_biz(typ, x0, F, n, seed, **k)); n += number('region.make_town_numbers', 'make_town_370_92'); return True
         unplaced.append(typ); return False
     if "gas station" in prog: put("gas station", mains[:number('region.make_town_numbers', 'make_town_372_56')], FT(number('region.make_town_numbers', 'make_town_372_63')))
