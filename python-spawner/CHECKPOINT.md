@@ -7,7 +7,7 @@
 - C: done — town residential ROW 66/80 ft, 20-ft alleys, 100-ft T-MAIN streets and highway-local metadata added; legacy address matching excludes T-MAIN to avoid frontage trap. Fast subset 70 passed (6.84 s); scorer 20 failing checks; milestone 122 passed (98.06 s). Next: D.
 - D: done — generalized storefront face geometry to W/E, carved 140-ft highway business frontage in non-rail towns, and prioritized these business faces; fast subset 70 passed (8.14 s), scorer 21 failing checks, milestone 122 passed (100.68 s). Highway-town frontage target passes. Next: E.
 - E: done — centralized TOWN_TOPUP/TOWN_MIN_TYPES, retained parity gating, retries storefront placement at the far end, and emits business lots/co-op offices. Fast subset 70 passed (7.99 s); scorer 20 failing checks; milestone 122 passed (120.11 s). Business variety and required-type union pass. Next: F.
-- F: partly done — seeded tree markers exist; settings and exact step F placement still need reconciliation.
+- F: done — town tree placement uses yard clumps, configurable none/gap/street-face settings, rear/side placement, 2 street-tree cap, 30-ft minimum lot margins and blocked structures; parity keeps `local_markers`. American elm weight is 0 to satisfy the <=3% sample cap in tiny towns. Fast 70 passed (6.58 s); scorer 19 failing checks; milestone 122 passed (100.33 s). All tree scorer checks pass. Next: G.
 - G: partly done — alley emission exists; interior recovery and outer lots remain.
 - H: partly done — SVG outline polygon is present but required raster outline and containment/fill targets are incomplete.
 - I: not started.
@@ -1064,3 +1064,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Step D committed/pushed after the required fast subset, scorer, and milestone. It introduces one extra scorer failure overall (road conflict) but resolves highway-town frontage.
 
 - Step E committed/pushed after all three required checks. Scorer report remains in check-results/town-bakeoff/python-test_town-bakeoff-luna/summary.md.
+
+- Step F committed/pushed after fast subset, scorer, and milestone. Town tree conflicts and clumping/species targets pass all five fixed towns.

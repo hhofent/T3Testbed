@@ -216,10 +216,17 @@ def _town_scene(seed,site,serialized,detail):
      a,b,c,d=r; p=to_world(pl,spec['width'],spec['depth'],a,b); q=to_world(pl,spec['width'],spec['depth'],a+c,b+d)
      add('driveways',lid+':drive:'+str(i),(min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
     if option('stages.trees'):
-     from trees import town_markers
-     markers=town_markers(plan,spec['seed'],street_trees=(H(seed,'street-trees',lid.rsplit(':',1)[0])%100<50))
+     if option('generation.parity'):
+      from trees import local_markers
+      markers=[{'x':a,'y':b,'species':'','setting':'yard','condition':'good'} for a,b in local_markers(plan)]
+     else:
+      from trees import town_markers
+      older=math.dist((pl['x0']+spec['width']//2,pl['y0']+spec['depth']//2),(town['Xc'],town['Yc']))<1.5*town['cx']
+      markers=town_markers(plan,spec['seed'],older=older,street_trees=(H(seed,'street-trees',lid.rsplit(':',1)[0])%100<option('town.street_tree_pct')))
      for i,t in enumerate(markers):
-      a,b=to_world(pl,spec['width'],spec['depth'],t['x'],t['y']); add('trees',lid+':tree:'+str(i),(a,b,0,0),species=t['species'],setting=t['setting'],condition=t['condition'],label='simplified')
+      a,b=to_world(pl,spec['width'],spec['depth'],t['x'],t['y'])
+      attrs={} if option('generation.parity') else dict(species=t['species'],setting=t['setting'],condition=t['condition'],label='simplified')
+      add('trees',lid+':tree:'+str(i),(a,b,0,0),**attrs)
   if detail:
    for shop in town['commercial']:
     if shop.get('lot') and shop['type']!='funeral home': add('lots','business:'+shop['id'],shop['lot'],use='business:'+shop['type'])
