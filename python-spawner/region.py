@@ -299,13 +299,15 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         for j in range(rows):
             outer = i in (number('region.make_town_numbers', 'make_town_286_26'), cols - number('region.make_town_numbers', 'make_town_286_36')) or j in (number('region.make_town_numbers', 'make_town_286_48'), rows - number('region.make_town_numbers', 'make_town_286_58'))
             on_main = Yc in (ys[j], ys[j + number('region.make_town_numbers', 'make_town_287_43')]) and min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_287_83')] - Xc)) < number('region.make_town_numbers', 'make_town_287_95') * cx
-            if size != "tiny" and outer and not on_main and rng(seed, "ragged", i, j).chance("skip", RAGGED_PCT): continue
+            if size != "tiny" and outer and not on_main and rng(seed, "ragged", i, j).chance("skip", RAGGED_PCT):
+                continue
             bx0, bx1 = xs[i] + hw(xs[i], Xc), xs[i + number('region.make_town_numbers', 'make_town_289_53')] - hw(xs[i + number('region.make_town_numbers', 'make_town_289_68')], Xc)
             by0, by1 = ys[j] + hw(ys[j], Yc), ys[j + number('region.make_town_numbers', 'make_town_290_53')] - hw(ys[j + number('region.make_town_numbers', 'make_town_290_68')], Yc)
             if rail_hits(list(creeks), (bx0, by0, bx1 - bx0, by1 - by0)): continue        # town stops at the floodplain
             # ribbon growth: blocks on the main paved roads always grow; others thin out with distance from both roads
             ra = min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_293_49')] - Xc)) / cx; rb = min(abs(ys[j] - Yc), abs(ys[j + number('region.make_town_numbers', 'make_town_293_102')] - Yc)) / cy
-            if min(ra, rb) >= number('region.make_town_numbers', 'make_town_294_30') and not rng(seed, "ribbon", i, j).chance("keep", max(number('region.make_town_numbers', 'make_town_294_85'), number('region.make_town_numbers', 'make_town_294_89') - RIBBON_DECAY * number('region.make_town_numbers', 'make_town_294_110') / max(cols, rows, number('region.make_town_numbers', 'make_town_294_130')) * (ra + rb - number('region.make_town_numbers', 'make_town_294_146')))): continue
+            if min(ra, rb) >= number('region.make_town_numbers', 'make_town_294_30') and not rng(seed, "ribbon", i, j).chance("keep", max(number('region.make_town_numbers', 'make_town_294_85'), number('region.make_town_numbers', 'make_town_294_89') - RIBBON_DECAY * number('region.make_town_numbers', 'make_town_294_110') / max(cols, rows, number('region.make_town_numbers', 'make_town_294_130')) * (ra + rb - number('region.make_town_numbers', 'make_town_294_146')))):
+                if option("generation.parity"): continue
             bld = (by1 - by0 - al) // number('region.make_town_numbers', 'make_town_295_38')
             blocks.append({"id": f"b{i}{j}", "ij": (i, j), "rect": (bx0, by0, bx1 - bx0, by1 - by0), "lot_d": bld})
             alleys.append((bx0, by0 + bld, bx1 - bx0, al))
@@ -646,7 +648,7 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
         if L["kind"] == "town":
             sb = town["setbacks"]
             ov.update(front_setback=sb["front"], front_min=FT(TOWN_SB["front"][number('region.make_region_numbers', 'make_region_596_79')]), rear_setback=sb["rear"], rear_min=FT(TOWN_SB["rear"][number('region.make_region_numbers', 'make_region_596_137')]),
-                      acc_rear=FT(number('region.make_region_numbers', 'make_region_597_34') + dl.int("ar", number('region.make_region_numbers', 'make_region_597_51'))), base_lots=L["base_lots"], house_type=L["house_type"], alley_rear=True, use=L.get("use", "house"))
+                      acc_rear=FT(number('region.make_region_numbers', 'make_region_597_34') + dl.int("ar", number('region.make_region_numbers', 'make_region_597_51'))), base_lots=L["base_lots"], house_type=L["house_type"], alley_rear=L.get("alley_rear", True), use=L.get("use", "house"))
             for k in ("left", "right"):
                 c = corner == k
                 ov[f"side_{k}"] = sb["corner"] if c else sb["side"]
