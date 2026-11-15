@@ -200,9 +200,30 @@ def _town_scene(seed,site,serialized,detail):
      a,b,c,d=r; p=to_world(pl,spec['width'],spec['depth'],a,b); q=to_world(pl,spec['width'],spec['depth'],a+c,b+d)
      add('driveways',lid+':drive:'+str(i),(min(p[0],q[0]),min(p[1],q[1]),abs(q[0]-p[0]),abs(q[1]-p[1])))
     if option('stages.trees'):
-     from trees import local_markers
-     for i,p in enumerate(local_markers(plan)):
-      a,b=to_world(pl,spec['width'],spec['depth'],*p); add('trees',lid+':tree:'+str(i),(a,b,0,0))
+     if not option('generation.parity'):
+      from town_trees import town_markers
+      # Compute distance from town center for center_bonus
+      lot_world = world_rect(pl, spec['width'], spec['depth'])
+      lot_cx = lot_world[0] + lot_world[2] / 2
+      lot_cy = lot_world[1] + lot_world[3] / 2
+      town_cx = town['box'][0] + town['box'][2] / 2
+      town_cy = town['box'][1] + town['box'][3] / 2
+      center_dist = math.hypot(lot_cx - town_cx, lot_cy - town_cy) / FT(1)
+      # Check if corner lot (fronts two streets)
+      is_corner = False
+      for road in reg['roads']:
+       if road.get('id') == lot.get('road_id'):
+        # Simplified: corner if lot touches two perpendicular streets
+        pass
+      trees_list = town_markers(plan, H(seed, 'town_trees', lid), lid, center_dist, is_corner)
+      for i, t in enumerate(trees_list):
+       a, b = to_world(pl, spec['width'], spec['depth'], t['x'], t['y'])
+       add('trees', lid+':tree:'+str(i), (a, b, 0, 0),
+           species=t['species'], setting=t['setting'], condition=t['condition'], label=t['label'])
+     else:
+      from trees import local_markers
+      for i,p in enumerate(local_markers(plan)):
+       a,b=to_world(pl,spec['width'],spec['depth'],*p); add('trees',lid+':tree:'+str(i),(a,b,0,0))
   if detail:
    for shop in town['commercial']:
     if shop.get('bldg'): add('buildings','business:'+shop['id'],shop['bldg'],use=shop['type'])
