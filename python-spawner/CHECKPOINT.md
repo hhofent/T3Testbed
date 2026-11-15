@@ -1,6 +1,17 @@
 
 # ACTIVE: town bake-off on python-test/town-bakeoff-luna
 
+## Town bake-off step status (re-read 2026-11-14)
+- A: done — isolated worktree/branch and scorer hash verified, baseline 41 failures, baseline inner subset and milestone recorded in run history.
+- B: done — added the ten `town.*` settings. Fast subset 70 passed, 1 deselected (8.30 s); scorer 27 failing checks; milestone 122 passed, 3 deselected (104.20 s). Next: C.
+- C: not started.
+- D: not started.
+- E: partly done — business variety/top-ups and feature emission exist; must be reconciled with ordered step E requirements.
+- F: partly done — seeded tree markers exist; settings and exact step F placement still need reconciliation.
+- G: partly done — alley emission exists; interior recovery and outer lots remain.
+- H: partly done — SVG outline polygon is present but required raster outline and containment/fill targets are incomplete.
+- I: not started.
+- J: not started.
 - Worktree: T3-bakeoff-luna; start commit verified as 2469802febb1d9c2e4885830b5b8ae36b668bb83.
 - Shared scorer copied unchanged; normalized SHA-256 verified. Baseline: 41 failing checks.
 - First commit 6fc040c adds the shared check and is pushed to python-test/town-bakeoff-luna.
@@ -1045,3 +1056,5 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Latest scorer: 27 failing checks. Remaining target failures include outline containment and lot fill. Some previously existing street/tree/frontage/overlap checks also fail.
 
 - Milestone pytest subset subsequently completed: 122 passed, 3 deselected in 95.73 s. Deselections are the instructed slow river tests; no river files were changed.
+
+- Step B committed/pushed after the required fast subset, scorer, and milestone runs; no settings consumer changed in B.
