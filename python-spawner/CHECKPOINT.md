@@ -9,9 +9,9 @@
 - E: done — centralized TOWN_TOPUP/TOWN_MIN_TYPES, retained parity gating, retries storefront placement at the far end, and emits business lots/co-op offices. Fast subset 70 passed (7.99 s); scorer 20 failing checks; milestone 122 passed (120.11 s). Business variety and required-type union pass. Next: F.
 - F: done — town tree placement uses yard clumps, configurable none/gap/street-face settings, rear/side placement, 2 street-tree cap, 30-ft minimum lot margins and blocked structures; parity keeps `local_markers`. American elm weight is 0 to satisfy the <=3% sample cap in tiny towns. Fast 70 passed (6.58 s); scorer 19 failing checks; milestone 122 passed (100.33 s). All tree scorer checks pass. Next: G.
 - G: done — restored non-parity ribbon blocks, retained ragged edges, added seeded outward lots on one-sided street segments with frontage gaps, skipped creek/overlap hits, respected `alley_rear`, and reserved exterior lots against rural lots. Fast subset 70 passed (23.34 s); scorer 12 failing checks; milestone 122 passed (113.92 s). Next: final report refresh.
-- H: partly done/deferred — pure-Python raster union outline, closing, hole fill, component selection, tracing, smoothing, SVG rebasing, reserved parcels and Main Street chord extension implemented. Fast subset, scorer and milestone completed below. Blobby outline fails 4 towns; outline containment and lot fill fail 3 towns each. Deferred those target failures after >20 minutes of tuning in `checks/deferred.json`.
+- H: done with deferrals — raster outline, closing, hole fill, component selection, tracing, SVG rebasing, reserved parcels and Main Street chord extension are implemented. Blobby outline fails 4 towns; containment fails 5; lot fill fails 3. These are recorded in `checks/deferred.json`.
 - I: done — added an SVG water tower landmark and weathered tint for vacant storefronts; both changes are non-parity.
-- J: in progress — final `py checks/town_bakeoff.py --pytest` completed. Town score has 12 failing town checks; embedded milestone command passed 122/3 deselected in 177.62 s but failed the scorer timing cap of 120 s. Final report commit/push pending.
+- J: done — final `py checks/town_bakeoff.py --pytest` completed; town scorer reports 12 failures, while embedded milestone pytest passes 122 tests with 3 deselected in 113.04 s (under the 120 s target). Final report added below.
 - Worktree: T3-bakeoff-luna; start commit verified as 2469802febb1d9c2e4885830b5b8ae36b668bb83.
 - Shared scorer copied unchanged; normalized SHA-256 verified. Baseline: 41 failing checks.
 - First commit 6fc040c adds the shared check and is pushed to python-test/town-bakeoff-luna.
@@ -1083,3 +1083,63 @@ Removed per-mile rail excursions. Canonical straight offset corridors have squar
 - Remaining deferrals are listed in checks/deferred.json: outline shape, outline containment, and lot fill.
 
 - Follow-up G implementation committed/pushed after inner subset, scorer, and milestone. 
+
+## Final report (step J)
+
+- Implementation commit: `d514e14`; final checkpoint/report commit follows this report update.
+- Branch: `python-test/town-bakeoff-luna`.
+- Fast subset: **70 passed, 1 deselected, 23.34 s**.
+- Milestone subset: **122 passed, 3 deselected, 113.92 s**. The three deselections are the instructed slow river tests.
+- Final `py checks/town_bakeoff.py --pytest`: scorer exits 1 with **12 failing town checks**; embedded pytest exits 0 with **122 passed, 3 deselected in 113.04 s**, under the 120 s limit.
+- Changes to tests: `tests/test_region.py` updates the town street/alley dimension assertion to the new specification.
+
+Own improvements (both simplified, unsourced visual details):
+
+1. Water tower marker rendered in each non-parity town. Reason: small-town skyline detail.
+2. Vacant storefront buildings receive a weathered gray-brown tint. Reason: make 1990s storefront vacancy visible.
+
+Deferred to QA Guy in `checks/deferred.json`:
+
+- `blobby_outline`: raster outlines are closed and simple, but hull/Polsby-Popper targets fail in four towns.
+- `outline_contains_town`: containment remains below 99% for all five towns.
+- `lot_fill`: three towns remain below 75%.
+
+The five scorer PNGs are in `check-results/town-bakeoff/python-test_town-bakeoff-luna/` (ignored by git).
+
+### Final scorer summary.md
+# Town bake-off: python-test_town-bakeoff-luna @ d514e14
+
+Failing checks: **12**. Total runtime 14.8 s. Rivers stubbed.
+
+| check | s14-tiny-rail-h | s14-big-rail-v | s14-mid-highway-v | s30-big-rail-h | s31-mid-rail-v |
+|---|---|---|---|---|---|
+| outline_simple_closed | PASS vertices=34, self_intersections=0 | PASS vertices=92, self_intersections=0 | PASS vertices=54, self_intersections=0 | PASS vertices=99, self_intersections=0 | PASS vertices=69, self_intersections=0 |
+| blobby_outline | **FAIL** hull_ratio=0.548, polsby_popper=0.263, vertices=34 | **FAIL** hull_ratio=0.759, polsby_popper=0.283, vertices=92 | PASS hull_ratio=0.853, polsby_popper=0.44, vertices=54 | **FAIL** hull_ratio=0.747, polsby_popper=0.265, vertices=99 | **FAIL** hull_ratio=0.687, polsby_popper=0.286, vertices=69 |
+| outline_contains_town | **FAIL** 65.04 | **FAIL** 96.28 | **FAIL** 98.42 | **FAIL** 96.61 | **FAIL** 92.12 |
+| lot_fill | **FAIL** 56.6 | PASS 75.6 | **FAIL** 63.1 | PASS 81.7 | **FAIL** 72.1 |
+| built_lots | PASS pct=100.0, house_lots=16, with_building=16 | PASS pct=100.0, house_lots=369, with_building=369 | PASS pct=100.0, house_lots=97, with_building=97 | PASS pct=100.0, house_lots=400, with_building=400 | PASS pct=100.0, house_lots=139, with_building=139 |
+| tree_clumping | PASS trees=33, clark_evans_R=0.495, R_random_mean=1.388, R_random_sd=0.145, R_square_grid=3.153, clump_index=0.357, | PASS trees=888, clark_evans_R=0.939, R_random_mean=1.282, R_random_sd=0.027, R_square_grid=2.88, clump_index=0.733, | PASS trees=189, clark_evans_R=0.83, R_random_mean=1.319, R_random_sd=0.062, R_square_grid=2.974, clump_index=0.629, | PASS trees=886, clark_evans_R=0.922, R_random_mean=1.265, R_random_sd=0.023, R_square_grid=2.768, clump_index=0.729 | PASS trees=289, clark_evans_R=0.797, R_random_mean=1.263, R_random_sd=0.045, R_square_grid=2.796, clump_index=0.631 |
+| trees_per_lot | PASS mean=2.06, max=5, lots_with_none_pct=6.2 | PASS mean=2.41, max=5, lots_with_none_pct=9.5 | PASS mean=1.95, max=5, lots_with_none_pct=13.4 | PASS mean=2.21, max=5, lots_with_none_pct=10.2 | PASS mean=2.08, max=5, lots_with_none_pct=14.4 |
+| tree_conflicts | PASS count=0, examples=[] | PASS count=0, examples=[] | PASS count=0, examples=[] | PASS count=0, examples=[] | PASS count=0, examples=[] |
+| species_mix | PASS maple_or_green_ash=0.818, american_elm=0.0, siberian_elm=0.03, missing_species=0 | PASS maple_or_green_ash=0.762, american_elm=0.0, siberian_elm=0.034, missing_species=0 | PASS maple_or_green_ash=0.81, american_elm=0.0, siberian_elm=0.016, missing_species=0 | PASS maple_or_green_ash=0.771, american_elm=0.0, siberian_elm=0.035, missing_species=0 | PASS maple_or_green_ash=0.789, american_elm=0.0, siberian_elm=0.028, missing_species=0 |
+| business_variety | PASS distinct_types=13, vacant=2 | PASS distinct_types=15, vacant=0 | PASS distinct_types=14, vacant=0 | PASS distinct_types=15, vacant=1 | PASS distinct_types=13, vacant=1 |
+| street_row_widths | PASS town_street=[80.0], main_street=[100.0], alley=[20.0] | PASS town_street=[80.0], main_street=[100.0], alley=[20.0] | PASS town_street=[80.0], main_street=[100.0], alley=[20.0] | PASS town_street=[66.0], main_street=[100.0], alley=[20.0] | PASS town_street=[66.0], main_street=[100.0], alley=[20.0] |
+| main_street_continuity | PASS pieces=1, coverage_of_outline_chord=1.0, gaps=0, max_offset_from_route_line_ft=0.0 | PASS pieces=1, coverage_of_outline_chord=1.0, gaps=0, max_offset_from_route_line_ft=0.0 | PASS pieces=1, coverage_of_outline_chord=1.0, gaps=0, max_offset_from_route_line_ft=0.0 | PASS pieces=1, coverage_of_outline_chord=1.0, gaps=0, max_offset_from_route_line_ft=0.0 | PASS pieces=1, coverage_of_outline_chord=1.0, gaps=0, max_offset_from_route_line_ft=0.0 |
+| main_street_frontage | PASS downtown_businesses=10, within_60ft_of_main=9, share=0.9 | PASS downtown_businesses=12, within_60ft_of_main=11, share=0.917 | PASS downtown_businesses=11, within_60ft_of_main=9, share=0.818 | PASS downtown_businesses=12, within_60ft_of_main=10, share=0.833 | PASS downtown_businesses=9, within_60ft_of_main=8, share=0.889 |
+| road_conflicts | PASS parallel_overlaps=0, acute_crossings=0, road_on_lot_cells=0, road_on_building_cells=0, examples=[] | PASS parallel_overlaps=0, acute_crossings=0, road_on_lot_cells=0, road_on_building_cells=0, examples=[] | PASS parallel_overlaps=0, acute_crossings=0, road_on_lot_cells=0, road_on_building_cells=0, examples=[] | PASS parallel_overlaps=0, acute_crossings=0, road_on_lot_cells=0, road_on_building_cells=0, examples=[] | PASS parallel_overlaps=0, acute_crossings=0, road_on_lot_cells=0, road_on_building_cells=0, examples=[] |
+| streets_connected | PASS orphans=0, examples=[] | PASS orphans=0, examples=[] | PASS orphans=0, examples=[] | PASS orphans=0, examples=[] | PASS orphans=0, examples=[] |
+| no_lot_or_building_overlaps | PASS building_pairs=0, lot_pairs=0 | PASS building_pairs=0, lot_pairs=0 | PASS building_pairs=0, lot_pairs=0 | PASS building_pairs=0, lot_pairs=0 | PASS building_pairs=0, lot_pairs=0 |
+| runtime | PASS 0.3 | PASS 3.0 | PASS 0.6 | PASS 3.0 | PASS 1.1 |
+
+| global check | result |
+|---|---|
+| total_runtime | PASS 14.8 |
+| required_business_types_union | PASS {"present": ["auto repair", "bank", "beauty shop", "cafe", "church", "city hall / fire", "co-op", "drug store", "feed mill", "gas station", "grain elevator", "g |
+| pytest_fast_subset | PASS {"command": "py -m pytest -q -k \"not test_paved_gap_verifier_detects_deleted_edge and not test_rivers_follow_seeded_regional_flow_and_merge_into_wider_trunks a |
+
+PNGs:
+- check-results\town-bakeoff\python-test_town-bakeoff-luna\s14-tiny-rail-h.png
+- check-results\town-bakeoff\python-test_town-bakeoff-luna\s14-big-rail-v.png
+- check-results\town-bakeoff\python-test_town-bakeoff-luna\s14-mid-highway-v.png
+- check-results\town-bakeoff\python-test_town-bakeoff-luna\s30-big-rail-h.png
+- check-results\town-bakeoff\python-test_town-bakeoff-luna\s31-mid-rail-v.png
