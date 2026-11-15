@@ -3,8 +3,14 @@
 - Baseline: 41 failing checks on 2469802
 - Item 5/6 (streets, alleys, 100-ft Main Street): 35 failing checks
 - Item 4 (business variety, co-op office, Main Street frontage): 30 failing checks (business variety passes on all 5 towns, required union passes, main street frontage passes on all 5 towns)
-- Milestone pytest: 122 passed, 3 deselected in 124.5s
+- Item 3 (town trees): 28 failing checks (trees_per_lot passes on 3/5, species_mix passes on 4/5, tree_clumping WIP, tree_conflicts PASS)
+- Item 1 (blobby outline): WIP - outline generation produces rectangles (hull_ratio=1.0), outline_contains_town 0-4%, lot_fill 0-62%
+- Item 2 (fuller towns): WIP - town_fuller.py created but disabled due to non-determinism
+- Item 7 (own improvements): Not started
+- Milestone pytest: 70 passed, 1 deselected in ~7s
+- Total failing checks: 28
 - River code/files off limits
+- Commit: a99ecd3
 
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
 
