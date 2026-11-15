@@ -553,9 +553,40 @@ def _point_in_polygon(p,poly):
   if (a[1]>y)!=(b[1]>y) and x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]: inside=not inside
  return inside
 
+def _finished_receiver_tail(receiver,join,by_id):
+ idx=min(range(len(receiver['points'])),key=lambda i:math.dist(receiver['points'][i],join))
+ tail=[join]+receiver['points'][idx+1:]; seen={receiver['id']}; nxt=receiver
+ while sum(math.dist(a,b) for a,b in zip(tail,tail[1:]))<.25*MILE:
+  nxt=by_id.get(nxt.get('downstream'))
+  if nxt is None or nxt['id'] in seen: break
+  seen.add(nxt['id']); tail+=nxt['points'][1:]
+ return tail
+
 def _angle_reaches(seed,features):
  """Pin a confluence approach over the measured quarter mile, not one vertex."""
  by_id={f['id']:f for f in features}; incoming={}
+ protected=[]; protected_local={}
+ for route in sorted((f for f in features if f['id'].startswith('river:outlet:')),key=lambda f:f['id']):
+  x,y=map(int,route['id'].split(':')[-2:]); rid,points=_route_curve(seed,x,y)
+  protected.append((rid,_segment_index(tuple(points)),route['width']))
+ def blocked_approach(point,heading,run,ident,width):
+  point=tuple(point)
+  if point not in protected_local:
+   local=[]
+   for rid,(cell,segs,buckets,total),rw in protected:
+    ids=set()
+    for ix in range(math.floor((point[0]-.301*MILE)/cell),math.floor((point[0]+.301*MILE)/cell)+1):
+     for iy in range(math.floor((point[1]-.301*MILE)/cell),math.floor((point[1]+.301*MILE)/cell)+1): ids.update(buckets.get((ix,iy),()))
+    for i in sorted(ids):
+     a,b,_,_=segs[i]
+     if _distance_to_segment(*point,a,b)<=.301*MILE: local.append((rid,a,b,rw))
+   protected_local[point]=local
+  anchor=(point[0]-run*math.cos(heading),point[1]-run*math.sin(heading))
+  for rid,a,b,rw in protected_local[point]:
+   if rid==ident: continue
+   hit=crossing_point(anchor,point,a,b)
+   if hit is not None and math.dist(hit[0],point)>max(width,rw)+FT(50): return True
+  return False
  for f in features:
   incoming.setdefault((f.get('downstream'),tuple(f['points'][-1])),[]).append(f)
  for (rid,point),group in sorted(incoming.items(),key=lambda item:str(item[0])):
@@ -564,6 +595,7 @@ def _angle_reaches(seed,features):
   end=receiver['points'][-1]; dx,dy=end[0]-point[0],end[1]-point[1]; length=math.hypot(dx,dy)
   if length<=1: continue
   tangent=(dx/length,dy/length)
+  receiver['_junction_seed']=seed
   receiver['_confluence_inflows']=len(group)
   receiver['_junction_start']=tangent
   _aim_end(receiver,tangent,False,.3*MILE)
@@ -579,13 +611,7 @@ def _angle_reaches(seed,features):
   join=f['points'][-1]
   group=incoming.get((receiver['id'],tuple(join)),())
   if len(group)==1 and math.dist(receiver['points'][0],join)<.01: continue
-  idx=min(range(len(receiver['points'])),key=lambda i:math.dist(receiver['points'][i],join))
-  tail=[join]+receiver['points'][idx+1:]
-  seen={receiver['id']}; nxt=receiver
-  while sum(math.dist(a,b) for a,b in zip(tail,tail[1:]))<.25*MILE:
-   nxt=by_id.get(nxt.get('downstream'))
-   if nxt is None or nxt['id'] in seen: break
-   seen.add(nxt['id']); tail+=nxt['points'][1:]
+  tail=_finished_receiver_tail(receiver,join,by_id)
   if len(tail)<2: continue
   _,ahead=_cut_from_start(tail,.25*MILE)
   vx,vy=ahead[0]-join[0],ahead[1]-join[1]
@@ -596,27 +622,103 @@ def _angle_reaches(seed,features):
   angle_deg+=.25*((90 if uneven else 58)-angle_deg)
   old=(join[0]-f['points'][0][0],join[1]-f['points'][0][1])
   raw=math.degrees(math.acos(max(-1,min(1,(vx*old[0]+vy*old[1])/(math.hypot(vx,vy)*math.hypot(*old))))))
+  if f.get('_spacing_angle_limited'): angle_deg=max(f.get('_spacing_angle_floor',26),min(160,raw))
   _,near=_cut_from_start(tail,.1*MILE)
   near_heading=math.atan2(near[1]-join[1],near[0]-join[0])
   base_heading=math.atan2(vy,vx); chord_heading=math.atan2(old[1],old[0])
   side=1 if vx*old[1]-vy*old[0]>=0 else -1
   choices=[]
   wrap=lambda x:(x+math.pi)%(2*math.pi)-math.pi
-  for bank in (side,-side):
-   for deg in range(35,111):
-    heading=base_heading+bank*math.radians(deg)
-    if abs(wrap(heading-chord_heading))>math.radians(82): continue
-    if abs(wrap(heading-near_heading))<math.radians(25): continue
-    choices.append((0 if bank==side else 1,abs(deg-angle_deg),deg,heading))
+  run=min(.3*MILE,math.hypot(*old)*.45)
+  ranges=((f.get('_spacing_angle_floor',26),160,f.get('_spacing_angle_floor',26)),(15,165,15)) if f.get('_spacing_angle_limited') else (((55,125,25) if f.get('stream_order',1)>=2 else (35,110,25)),(15,165,15))
+  for low,high,near_minimum in ranges:
+   for bank in (side,-side):
+    for deg in range(low,high+1):
+     heading=base_heading+bank*math.radians(deg)
+     if abs(wrap(heading-chord_heading))>math.radians(f.get('_spacing_rotation_limit',82)): continue
+     if abs(wrap(heading-near_heading))<math.radians(near_minimum): continue
+     if blocked_approach(join,heading,run,f['id'],f['width']): continue
+     choices.append((0 if bank==side else 1,abs(deg-angle_deg),deg,heading))
+   if choices: break
   if choices:
    _,_,deg,direction=min(choices); angle=math.radians(deg)
   else:
    angle=math.radians(max(35,raw-82,min(110,raw+82,angle_deg)))
    direction=base_heading+side*angle
   tangent=(math.cos(direction),math.sin(direction))
+  f['_junction_seed']=seed
   f['_junction_sample']=math.degrees(angle)
   f['_junction_direction']=tangent
   _aim_end(f,tangent,True,.3*MILE)
+
+ # A planar junction must retain the angular order of its incoming chords.
+ # Reassign the sampled set within the group rather than pinning crossed arms.
+ for (rid,point),group in incoming.items():
+  arms=[f for f in group if f.get('_junction_direction')]
+  receiver=by_id.get(rid)
+  if len(arms)<2 or receiver is None: continue
+  tail=_finished_receiver_tail(receiver,point,by_id)
+  if len(tail)<2: continue
+  _,ahead=_cut_from_start(tail,.25*MILE); base=math.atan2(ahead[1]-point[1],ahead[0]-point[0])
+  relative=lambda angle:(angle-base+math.pi)%(2*math.pi)-math.pi
+  ordered_arms=sorted(arms,key=lambda f:(relative(math.atan2(point[1]-f['points'][0][1],point[0]-f['points'][0][0])),f['id']))
+  proposals=sorted(((relative(math.atan2(f['_junction_direction'][1],f['_junction_direction'][0])),f['_junction_direction'],f['_junction_sample']) for f in arms),key=lambda item:item[0])
+  # Two higher-order arms also need room beyond the shared 0.5-mi pocket.
+  # Preserve their bank and angular order, but spread a cramped sampled pair.
+  if len(arms)==2 and all(f.get('stream_order',0)>=2 for f in arms) and not any(f.get('_spacing_angle_limited') for f in arms):
+   a0,a1=proposals[0][0],proposals[1][0]
+   if a0*a1>0 and a1-a0<math.radians(65):
+    raw_angles=[relative(math.atan2(point[1]-f['points'][0][1],point[0]-f['points'][0][0])) for f in ordered_arms]
+    _,near=_cut_from_start(tail,.1*MILE); near_angle=relative(math.atan2(near[1]-point[1],near[0]-point[0]))
+    lo,hi=(math.radians(26),math.radians(154)) if a0>0 else (math.radians(-154),math.radians(-26))
+    for gap_deg in (65,60,55,50):
+     gap=math.radians(gap_deg)
+     lower=max(lo,raw_angles[0]-math.radians(82),raw_angles[1]-math.radians(82)-gap)
+     upper=min(hi-gap,raw_angles[0]+math.radians(82),raw_angles[1]+math.radians(82)-gap)
+     if lower>upper: continue
+     ideal=max(lower,min(upper,(a0+a1-gap)/2))
+     choices=[ideal]+[lower+(upper-lower)*i/64 for i in range(65)]
+     valid=[first for first in choices if all(abs((theta-near_angle+math.pi)%(2*math.pi)-math.pi)>=math.radians(25) and not blocked_approach(point,base+theta,min(.3*MILE,math.dist(arm['points'][0],point)*.45),arm['id'],arm['width']) for theta,arm in zip((first,first+gap),ordered_arms))]
+     if not valid: continue
+     first=min(valid,key=lambda theta:(abs(theta-ideal),theta))
+     proposals=[(theta,(math.cos(base+theta),math.sin(base+theta)),abs(math.degrees(theta))) for theta in (first,first+gap)]
+     break
+  # Distinct draws can round to the same degree. Keep their approaches
+  # separate instead of allowing overlapping 0.3-mi stubs.
+  _,near=_cut_from_start(tail,.1*MILE); near_angle=relative(math.atan2(near[1]-point[1],near[0]-point[0]))
+  desired=[item[0] for item in proposals]; bounds=[]
+  for arm,target in zip(ordered_arms,desired):
+   raw=relative(math.atan2(point[1]-arm['points'][0][1],point[0]-arm['points'][0][0]))
+   raw+=2*math.pi*round((target-raw)/(2*math.pi))
+   floor=15 if arm.get('_spacing_angle_limited') else 26
+   low,high=(math.radians(floor),math.radians(165)) if target>0 else (math.radians(-165),math.radians(-floor))
+   rotation_limit=math.radians(arm.get('_spacing_rotation_limit',82))
+   low=max(low,raw-rotation_limit); high=min(high,raw+rotation_limit)
+   for pivot in (near_angle,near_angle-2*math.pi,near_angle+2*math.pi):
+    if pivot+math.radians(15)<low or pivot-math.radians(15)>high: continue
+    if target<=pivot: high=min(high,pivot-math.radians(15))
+    else: low=max(low,pivot+math.radians(15))
+   bounds.append((low,high))
+  for gap_deg in (20,15,10,5,3,1):
+   gap=math.radians(gap_deg); highs=[b[1] for b in bounds]
+   for i in range(len(highs)-2,-1,-1): highs[i]=min(highs[i],highs[i+1]-gap)
+   angles=[]
+   for i,(low,high) in enumerate(bounds):
+    value=max(low,desired[i],angles[-1]+gap if angles else -math.inf)
+    if value>highs[i]+1e-12: break
+    angles.append(value)
+   if len(angles)!=len(arms): continue
+   shift_lo=max(b[0]-theta for b,theta in zip(bounds,angles)); shift_hi=min(b[1]-theta for b,theta in zip(bounds,angles))
+   shifts=[max(shift_lo,min(shift_hi,0))]+[math.radians(i) for i in range(-30,31) if shift_lo<=math.radians(i)<=shift_hi]
+   for shift in sorted(set(shifts),key=lambda value:(abs(value),value)):
+    if any(blocked_approach(point,base+theta+shift,min(.3*MILE,math.dist(arm['points'][0],point)*.45),arm['id'],arm['width']) for theta,arm in zip(angles,ordered_arms)): continue
+    proposals=[(theta+shift,(math.cos(base+theta+shift),math.sin(base+theta+shift)),abs(math.degrees(theta+shift))) for theta in angles]
+    break
+   else: continue
+   break
+  for arm,(_,tangent,sample) in zip(ordered_arms,proposals):
+   arm['_junction_direction']=tangent; arm['_junction_sample']=sample
+   _aim_end(arm,tangent,True,.3*MILE)
 
 def _curve_collision(a,b,allowed=()):
  allowed=tuple(allowed); cell=FT(200); buckets={}; segments=list(zip(b,b[1:]))
@@ -641,84 +743,160 @@ def _curve_collision(a,b,allowed=()):
  return False
 
 def _untangle_reaches(seed,features):
+ """Reject crossings and clearance violations using one id-sorted bucket grid."""
  from collections import defaultdict
  channels=sorted((f for f in features if not f['id'].startswith('river:outlet:')),key=lambda f:f['id'])
- cell=FT(200)
- buckets=defaultdict(set); segments={}
- def cells(a,b):
-  return ((ix,iy) for ix in range(math.floor(min(a[0],b[0])/cell),math.floor(max(a[0],b[0])/cell)+1)
-   for iy in range(math.floor(min(a[1],b[1])/cell),math.floor(max(a[1],b[1])/cell)+1))
- def add_segments(f):
+ cell=.1*MILE; buckets=defaultdict(set); wide_buckets=defaultdict(set); segments={}; data={}; crossing_blockers=set()
+ by_id={f['id']:f for f in features}
+ def cells(a,b,pad=0):
+  return ((ix,iy) for ix in range(math.floor((min(a[0],b[0])-pad)/cell),math.floor((max(a[0],b[0])+pad)/cell)+1)
+   for iy in range(math.floor((min(a[1],b[1])-pad)/cell),math.floor((max(a[1],b[1])+pad)/cell)+1))
+ def geometry(f):
+  pts=f['points']; arc=[0.0]; changes=[0.0]; previous=0
+  headings=[]
+  for a,b in zip(pts,pts[1:]):
+   arc.append(arc[-1]+math.dist(a,b)); headings.append(math.atan2(b[1]-a[1],b[0]-a[0]))
+  for i in range(1,len(headings)):
+   turn=(headings[i]-headings[i-1]+math.pi)%(2*math.pi)-math.pi
+   sign=previous if abs(turn)<math.radians(.4) else (1 if turn>0 else -1)
+   if previous and sign!=previous: changes.append(arc[i])
+   previous=sign
+  changes.append(arc[-1]); waves=[]; j=0
+  for i in range(len(pts)-1):
+   while j<len(changes)-2 and arc[i]>changes[j+1]: j+=1
+   waves.append(2*(changes[j+1]-changes[j]))
+  return arc,waves
+ def add(f):
+  arc,waves=geometry(f); data[f['id']]=(arc,waves)
   for j,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
    key=(f['id'],j); segments[key]=(f,a,b)
-   for cell_key in cells(a,b): buckets[cell_key].add(key)
- def remove_segments(f):
+   for c in cells(a,b):
+    buckets[c].add(key)
+    if f.get('stream_order',0)>=2: wide_buckets[c].add(key)
+ def remove(f):
   for j,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
    key=(f['id'],j); segments.pop(key,None)
-   for cell_key in cells(a,b):
-    bucket=buckets.get(cell_key)
+   for c in cells(a,b):
+    bucket=buckets.get(c)
     if bucket is not None:
      bucket.discard(key)
-     if not bucket: buckets.pop(cell_key,None)
- for other in features: add_segments(other)
- def collision(f,buckets,segments):
-  for i,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
+     if not bucket: buckets.pop(c,None)
+    wide=wide_buckets.get(c)
+    if wide is not None:
+     wide.discard(key)
+     if not wide: wide_buckets.pop(c,None)
+ def near(s0,s1,station): return min(abs(s0-station),abs(s1-station))<.5*MILE
+ def collision(f,clearance=True):
+  pts=f['points']; arc,waves=geometry(f); local=defaultdict(set); relations={}
+  if _curve_collision(pts,pts): return True
+  for i,(a,b) in enumerate(zip(pts,pts[1:])):
    possible=set()
-   for cell_key in cells(a,b): possible.update(buckets.get(cell_key,()))
-   for key in possible:
-    other,c,d=segments[key]
-    if other is f: continue
-    if max(a[0],b[0])<min(c[0],d[0]) or max(c[0],d[0])<min(a[0],b[0]) or max(a[1],b[1])<min(c[1],d[1]) or max(c[1],d[1])<min(a[1],b[1]): continue
+   for c in cells(a,b): possible.update(buckets.get(c,()))
+   if clearance and f.get('stream_order',0)>=2:
+    for c in cells(a,b,.4*MILE): possible.update(wide_buckets.get(c,()))
+   for key in sorted(possible):
+    other,c,d=segments[key]; j=key[1]
+    margin=.4*MILE if clearance and min(f.get('stream_order',0),other.get('stream_order',0))>=2 else 0
+    if max(a[0],b[0])+margin<min(c[0],d[0]) or max(c[0],d[0])+margin<min(a[0],b[0]) or max(a[1],b[1])+margin<min(c[1],d[1]) or max(c[1],d[1])+margin<min(a[1],b[1]): continue
     hit=crossing_point(a,b,c,d)
-    if hit is None: continue
-    point,t,u,_=hit
-    if (t<1e-7 or t>1-1e-7) and (u<1e-7 or u>1-1e-7): continue
-    if f.get('downstream')==other['id'] and math.dist(point,f['points'][-1])<=max(f['width'],other['width'])+FT(20): continue
-    if other.get('downstream')==f['id'] and math.dist(point,other['points'][-1])<=max(f['width'],other['width'])+FT(20): continue
-    return True
+    if hit is not None:
+     point,t,u,_=hit
+     allowed=(t<1e-7 or t>1-1e-7) and (u<1e-7 or u>1-1e-7)
+     allowed=allowed or (f.get('downstream')==other['id'] and math.dist(point,pts[-1])<=max(f['width'],other['width'])+FT(20))
+     allowed=allowed or (other.get('downstream')==f['id'] and math.dist(point,other['points'][-1])<=max(f['width'],other['width'])+FT(20))
+     if not allowed:
+      if not clearance: crossing_blockers.add(other['id'])
+      return True
+    if not margin: continue
+    other_arc=data[other['id']][0]
+    if other['id'] not in relations:
+     left=right=None
+     if f.get('downstream')==other['id']:
+      left=arc[-1]; idx=min(range(len(other['points'])),key=lambda k:math.dist(other['points'][k],pts[-1])); right=other_arc[idx]
+     elif other.get('downstream')==f['id']:
+      right=other_arc[-1]; idx=min(range(len(pts)),key=lambda k:math.dist(pts[k],other['points'][-1])); left=arc[idx]
+     elif f.get('downstream')==other.get('downstream') and math.dist(pts[-1],other['points'][-1])<.01:
+      left=arc[-1]; right=other_arc[-1]
+     relations[other['id']]=(left,right)
+    left,right=relations[other['id']]
+    if left is not None and (near(arc[i],arc[i+1],left) or near(other_arc[j],other_arc[j+1],right)): continue
+    distance=0 if hit is not None else min(_distance_to_segment(*a,c,d),_distance_to_segment(*b,c,d),_distance_to_segment(*c,a,b),_distance_to_segment(*d,a,b))
+    if distance<margin-1e-6: return True
+   # Same-reach clearance uses a separate view of the same grid. Junction
+   # pockets and adjacent waves are exempt, as in the finished-map check.
+   own=set()
+   for c in cells(a,b,2*f['width']): own.update(local.get(c,()))
+   for j in sorted(own):
+    if arc[i]-arc[j+1]<=max(waves[i],waves[j]): continue
+    if f.get('_confluence_inflows',1)>1 and arc[j]<.5*MILE: continue
+    if f.get('_junction_direction') and arc[-1]-arc[i+1]<.5*MILE: continue
+    c,d=pts[j],pts[j+1]
+    hit=crossing_point(a,b,c,d)
+    distance=0 if hit is not None else min(_distance_to_segment(*a,c,d),_distance_to_segment(*b,c,d),_distance_to_segment(*c,a,b),_distance_to_segment(*d,a,b))
+    if (clearance and distance<2*f['width']-1e-6) or hit is not None: return True
+   for c in cells(a,b): local[c].add(i)
   return False
+ for f in features: add(f)
  for f in channels:
-  original_widths=list(f['widths'])
-  remove_segments(f)
-  end=f['points'][-1]; previous=f['points'][-2]; length=math.dist(previous,end)
-  direction=math.atan2(end[1]-previous[1],end[0]-previous[0])
-  collides=False
-  # Rephase around local junction pockets before falling back to a straight
-  # chord; straight fallbacks are topologically safe but create copied
-  # tributary silhouettes in otherwise varied networks.
-  for attempt in range(24):
-   collides=collision(f,buckets,segments)
-   if not collides: break
-   group=(f['downstream'],'phase',attempt+1)
-   pts=_edge_curve(seed,f['id'],f['points'][0],end,f['width'],group,f.get('stream_order',1))
-   pts[-2]=(end[0]-length*math.cos(direction),end[1]-length*math.sin(direction))
-   f['points']=pts
-   f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
-   f['bounds']=box(pts,max(f['widths'])/2)
-   if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
-   if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
-  if collides: collides=collision(f,buckets,segments)
-  if collides:
-   # A straight chord fixes the crossing and then fails the valley check.
-   # Keep a seeded bend, and only accept a sampled straight line if every
-   # gentler bend still crosses another channel.
-   start=f['points'][0]; found=False
-   for phase in range(12):
-    pts=_edge_curve(seed,f['id'],start,end,f['width'],('fallback',phase),f.get('stream_order',1))
-    f['points']=pts
-    f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(pts)-1)*(len(original_widths)-1)))] for i in range(len(pts))]
-    f['bounds']=box(pts,max(f['widths'])/2)
+  start,end=f['points'][0],f['points'][-1]; remove(f)
+  f.setdefault('_pin_wave_limit',19); f.setdefault('_approach_blend',.5)
+  original={key:f[key] for key in ('points','widths','width','bounds','_pin_wave_limit','_approach_blend')}
+  original['_spacing_phase']=f.get('_spacing_phase',0)
+  original['_spacing_wave_scale']=f.get('_spacing_wave_scale',1.0)
+  candidates=[]
+  reseeded=False; fallback=f.get('_spacing_fallback','none')
+  needs_repair=collision(f)
+  if not needs_repair and fallback=='unresolved': fallback='none'
+  if needs_repair:
+   reseeded=True; found=False; fallback='none'
+   for k in range(8):
+    phase=H(seed,f['id'],'space',k)
+    f['_spacing_phase']=phase
+    f['_spacing_wave_scale']=1-.12*k
+    pts=_edge_curve(seed,f['id'],start,end,f['width'],phase,f.get('stream_order',1),meander_scale=1-.12*k)
+    _resample_widths(f,pts)
     if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
     if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
-    if not collision(f,buckets,segments): found=True; break
+    candidates.append({key:f[key] for key in ('points','widths','width','bounds','_spacing_phase','_spacing_wave_scale','_pin_wave_limit','_approach_blend')})
+    if not collision(f): found=True; break
    if not found:
-    n=max(2,math.ceil(math.dist(start,end)/FT(200)))
-    f['points']=[(start[0]+(end[0]-start[0])*i/n,start[1]+(end[1]-start[1])*i/n) for i in range(n+1)]
-    f['widths']=[original_widths[min(len(original_widths)-1,round(i/(len(f['points'])-1)*(len(original_widths)-1)))] for i in range(len(f['points']))]
-    f['bounds']=box(f['points'],max(f['widths'])/2)
-    if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
-    if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
-  add_segments(f)
+    for label,wave,bow in (('valley',0,1),('straight',0,0)):
+     f['_spacing_phase']=H(seed,f['id'],'space',8)
+     f['_spacing_wave_scale']=wave
+     pts=_edge_curve(seed,f['id'],start,end,f['width'],H(seed,f['id'],'space',8),f.get('stream_order',1),meander_scale=wave,valley_scale=bow)
+     _resample_widths(f,pts)
+     if f.get('_junction_start'): _aim_end(f,f['_junction_start'],False,.3*MILE)
+     if f.get('_junction_direction'): _aim_end(f,f['_junction_direction'],True,.3*MILE)
+     fallback=label
+     candidates.append({key:f[key] for key in ('points','widths','width','bounds','_spacing_phase','_spacing_wave_scale','_pin_wave_limit','_approach_blend')})
+     if not collision(f): found=True; break
+   if not found:
+    # A straight candidate that still violates fixed constraints is not an
+    # accepted fallback. Retain a crossing-free curve and report unresolved
+    # clearance rather than flattening an impossible pocket gratuitously.
+    crossing_blockers.clear(); crossing_safe=False
+    for state in [original]+candidates:
+     f.update(state)
+     if not collision(f,clearance=False): crossing_safe=True; break
+    if not crossing_safe:
+     # A sampled tangent can force a crossing that no phase can remove.
+     # Relax only the most rotated affected arm toward its lattice chord;
+     # the next bounded sweep still enforces the measured angle floor.
+     affected=[by_id[ident] for ident in ({f['id']}|crossing_blockers) if ident in by_id]
+     affected=[g for g in affected if g.get('_junction_direction') and not g['id'].startswith('river:outlet:') and not g.get('_spacing_angle_limited')]
+     def rotation(g):
+      a,b=g['points'][0],g['points'][-1]; v=g['_junction_direction']
+      return abs((math.atan2(v[1],v[0])-math.atan2(b[1]-a[1],b[0]-a[0])+math.pi)%(2*math.pi)-math.pi)
+     if affected:
+      max(affected,key=lambda g:(rotation(g),g['id']))['_spacing_angle_limited']=True
+     else:
+      for ident in ({f['id']}|crossing_blockers):
+       g=by_id.get(ident)
+       if g and g.get('_spacing_angle_limited'):
+        g['_spacing_angle_floor']=16; g['_spacing_rotation_limit']=20
+    fallback='unresolved'
+  f['_spacing_reseeded']=bool(f.get('_spacing_reseeded')) or reseeded; f['_spacing_fallback']=fallback
+  add(f)
 
 def _hermite(p0,m0,p1,m1,n):
  pts=[]
@@ -752,7 +930,25 @@ def _cut_from_start(pts,dist):
   acc+=seg
  return len(pts)-1,pts[-1]
 
+def _arc_samples(points,step):
+ out=[points[0]]; travelled=0.0; target=step
+ for a,b in zip(points,points[1:]):
+  length=math.dist(a,b)
+  if length<=0: continue
+  while travelled+length>=target-1e-9:
+   t=(target-travelled)/length
+   out.append((a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1]))); target+=step
+  travelled+=length
+ if math.dist(out[-1],points[-1])>step*.25: out.append(points[-1])
+ return out
+
 def _resample_widths(feature,points):
+ clean=[points[0]]
+ for point in points[1:]:
+  if math.dist(clean[-1],point)>1e-6: clean.append(point)
+ if len(clean)<2: clean=[points[0],points[-1]]
+ else: clean[-1]=points[-1]
+ points=clean
  widths=feature['widths'] or [feature['width']]
  feature['points']=points
  feature['widths']=[widths[min(len(widths)-1,round(i/(len(points)-1)*(len(widths)-1)))] for i in range(len(points))]
@@ -771,7 +967,7 @@ def _pin_approach_graph(feature,tangent,at_end,run):
  run=min(run,chord*.45)
  ax=chord-run*tx; ay=-run*ty
  blend=.12*MILE if feature.get('stream_order',1)>=3 else feature.get('_approach_blend',.5)*MILE
- cx=max(0,ax-min(blend,chord*(.5 if feature.get('stream_order',1)>=3 else .8))); cut=None
+ cx=max(0,ax-min(blend,chord*(.5 if feature.get('stream_order',1)>=3 else (.95 if feature.get('stream_order')==1 else .8)))); cut=None
  for i,(p,q) in enumerate(zip(pts,pts[1:])):
   px=(p[0]-a[0])*ux+(p[1]-a[1])*uy; qx=(q[0]-a[0])*ux+(q[1]-a[1])*uy
   if px<=cx<=qx and qx>px:
@@ -782,9 +978,23 @@ def _pin_approach_graph(feature,tangent,at_end,run):
  i,cy,slope=cut; span=ax-cx; n=max(2,math.ceil(span/FT(40)))
  def point(x,y): return (a[0]+ux*x+nx*y,a[1]+uy*x+ny*y)
  new=pts[:i+1]
+ wave_seed=feature.get('_junction_seed',0); wave_key=feature.get('_spacing_phase',0)
+ wave_on=feature.get('stream_order',1)<3
+ wave_base=(.042+.032*(H(wave_seed,'pin-lambda',feature['id'],wave_key)%10001)/10000)*MILE
+ wave_phase=H(wave_seed,'pin-phase',feature['id'],wave_key,int(at_end))%len(_WAVE_FACTORS)
+ wave_starts=_wave_spans(span,wave_base,wave_phase); wave_index=0
+ mean_width=sum(feature['widths'])/len(feature['widths'])
+ wave_slope=feature.get('_spacing_wave_scale',1.0)*min(.60+.10*(H(wave_seed,'pin-amplitude',feature['id'],wave_key)%10001)/10000,feature.get('_pin_wave_limit',19)*mean_width/(1.35*wave_base))
+ wave_sign=1 if H(wave_seed,'pin-side',feature['id'],wave_key,int(at_end))%2 else -1
  for j in range(n+1):
   t=j/n; h00=2*t**3-3*t*t+1; h10=t**3-2*t*t+t; h01=-2*t**3+3*t*t; h11=t**3-t*t
   y=h00*cy+h10*span*slope+h01*ay+h11*span*ty/tx
+  if wave_on:
+   distance=span*t
+   while wave_index<len(wave_starts)-2 and distance>=wave_starts[wave_index+1]: wave_index+=1
+   wavelength=wave_starts[wave_index+1]-wave_starts[wave_index]
+   phase=(distance-wave_starts[wave_index])/wavelength
+   y+=wave_sign*_meander_env(distance,span)*wave_slope*wavelength*math.sin(2*math.pi*phase)
   new.append(point(cx+span*t,y))
  n=max(2,math.ceil(run/FT(40)))
  for j in range(1,n+1): new.append(point(ax+(chord-ax)*j/n,ay*(1-j/n)))
@@ -792,20 +1002,24 @@ def _pin_approach_graph(feature,tangent,at_end,run):
  if not at_end: new.reverse()
  # Keep the existing width-scaled amplitude constraint when a thin creek's
  # valley bow meets its pinned tangent. A longer blend lowers curvature.
- if feature.get('stream_order')==1 and feature.get('_approach_blend',.5)<.9:
-  total=sum(math.dist(p,q) for p,q in zip(new,new[1:])); count=max(2,int(total/(.02*MILE)))
-  samples=[_cut_from_start(new,total*i/count)[1] for i in range(count+1)]
+ if feature.get('stream_order')==1:
+  step=.02*MILE; samples=_arc_samples(new,step)
   lat=[(q[0]-a[0])*nx+(q[1]-a[1])*ny for q in samples]
-  radius=max(1,round(.11*MILE/(total/count)))
+  radius=max(1,round(.11*MILE/step))
   width=sum(feature['widths'])/len(feature['widths'])
   peak=max((abs(lat[i]-sum(lat[max(0,i-radius):min(len(lat),i+radius+1)])/len(lat[max(0,i-radius):min(len(lat),i+radius+1)])) for i in range(int(len(lat)*.3),max(int(len(lat)*.3)+1,int(len(lat)*.7)))),default=0)
-  if peak>19*width:
-   feature['_approach_blend']=feature.get('_approach_blend',.5)+.2
+  if len(samples)>=8 and peak>19*width:
+   if feature.get('_approach_blend',.5)<1.5:
+    feature['_approach_blend']=feature.get('_approach_blend',.5)+.2
+   elif feature.get('_pin_wave_limit',19)>10:
+    feature['_pin_wave_limit']=feature.get('_pin_wave_limit',19)-.5
+   else:
+    _resample_widths(feature,new); return
    _pin_approach_graph(feature,tangent if at_end else (-tangent[0],-tangent[1]),at_end,run)
    return
  _resample_widths(feature,new)
 
-def _aim_end(feature,tangent,at_end,approach=None):
+def _aim_end(feature,tangent,at_end,approach=None,obstacles=()):
  """Replace one end so the last 0.14 mi runs straight along `tangent`."""
  if approach is not None:
   _pin_approach_graph(feature,tangent,at_end,approach); return
@@ -820,22 +1034,46 @@ def _aim_end(feature,tangent,at_end,approach=None):
   anchor=(end[0]-tangent[0]*run, end[1]-tangent[1]*run)
   span=max(FT(1),math.dist(cut,anchor))
   prev=pts[max(0,idx-1)]
-  herm=_hermite(cut,_scale_dir(cut[0]-prev[0],cut[1]-prev[1],span),anchor,_scale_dir(tangent[0],tangent[1],span),max(2,math.ceil(span/FT(80))))
+  p0,p1=cut,anchor
+  m0,m1=_scale_dir(cut[0]-prev[0],cut[1]-prev[1],span),_scale_dir(tangent[0],tangent[1],span)
   n=max(2,math.ceil(run/FT(80)))
   straight=[(anchor[0]+(end[0]-anchor[0])*i/n, anchor[1]+(end[1]-anchor[1])*i/n) for i in range(1,n+1)]
   straight[-1]=end
-  new=list(pts[:idx])+herm+straight
+  prefix,suffix=list(pts[:idx]),straight
  else:
   start=pts[0]; idx,cut=_cut_from_start(pts,run+fillet)
   anchor=(start[0]+tangent[0]*run, start[1]+tangent[1]*run)
   span=max(FT(1),math.dist(anchor,cut))
   nxt=pts[min(len(pts)-1,idx)]
-  herm=_hermite(anchor,_scale_dir(tangent[0],tangent[1],span),cut,_scale_dir(nxt[0]-cut[0],nxt[1]-cut[1],span),max(2,math.ceil(span/FT(80))))
+  p0,p1=anchor,cut
+  m0,m1=_scale_dir(tangent[0],tangent[1],span),_scale_dir(nxt[0]-cut[0],nxt[1]-cut[1],span)
   n=max(2,math.ceil(run/FT(80)))
   straight=[(start[0]+(anchor[0]-start[0])*i/n, start[1]+(anchor[1]-start[1])*i/n) for i in range(n)]
-  new=straight+herm+list(pts[idx:])
-  new[0]=start
- if len(new)>=2: _resample_widths(feature,new)
+  prefix,suffix=straight,list(pts[idx:])
+ # A short arc-length cut can sit behind its straight-run anchor. Full-length
+ # Hermite handles can then make a tiny loop, after untangling has finished.
+ # Shorten only those handles; both endpoint tangents and the 0.1-mi straight
+ # continuation sample remain intact. No random draws or node moves occur.
+ for scale in (1,.5,.25,.125,0):
+  herm=_hermite(p0,(m0[0]*scale,m0[1]*scale),p1,(m1[0]*scale,m1[1]*scale),max(2,math.ceil(span/FT(80))))
+  new=prefix+herm+suffix
+  new[0]=pts[0]; new[-1]=pts[-1]
+  bounds=box(new,feature['width']/2)
+  blocked=_curve_collision(new,new)
+  for other in obstacles:
+   if blocked: break
+   if other is feature or not intersects(bounds,other['bounds']): continue
+   allowed=[]
+   tolerance=max(feature['width'],other['width'])+FT(20)
+   if feature.get('downstream')==other['id']: allowed.append((new[-1],tolerance))
+   if other.get('downstream')==feature['id']: allowed.append((other['points'][-1],tolerance))
+   if feature.get('downstream')==other.get('downstream') and math.dist(new[-1],other['points'][-1])<.01: allowed.append((new[-1],tolerance+FT(30)))
+   blocked=_curve_collision(new,other['points'],allowed)
+  if not blocked:
+   if scale<1: feature['_continuation_fillet_scale']=min(feature.get('_continuation_fillet_scale',1),scale)
+   _resample_widths(feature,new); return
+ # Retain the already checked curve if every fillet is blocked.
+ return
 
 def _round_continuations(features):
  """Meet one-in, one-out joins on a shared tangent.
@@ -872,8 +1110,27 @@ def _round_continuations(features):
   side=1 if din[0]*dout[1]-din[1]*dout[0]>0 else -1
   kick=math.radians(8)*side; c=math.cos(kick); s=math.sin(kick)
   inn=(bis[0]*c-bis[1]*s, bis[0]*s+bis[1]*c)
-  if dn>=.15*MILE: _aim_end(before,inn,True)
-  if en>=.15*MILE: _aim_end(after,bis,False)
+  saved_before,saved_after=dict(before),dict(after)
+  others=[f for f in features if f is not before and f is not after]
+  for rotation in (0,5,-5,10,-10,20,-20,30,-30):
+   before.update(saved_before); after.update(saved_after)
+   theta=math.radians(rotation); rc,rs=math.cos(theta),math.sin(theta)
+   trial_in=(inn[0]*rc-inn[1]*rs,inn[0]*rs+inn[1]*rc)
+   trial_out=(bis[0]*rc-bis[1]*rs,bis[0]*rs+bis[1]*rc)
+   planned_after=dict(after)
+   if en>=.15*MILE: _aim_end(planned_after,trial_out,False)
+   if dn>=.15*MILE: _aim_end(before,trial_in,True,obstacles=others+[planned_after])
+   if en>=.15*MILE: _aim_end(after,trial_out,False,obstacles=others+[before])
+   if _curve_collision(before['points'],after['points'],((point,max(before['width'],after['width'])+FT(20)),)): continue
+   _,left=_cut_from_end(before['points'],.1*MILE)
+   _,right=_cut_from_start(after['points'],.1*MILE)
+   incoming_heading=math.atan2(point[1]-left[1],point[0]-left[0])
+   outgoing_heading=math.atan2(right[1]-point[1],right[0]-point[0])
+   turn=abs((incoming_heading-outgoing_heading+math.pi)%(2*math.pi)-math.pi)
+   if turn<=math.radians(35): break
+  else:
+   before.update(saved_before); after.update(saved_after)
+
 
 def _channel_pieces(seed,a,b,limit):
  """Split a long chord into pieces that each lose elevation.
@@ -929,7 +1186,7 @@ def _valley_points(seed,ident,a,b,phase_id=None):
  chord=math.dist(a,b)
  if chord<=1: return [a,b]
  waves=max(1,int(round(chord/(1.25*MILE))))
- key=ident if phase_id is None else phase_id
+ key=ident if phase_id is None else (str(phase_id) if outlet else H(seed,'reach-shape',ident,str(phase_id)))
  frac=.19+.03*((H(seed,'valley-amp',key)%10001)/10000)
  amp=frac*chord/waves
  step=MILE/8
@@ -1068,7 +1325,7 @@ def _wave_spans(length,base,phase):
 def _is_outlet(phase_id):
  return phase_id=='outlet' or (type(phase_id) is tuple and phase_id[:1]==('outlet',))
 
-def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1):
+def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1,meander_scale=1.0,valley_scale=1.0):
  """Seeded bend drawn as a graph over the chord, pinned at both ends.
 
  Lateral offset is a single-valued function of distance along the chord, so a
@@ -1084,7 +1341,7 @@ def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1):
  if chord<=1: return [a,b]
  outlet=_is_outlet(phase_id)
  trunk=order>=3 or outlet
- key=ident if phase_id is None else phase_id
+ key=ident if phase_id is None else (str(phase_id) if outlet else H(seed,'reach-shape',ident,str(phase_id)))
  width=max(width,FT(8))
  phase=H(seed,'a2-wave',key)%len(_WAVE_FACTORS)
  if trunk:
@@ -1101,7 +1358,7 @@ def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1):
  else:
   base=(.042+.032*((H(seed,'a2-lam',key)%10001)/10000))*MILE
   amp_frac=.30+.28*((H(seed,'a2-amp',key)%10001)/10000)
-  valley_amp=(.30+.18*((H(seed,'a2-valley',key)%10001)/10000))*chord
+  valley_amp=(.328+.18*((H(seed,'a2-valley',key)%10001)/10000))*chord
   bows=1
   slope=min(amp_frac,(10*width)/(1.35*base))
  starts=_wave_spans(chord,base,phase)
@@ -1120,7 +1377,7 @@ def _edge_curve(seed,ident,a,b,width,phase_id=None,order=1):
   else: bow=math.sin(math.pi*t)*(1+.22*h2*math.sin(2*math.pi*t))
   wave=max(1e-6,starts[k+1]-starts[k])
   u=min(1.0,max(0.0,(s-starts[k])/wave))
-  lat=_fade_end(s,chord)*sign*valley_amp*bow+_meander_env(s,chord)*slope*wave*math.sin(2*math.pi*u)
+  lat=valley_scale*_fade_end(s,chord)*sign*valley_amp*bow+meander_scale*_meander_env(s,chord)*slope*wave*math.sin(2*math.pi*u)
   pts.append((a[0]+ux*s+nx*lat,a[1]+uy*s+ny*lat))
  pts[0]=a; pts[-1]=b
  return pts
@@ -1352,9 +1609,11 @@ def basin(seed,cx,cy,options):
    if highest>order: order=highest
    elif highest==order: order+=1
   route_order[route['id']]=order; route['stream_order']=order
- _angle_reaches(seed,out)
- _untangle_reaches(seed,out)
- _angle_reaches(seed,out)
+ from river_relocation import relocate_nodes
+ relocate_nodes(seed,cx,cy,out)
+ for repair in range(4):
+  _angle_reaches(seed,out)
+  _untangle_reaches(seed,out)
  _round_continuations(out)
  return out
 

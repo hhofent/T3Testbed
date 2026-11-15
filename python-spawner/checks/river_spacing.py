@@ -4,6 +4,8 @@ Counts violating reach pairs (and violating nonadjacent segment pairs within
 each reach). Shared junction pockets are excluded for 0.5 mi of arc length.
 """
 import math
+import json
+from pathlib import Path
 import numpy as np
 from a2_common import SEEDS, run_check, main
 from river_meander import _resample
@@ -75,19 +77,28 @@ def distances(a,b,c,d):
 
 
 def measure(features, seed):
-    from world import MILE
+    from world import MILE, _basin_polygon, _basin_angle, _rot, _point_in_polygon, elevation, _route_curve
     features=sorted(features,key=lambda f:f['id'])
+    by_id={f['id']:f for f in features}
+    incoming={}
+    for f in features: incoming.setdefault(tuple(f['points'][-1]),[]).append(f)
     data=[arrays(f,MILE) for f in features]
-    violations=0; worst=None; different=0; same=0
+    violations=0; worst=None; different=0; same=0; pairs=[]
     for i,f in enumerate(features):
         a,b,arc,visible=data[i]
         width=f['width']/MILE
         wavelengths=local_wavelengths(f['points'],arc,MILE)
+        own_visible=visible.copy()
+        if len(incoming.get(tuple(f['points'][0]),()))>1 or f.get('_confluence_inflows',1)>1:
+            own_visible &= arc[:-1]>=.5
+        receiver=by_id.get(f.get('downstream'))
+        confluence=receiver is not None and (len(incoming.get(tuple(f['points'][-1]),()))>1 or math.dist(receiver['points'][0],f['points'][-1])>.01)
+        if confluence: own_visible &= arc[-1]-arc[1:]>=.5
         buckets={}; cell=max(.02,2*width)
         def cells(p,q,pad=0):
             return ((x,y) for x in range(math.floor((min(p[0],q[0])-pad)/cell),math.floor((max(p[0],q[0])+pad)/cell)+1)
                     for y in range(math.floor((min(p[1],q[1])-pad)/cell),math.floor((max(p[1],q[1])+pad)/cell)+1))
-        for k in np.flatnonzero(visible):
+        for k in np.flatnonzero(own_visible):
             possible=set()
             for key in cells(a[k],b[k],2*width): possible.update(buckets.get(key,()))
             indices=[j for j in sorted(possible) if arc[k]-arc[j+1]>max(wavelengths[k],wavelengths[j])]
@@ -129,12 +140,66 @@ def measure(features, seed):
             if value < .4-1e-10:
                 different+=1; violations+=1
                 row=dict(ids=[f['id'],g['id']],coordinates_mi=closest(aa[inds[0]],bb[inds[0]],cc[inds[1]],dd[inds[1]]),distance_mi=value,required_mi=.4)
+                pairs.append(row)
                 if worst is None or value-.4 < worst['distance_mi']-worst['required_mi']: worst=row
-    return dict(violations=violations,different_channel_pairs=different,same_reach_segment_pairs=same,worst_pair=worst)
+    basin_stats={tuple(f['basin']):f['_relocation_basin_stats'] for f in features if '_relocation_basin_stats' in f}
+    in_window=lambda row: all(-20<=v<=20 for v in row['original_mi'])
+    moved=[dict(basin=list(cell),**row) for cell,stats in sorted(basin_stats.items())
+           for row in stats.get('moved_nodes',[]) if in_window(row)]
+    blocked=[dict(basin=list(cell),**row) for cell,stats in sorted(basin_stats.items())
+             for row in stats['blocked_nodes'] if in_window(row)]
+    guard_failures=[]
+    for f in features:
+        if f['id'].startswith('river:outlet:'):
+            cx,cy=map(int,f['id'].split(':')[-2:])
+            _,canonical=_route_curve(seed,cx,cy)
+            if tuple(f['points'][0])!=tuple(canonical[0]) or tuple(f['points'][-1])!=tuple(canonical[-1]):
+                guard_failures.append(dict(id=f['id'],reason='outlet node moved'))
+        before=f.get('_spacing_graph_before')
+        if before and any(f[key]!=value for key,value in before.items()): guard_failures.append(dict(id=f['id'],reason='graph or width changed'))
+        ends=f.get('_spacing_width_ends_before')
+        if ends and [f['widths'][0],f['widths'][-1]]!=ends: guard_failures.append(dict(id=f['id'],reason='endpoint widths changed'))
+        row=f.get('_node_relocation')
+        if row and row['status']=='moved':
+            p=tuple(v*MILE for v in row['position_mi']); cell=tuple(f['basin'])
+            if row['movement_mi']>.5+1e-9: guard_failures.append(dict(id=f['id'],reason='movement exceeds 0.5 mi'))
+            if not _point_in_polygon(_rot(*p,_basin_angle(seed)),_basin_polygon(seed,*cell)):
+                guard_failures.append(dict(id=f['id'],reason='moved outside basin'))
+            for ident,end in row['incident']:
+                incident=by_id.get(ident)
+                if incident is None: continue
+                if math.dist(incident['points'][end],p)>.001:
+                    guard_failures.append(dict(id=ident,reason='incident endpoint not moved with node'))
+                if elevation(seed,*incident['points'][0])<=elevation(seed,*incident['points'][-1]):
+                    guard_failures.append(dict(id=ident,reason='moved edge not strictly downhill'))
+    from river_geometry import finished_crossings
+    from river_meander import measure as meander_measure
+    crossings=finished_crossings(seed,features)
+    geometry=meander_measure(features,MILE)
+    if crossings: guard_failures.append(dict(reason='finished crossings',pairs=crossings[:20]))
+    for name in ('self_intersections','reversals','kinks'):
+        if geometry[name]: guard_failures.append(dict(reason=name,count=geometry[name]))
+    baseline=json.loads(Path(__file__).with_name('a2-baseline-spacing-v2.json').read_text(encoding='utf-8'))
+    before=baseline['per_seed'].get(str(seed),{}).get('violations')
+    return dict(violations=violations,different_channel_pairs=different,same_reach_segment_pairs=same,worst_pair=worst,pairs=pairs,
+                violations_before_db78343=before,finished_crossings=len(crossings),
+                self_intersections=geometry['self_intersections'],reversals=geometry['reversals'],kinks=geometry['kinks'],
+                nodes_moved=len(moved),node_move_mean_mi=sum(r['movement_mi'] for r in moved)/max(1,len(moved)),
+                node_move_max_mi=max((r['movement_mi'] for r in moved),default=0),
+                moved_nodes=moved,remaining_fixed_nodes=blocked,relocation_guard_failures=guard_failures,
+                relocation_scope='nodes originally inside the 40-mi window',
+                reseeded_reaches=sum(bool(f.get('_spacing_reseeded')) for f in features),
+                straight_fallbacks=sum(f.get('_spacing_fallback')=='straight' for f in features),
+                valley_fallbacks=sum(f.get('_spacing_fallback')=='valley' for f in features))
 
 
 def run(seeds=SEEDS, quick=False, progress=print):
-    return run_check('river_spacing',measure,lambda m:m['violations']==0,seeds,progress)
+    results,metrics,failures=run_check('river_spacing',measure,lambda m:m['violations']==0 and not m['relocation_guard_failures'],seeds,progress)
+    for seed,m in metrics['river_spacing']['per_seed'].items():
+        results.append(dict(name=f'relocation and geometry limits seed {seed}',passed=not m['relocation_guard_failures'],
+                            measured=f"{m['nodes_moved']} moved, mean/max {m['node_move_mean_mi']:.6f}/{m['node_move_max_mi']:.6f} mi; {len(m['remaining_fixed_nodes'])} constrained nodes",
+                            target='same graph/widths, <=0.5 mi, in basin, downhill, fixed outlets, no crossings/reversals/kinks'))
+    return results,metrics,failures
 
 
 if __name__=='__main__': main(run)

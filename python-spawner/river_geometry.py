@@ -85,3 +85,51 @@ def junction_metrics(features, seed, rect=None):
                 continuations={str(s):summarize([r[str(s)] for r in joins if r['connection']=='continuation']) for s in (.1,.25)},
                 **{str(s):summarize([r[str(s)] for r in joins if r['connection']=='confluence']) for s in (.1,.25)})
 
+
+def finished_crossings(seed,selected,by_id=None):
+ """Exact finished-segment crossing scan, with the existing join exemptions."""
+ from collections import defaultdict
+ from world import MILE,FT,crossing_point,intersects
+ by_id=by_id if by_id is not None else {f['id']:f for f in selected}
+ crossings=[]
+ # Index individual sampled segments, so dense 200-ft meanders do not trigger
+ # an all-pairs scan over every point in a 40-mile window.
+ cell=.1*MILE; buckets=defaultdict(list); segments=[]
+ for f in selected:
+  for i,(a,b) in enumerate(zip(f['points'],f['points'][1:])):
+   bounds=(min(a[0],b[0]),min(a[1],b[1]),abs(b[0]-a[0]),abs(b[1]-a[1]))
+   sid=len(segments); segments.append((f['id'],i,a,b))
+   for ix in range(math.floor(bounds[0]/cell),math.floor((bounds[0]+bounds[2])/cell)+1):
+    for iy in range(math.floor(bounds[1]/cell),math.floor((bounds[1]+bounds[3])/cell)+1): buckets[ix,iy].append(sid)
+ checked=set()
+ for ids in buckets.values():
+  for pos,sid in enumerate(ids):
+   f_id,i,a,b=segments[sid]
+   for other in ids[pos+1:]:
+    if sid==other: continue
+    pair=(min(sid,other),max(sid,other))
+    if pair in checked: continue
+    checked.add(pair); g_id,j,c,d=segments[other]
+    if f_id==g_id and abs(i-j)<=1: continue
+    if f_id!=g_id and not intersects((min(a[0],b[0]),min(a[1],b[1]),abs(b[0]-a[0]),abs(b[1]-a[1])),(min(c[0],d[0]),min(c[1],d[1]),abs(d[0]-c[0]),abs(d[1]-c[1]))): continue
+    hit=crossing_point(a,b,c,d)
+    if hit is None: continue
+    point,t,s,_=hit
+    if (t<1e-7 or t>1-1e-7) and (s<1e-7 or s>1-1e-7): continue
+    # Tributaries terminate on the interior of their downstream channel. This
+    # endpoint-to-interior touch is the intended confluence, not a crossing.
+    if f_id in by_id and by_id[f_id].get('downstream')==g_id and math.dist(point,by_id[f_id]['points'][-1])<=max(by_id[f_id]['width'],by_id[g_id]['width'])+FT(20): continue
+    if g_id in by_id and by_id[g_id].get('downstream')==f_id and math.dist(point,by_id[g_id]['points'][-1])<=max(by_id[f_id]['width'],by_id[g_id]['width'])+FT(20): continue
+    fa=by_id.get(f_id); ga=by_id.get(g_id)
+    if fa and ga and fa.get('downstream') and fa.get('downstream')==ga.get('downstream'):
+     target=fa['downstream']; parts=target.split(':')
+     if len(parts)==4 and parts[:2]==['river','outlet']:
+      try:
+       from world import _outlet
+       node=_outlet(seed,int(parts[2]),int(parts[3]))
+      except ValueError: node=None
+     else: node=by_id.get(target,{}).get('points',[None])[0]
+     tolerance=max(fa.get('width',0),ga.get('width',0))+FT(50)
+     if node is not None and math.dist(point,node)<=tolerance: continue
+    crossings.append((f_id,g_id))
+ return crossings

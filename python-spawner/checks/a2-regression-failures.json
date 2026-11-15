@@ -1,0 +1,319 @@
+{
+  "starting_revision": "db78343c672c65c0c2e928c4d6124d822253060f",
+  "part4_revision": "aff8968",
+  "note": "Recorded fail-first transcripts plus explicit deferred QA items. A passing pytest run is not full geometric acceptance.",
+  "runs": [
+    {
+      "guard": "relocation guards",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-relocation-tests-before.log",
+      "output_tail": "FFF                                                                      [100%]\r\n================================== FAILURES ===================================\r\n_______ test_relocation_moves_all_incident_ends_without_changing_graph ________\r\n\r\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AD99D1BCD0>\r\n\r\n    def test_relocation_moves_all_incident_ends_without_changing_graph(monkeypatch):\r\n>       from river_relocation import relocate_nodes\r\nE       ModuleNotFoundError: No module named 'river_relocation'\r\n\r\ntests\\test_river_relocation.py:20: ModuleNotFoundError\r\n___________ test_infeasible_elevation_move_is_retained_and_reported ___________\r\n\r\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AD99EDF8D0>\r\n\r\n    def test_infeasible_elevation_move_is_retained_and_reported(monkeypatch):\r\n>       from river_relocation import relocate_nodes\r\nE       ModuleNotFoundError: No module named 'river_relocation'\r\n\r\ntests\\test_river_relocation.py:36: ModuleNotFoundError\r\n__________ test_relocation_is_independent_of_feature_iteration_order __________\r\n\r\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001AD9A7E3090>\r\n\r\n    def test_relocation_is_independent_of_feature_iteration_order(monkeypatch):\r\n>       from river_relocation import relocate_nodes\r\nE       ModuleNotFoundError: No module named 'river_relocation'\r\n\r\ntests\\test_river_relocation.py:49: ModuleNotFoundError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_relocation.py::test_relocation_moves_all_incident_ends_without_changing_graph\r\nFAILED tests/test_river_relocation.py::test_infeasible_elevation_move_is_retained_and_reported\r\nFAILED tests/test_river_relocation.py::test_relocation_is_independent_of_feature_iteration_order\r\n3 failed in 0.13s\r\n"
+    },
+    {
+      "guard": "per-reach identity",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-reach-identity-before.log",
+      "output_tail": "F                                                                        [100%]\r\n================================== FAILURES ===================================\r\n_____________ test_shared_phase_group_does_not_copy_another_reach _____________\r\n\r\n    def test_shared_phase_group_does_not_copy_another_reach():\r\n        from world import _edge_curve, MILE, FT\r\n        a=_edge_curve(14,'reach-a',(0,0),(MILE,0),FT(14),('receiver',1,0))\r\n        b=_edge_curve(14,'reach-b',(0,0),(MILE,0),FT(14),('receiver',1,0))\r\n>       assert a!=b\r\nE       assert [(0, 0), (7680.0, 0.0), (15360.0, 0.0), (23040.0, 0.0), (30720.0, 0.0), (38400.0, 0.0), ...] != [(0, 0), (7680.0, 0.0), (15360.0, 0.0), (23040.0, 0.0), (30720.0, 0.0), (38400.0, 0.0), ...]\r\n\r\ntests\\test_river_shapes.py:5: AssertionError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_shapes.py::test_shared_phase_group_does_not_copy_another_reach\r\n1 failed in 0.11s\r\n"
+    },
+    {
+      "guard": "window bearing clipping",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-window-bearings-before.log",
+      "output_tail": "F                                                                        [100%]\r\n================================== FAILURES ===================================\r\n___________ test_window_bearings_ignore_segments_outside_the_window ___________\r\n\r\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000191CC73F790>\r\n\r\n    def test_window_bearings_ignore_segments_outside_the_window(monkeypatch):\r\n        import world\r\n        from verification import river_geometry_metrics\r\n        m=world.MILE\r\n        reach=world.feature('rivers','outside-turn',points=[(-2*m,0),(2*m,0),(2*m,2*m),(-2*m,2*m)],\r\n                            width=world.FT(10),widths=[world.FT(10)]*4,stream_order=1,\r\n                            downstream='outside',source=True,basin=(0,0))\r\n        monkeypatch.setattr(world,'rivers',lambda seed,rect:iter([reach]))\r\n        monkeypatch.setattr(world,'basin',lambda *args:[reach])\r\n        metrics=river_geometry_metrics(14,(-.5*m,-.5*m,m,m))\r\n>       assert metrics['bearing_entropy']==0\r\nE       assert 0.396240625180289 == 0\r\n\r\ntests\\test_river_shapes.py:18: AssertionError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_shapes.py::test_window_bearings_ignore_segments_outside_the_window\r\n1 failed in 0.23s\r\n"
+    },
+    {
+      "guard": "finished crossing helper",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-crossing-scan-before.log",
+      "output_tail": "F                                                                        [100%]\r\n================================== FAILURES ===================================\r\n______ test_finished_crossing_scan_distinguishes_crossing_and_confluence ______\r\n\r\n    def test_finished_crossing_scan_distinguishes_crossing_and_confluence():\r\n        import world\r\n>       from river_geometry import finished_crossings\r\nE       ImportError: cannot import name 'finished_crossings' from 'river_geometry' (C:\\Users\\hhofe\\Documents\\grokkable projects\\t3 testbed\\python-spawner\\river_geometry.py)\r\n\r\ntests\\test_river_shapes.py:24: ImportError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_shapes.py::test_finished_crossing_scan_distinguishes_crossing_and_confluence\r\n1 failed in 0.23s\r\n"
+    },
+    {
+      "guard": "canonical cached-outlet independence",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-stability-tests-before.log",
+      "output_tail": ".F                                                                       [100%]\r\n================================== FAILURES ===================================\r\n_ test_relocation_uses_canonical_outlet_geometry_not_mutable_cached_rendering _\r\n\r\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023A223515D0>\r\n\r\n    def test_relocation_uses_canonical_outlet_geometry_not_mutable_cached_rendering(monkeypatch):\r\n        from river_relocation import relocate_nodes\r\n        fs=fixture_network(monkeypatch)\r\n        monkeypatch.setattr(world,'elevation',lambda seed,x,y:100-10*x/world.MILE+10*y/world.MILE)\r\n        changed=copy.deepcopy(fs)\r\n        changed[-1]['points'].insert(1,(2.5*world.MILE,2*world.MILE))\r\n        changed[-1]['bounds']=world.box(changed[-1]['points'],changed[-1]['width']/2)\r\n        relocate_nodes(14,0,0,fs)\r\n        relocate_nodes(14,0,0,changed)\r\n>       assert fs[1]['points']==changed[1]['points']\r\nE       assert [(1013760.0, ... (2027520, 0)] == [(1013760, 20... (2027520, 0)]\r\nE         \r\nE         At index 0 diff: (1013760.0, 451123.20000000007) != (1013760, 202752.0)\r\nE         Use -v to get more diff\r\n\r\ntests\\test_river_relocation.py:69: AssertionError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_relocation.py::test_relocation_uses_canonical_outlet_geometry_not_mutable_cached_rendering\r\n1 failed, 1 passed in 0.15s\r\n"
+    },
+    {
+      "guard": "non-overlapping confluence stubs",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-overlapping-stubs-before.log",
+      "output_tail": "F                                                                        [100%]\r\n================================== FAILURES ===================================\r\n_____ test_equal_junction_samples_do_not_make_overlapping_approach_stubs ______\r\n\r\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000247AE191710>\r\n\r\n    def test_equal_junction_samples_do_not_make_overlapping_approach_stubs(monkeypatch):\r\n        import math\r\n        import world\r\n        m=world.MILE\r\n        def reach(ident,points,order,downstream):\r\n            return world.feature('rivers',ident,points=[(x*m,y*m) for x,y in points],\r\n                                 width=world.FT(15),widths=[world.FT(15)]*len(points),\r\n                                 stream_order=order,downstream=downstream)\r\n        a=reach('a',[(-1,-.5),(-.5,-.25),(0,0)],1,'r')\r\n        b=reach('b',[(-1,-1),(-.5,-.5),(0,0)],1,'r')\r\n        r=reach('r',[(0,0),(.75,0),(1.5,0)],2,'outside')\r\n        original=world.H\r\n        monkeypatch.setattr(world,'H',lambda *args:0 if args[1]=='junction-normal' else original(*args))\r\n        world._angle_reaches(14,[a,b,r])\r\n        aa=math.atan2(a['_junction_direction'][1],a['_junction_direction'][0])\r\n        bb=math.atan2(b['_junction_direction'][1],b['_junction_direction'][0])\r\n>       assert abs(aa-bb)>=math.radians(5)-1e-12\r\nE       AssertionError: assert 0.0 >= (0.08726646259971647 - 1e-12)\r\nE        +  where 0.0 = abs((0.6108652381980153 - 0.6108652381980153))\r\nE        +  and   0.08726646259971647 = <built-in function radians>(5)\r\nE        +    where <built-in function radians> = <module 'math' (built-in)>.radians\r\n\r\ntests\\test_river_shapes.py:67: AssertionError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_shapes.py::test_equal_junction_samples_do_not_make_overlapping_approach_stubs\r\n1 failed in 0.13s\r\n"
+    },
+    {
+      "guard": "final continuation self-crossing",
+      "recorded_exit_code": 1,
+      "log": "check-results\\a2-final-rounding-before.log",
+      "output_tail": "F                                                                        [100%]\r\n================================== FAILURES ===================================\r\n_______ test_continuation_rounding_does_not_reintroduce_a_self_crossing _______\r\n\r\n    def test_continuation_rounding_does_not_reintroduce_a_self_crossing():\r\n        import world\r\n        ident='river:0:0:edge:9:2:part:1'\r\n        a=(9894158.268651359,7379146.628178952)\r\n        b=(9223504.35458478,7047406.2209005095)\r\n        points=world._edge_curve(13,ident,a,b,world.FT(15),('river:0:0:edge:8:2',1,1),1)\r\n        f=world.feature('rivers',ident,points=points,width=world.FT(15),\r\n                        widths=[world.FT(15)]*len(points),stream_order=1,_junction_seed=13)\r\n        for _ in range(4):\r\n            world._aim_end(f,(-.9483164653159329,-.3173261439130016),True,.3*world.MILE)\r\n        assert not world._curve_collision(f['points'],f['points'])\r\n        world._aim_end(f,(-.8963363556842977,-.44337471452327126),False)\r\n>       assert not world._curve_collision(f['points'],f['points'])\r\nE       AssertionError: assert not True\r\nE        +  where True = <function _curve_collision at 0x00000298AF0CC2C0>([(9894158.268651359, 7379146.628178952), (9881436.889436219, 7372853.97047062), (9868715.51022108, 7366561.312762289),...994.131005941, 7360268.655053957), (9843272.751790803, 7353975.997345626), (9830551.372575663, 7347683.339637294), ...], [(9894158.268651359, 7379146.628178952), (9881436.889436219, 7372853.97047062), (9868715.51022108, 7366561.312762289),...994.131005941, 7360268.655053957), (9843272.751790803, 7353975.997345626), (9830551.372575663, 7347683.339637294), ...])\r\nE        +    where <function _curve_collision at 0x00000298AF0CC2C0> = <module 'world' from 'C:\\\\Users\\\\hhofe\\\\Documents\\\\grokkable projects\\\\t3 testbed\\\\python-spawner\\\\world.py'>._curve_collision\r\n\r\ntests\\test_river_shapes.py:83: AssertionError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_shapes.py::test_continuation_rounding_does_not_reintroduce_a_self_crossing\r\n1 failed in 0.17s\r\n"
+    },
+    {
+      "guard": "zero-length numerical sampled segments",
+      "recorded_exit_code": 1,
+      "log": "check-results/a2-zero-segments-before.log",
+      "output_tail": "F                                                                        [100%]\r\n================================== FAILURES ===================================\r\n___________ test_resampling_removes_zero_length_numerical_segments ____________\r\n\r\n    def test_resampling_removes_zero_length_numerical_segments():\r\n        import world\r\n        f=world.feature('rivers','duplicate',points=[(0,0),(1,1),(2,0)],width=10,widths=[10,10,10])\r\n        world._resample_widths(f,[(0,0),(1,1),(1+1e-10,1),(2,0)])\r\n>       assert len(f['points'])==3\r\nE       assert 4 == 3\r\nE        +  where 4 = len([(0, 0), (1, 1), (1.0000000001, 1), (2, 0)])\r\n\r\ntests\\test_river_shapes.py:90: AssertionError\r\n=========================== short test summary info ===========================\r\nFAILED tests/test_river_shapes.py::test_resampling_removes_zero_length_numerical_segments\r\n1 failed in 0.27s\r\n"
+    }
+  ],
+  "deferred": [
+    {
+      "failure": "Seed-13 smoke-window sinuosity",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": 13,
+      "window_size_mi": 9,
+      "measured_value": 1.5593703553168183,
+      "threshold": "median >= 1.6",
+      "already_tried": [
+        "Compared the 9-mi failure with the passing 10-mi window (1.620158 in the same trial).",
+        "Tried seeded fillet waves, wave caps 14/16/19 widths, and longer width-limited blends.",
+        "Tried non-trunk bow bases 0.30/0.33/0.328; later preview reached 1.624547 at 9 mi; no further tuning authorized."
+      ],
+      "measurement_log": "check-results/a2-current-pin-probe.log",
+      "note": "Historical failure explicitly deferred by user even though a later preview passed."
+    },
+    {
+      "failure": "Channel spacing residuals",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": [
+        14,
+        30,
+        31,
+        7,
+        52
+      ],
+      "window_size_mi": 40,
+      "measured_value": {
+        "14": 21,
+        "30": 32,
+        "31": 31,
+        "52": 15,
+        "7": 28
+      },
+      "threshold": "0 violations; different order>=2 channels >=0.4 mi outside shared 0.5-mi pockets",
+      "already_tried": [
+        "Tried eight H(seed, edge_id, space, k) phases with 1-0.12k amplitude, then valley-only and straight candidates.",
+        "Relocated canonical nodes within the approved 0.5-mi, basin, elevation and fixed-outlet limits.",
+        "Added receiving-approach clearance headroom and higher-order angle preference; latest cold audit was stopped by user before completion."
+      ],
+      "measurement_report": "check-results/20261115-024826-847644/summary.md",
+      "worst_pairs": {
+        "14": {
+          "coordinates_mi": [
+            [
+              5.048496394450073,
+              15.529483247053768
+            ],
+            [
+              5.059386751377312,
+              15.518661163819067
+            ]
+          ],
+          "distance_mi": 0.015353089576417034,
+          "ids": [
+            "river:0:0:edge:8:9",
+            "river:0:0:edge:9:9:part:1"
+          ],
+          "required_mi": 0.4
+        },
+        "30": {
+          "coordinates_mi": [
+            [
+              17.02102793153459,
+              4.790478867453575
+            ],
+            [
+              17.017896027360912,
+              4.809075145088968
+            ]
+          ],
+          "distance_mi": 0.018858164429385593,
+          "ids": [
+            "river:0:0:edge:12:-4",
+            "river:0:0:edge:13:-4:part:1"
+          ],
+          "required_mi": 0.4
+        },
+        "31": {
+          "coordinates_mi": [
+            [
+              7.363690570759618,
+              -17.718407662238516
+            ],
+            [
+              7.36851860404243,
+              -17.759957989871825
+            ]
+          ],
+          "distance_mi": 0.04182988921590942,
+          "ids": [
+            "river:0:-1:edge:-1:-15:part:2",
+            "river:0:-1:edge:-2:-14"
+          ],
+          "required_mi": 0.4
+        },
+        "52": {
+          "coordinates_mi": [
+            [
+              -17.144048126734727,
+              -19.85096633121158
+            ],
+            [
+              -17.14061581439323,
+              -19.85065517014455
+            ]
+          ],
+          "distance_mi": 0.003446387850957417,
+          "ids": [
+            "river:-1:-1:edge:-15:-10:part:1",
+            "river:-1:-1:edge:-15:-11"
+          ],
+          "required_mi": 0.4
+        },
+        "7": {
+          "coordinates_mi": [
+            [
+              11.329712488738295,
+              -18.03209199439799
+            ],
+            [
+              11.340175967647104,
+              -18.055462116388437
+            ]
+          ],
+          "distance_mi": 0.02560560471309781,
+          "ids": [
+            "river:0:-1:edge:4:-15:part:1",
+            "river:0:-1:edge:5:-15"
+          ],
+          "required_mi": 0.4
+        }
+      }
+    },
+    {
+      "failure": "Finished crossings / continuation QA",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": [
+        14,
+        30,
+        31,
+        7,
+        52
+      ],
+      "window_size_mi": 40,
+      "measured_value": {
+        "14": 2,
+        "30": 6,
+        "31": 4,
+        "52": 2,
+        "7": 7
+      },
+      "threshold": "0 crossings, reversals and continuation kinks",
+      "already_tried": [
+        "Preserved angular order, separated overlapping approach samples and rejected crossing rephasing candidates.",
+        "Guarded final Hermite fillets against self-crossings and other reaches; removed zero-length numerical segments.",
+        "Planned continuation sides together and searched nine bounded tangent rotations; cached five-seed crossings and targeted seed-31 kink cleared, cold confirmation deferred."
+      ],
+      "measurement_report": "check-results/20261115-024826-847644/summary.md",
+      "latest_diagnostic": "check-results/a2-v7-kink.log: crossings/self-intersections/reversals/kinks all 0"
+    },
+    {
+      "failure": "New seed-30 density overshoot",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": 30,
+      "window_size_mi": 10,
+      "measured_value": 1.500265757,
+      "threshold": "0.8 <= density <= 1.5 mi/sq mi",
+      "already_tried": [
+        "Preserved all drainage IDs, links, stream orders and widths; did not tune topology.",
+        "Compared the completed v4 value against db78343 1.4357899559212028.",
+        "Reduced the introduced non-trunk bow base from 0.330 to 0.328; final cold confirmation deferred, no further tuning authorized."
+      ]
+    },
+    {
+      "failure": "Near-parallel road/river bridge deck cap",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": 13,
+      "window_size_mi": 12,
+      "measured_value": {
+        "angle_sine": 0.007583074132121975,
+        "deck_length": 1679912.9770342032,
+        "target_length": 2215345.5811780547
+      },
+      "threshold": "one correctly sized deck per carrier crossing",
+      "already_tried": [
+        "Ran the full finished-map bridge geometry check: 252 crossings, decks and matches.",
+        "Located road:v:-2:3 / river:0:0:edge:-1:3:part:1 near (-2.046800, 3.943441) mi.",
+        "Identified the existing max(sine,0.01) deck-length cap; left bridge code and export format unchanged."
+      ]
+    },
+    {
+      "failure": "Known baseline per-basin N3/N4 outliers",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": [
+        13,
+        14,
+        30,
+        31,
+        46
+      ],
+      "window_size_mi": 10,
+      "measured_value": {
+        "mean": 5.596,
+        "minimum": 2.8,
+        "maximum": 10.375
+      },
+      "threshold": "per-basin N3/N4 in [3,5]",
+      "already_tried": [
+        "Saved db78343 per-basin ratios in checks/a2-baseline-item-a.json.",
+        "Compared every measured v4 basin: all N3/N4 values exactly unchanged.",
+        "Kept topology unchanged and left the full-runner failure labeled BASELINE as instructed."
+      ]
+    },
+    {
+      "failure": "Known baseline seed-13 density",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": 13,
+      "window_size_mi": 10,
+      "measured_value": 1.554535387,
+      "threshold": "0.8 <= density <= 1.5 mi/sq mi",
+      "already_tried": [
+        "Recorded db78343 density 1.5742295164896323.",
+        "Measured v4 density 1.554535387, an improvement but still above 1.5.",
+        "Kept the failing BASELINE label and did not tune topology or density to erase it."
+      ]
+    },
+    {
+      "failure": "Final cold acceptance and render QA",
+      "status": "deferred to QA Guy",
+      "commit": "aff8968b42d42e385e7afac71662057550f78575",
+      "source_state": "uncommitted part-5 working tree based on this commit; measurements are from the named trial, not a final acceptance claim",
+      "seed": [
+        14,
+        30,
+        31,
+        7,
+        52
+      ],
+      "window_size_mi": 40,
+      "measured_value": "v7 full audit intentionally stopped before completion; final requested renders not produced",
+      "threshold": "completed acceptance review and requested PNGs",
+      "already_tried": [
+        "Completed and retained the v4 full report and its failed measurements.",
+        "Ran cached geometry diagnostics and retained the v7 targeted seed-31 passing result.",
+        "Started a v7 cold audit, then stopped it on the explicit user instruction; no further audit or rendering started."
+      ]
+    }
+  ],
+  "stop_rule": "Do not chase bypassable bugs beyond about 20 minutes; record and move on. At visible 90% 5-hour or weekly usage, checkpoint, commit/push only python-test/spawner, and stop."
+}

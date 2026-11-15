@@ -1,5 +1,6 @@
 """Shared A2 measurement window and reproducible JSON runner."""
 import json
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -25,13 +26,19 @@ def run_check(name, measure, passes, seeds=SEEDS, progress=print):
             summary = measure(features, seed)
         metrics[str(seed)] = summary
         passed = passes(summary)
-        measured = json.dumps({k: v for k, v in summary.items() if k not in ('joins', 'pairs')}, sort_keys=True)
+        measured = json.dumps({k: v for k, v in summary.items() if k not in ('joins', 'pairs', 'moved_nodes', 'remaining_fixed_nodes')}, sort_keys=True)
         print(f'seed {seed}: {measured}', flush=True)
         results.append(dict(name=f'{name} seed {seed}', passed=passed, measured=measured, target=name))
         if not passed:
             failures.append(dict(check=name, seed=seed, coordinates=[0, 0], feature_ids=[], message=measured))
     revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-    return results, {name: dict(source_revision=revision,window_mi=WINDOW_MI, per_seed=metrics)}, failures
+    sources = ('world.py', 'river_relocation.py', 'river_geometry.py', 'verification.py',
+               'checks/a2_common.py', 'checks/river_junctions.py',
+               'checks/river_spacing.py', 'checks/river_copies.py')
+    fingerprints = {path: hashlib.sha256((ROOT/path).read_bytes()).hexdigest()
+                    for path in sources if (ROOT/path).exists()}
+    return results, {name: dict(source_revision=revision, source_sha256=fingerprints,
+                               window_mi=WINDOW_MI, per_seed=metrics)}, failures
 
 
 def main(run):

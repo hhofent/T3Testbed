@@ -1,3 +1,110 @@
+# ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
+
+This section overrides all older in-progress notes below. Read this section and
+`checks/a2-regression-failures.json` before doing anything. Do not resume tuning.
+
+- Repository: hhofent/T3Testbed. Work only in `python-spawner/`.
+- Branch: `python-test/spawner`. Push ONLY this branch. No merge, rebase,
+  history rewrite, force-push or PR.
+- Last completed pushed implementation commit before this handoff:
+  `aff8968b42d42e385e7afac71662057550f78575` (`river A2 part 4: pin measured confluence approaches`).
+- Part 5 is being finalized with accepted implementation scope and deferred QA.
+  Geometric zero-spacing acceptance is NOT claimed.
+- Part 6: NOT STARTED. Its uncommitted verification/copy-helper replacement was
+  removed before the final part-5 pytest run. Pre-existing part-4 baseline copy
+  scripts/artifacts remain historical evidence. Do not start part 6.
+- User ordered STOP after checkpoint, commit and push. No more full audits,
+  smoke tuning, renders, or new work in this run.
+
+## What changed
+
+Part 4 replaced the misleading 30-ft sampled stub with pinned 0.3-mi tributary
+and receiving approaches. Real arc-length measurement now reports confluences
+at 0.1 and 0.25 mi, with continuations/splits separate. IDs, topology and widths
+were retained. db78343 seed-14 true-confluence mean was 37.243/41.449 degrees;
+part-4 result was 67.499/68.353 degrees. Pooled part-4 means 67.923/68.794,
+SD 21.873/21.294, under-25 fraction 0%, minima 25.069/35.000. Detailed per-seed
+before/after tables and every connection are already in checks/a2-*.json.
+
+Part 5 adds id-sorted bucket clearance rejection with eight deterministic
+H(seed, edge_id, 'space', k) trials, amplitude 1-0.12k, then valley-only/straight
+candidates. Failed fallbacks stay explicitly unresolved. Canonical node repair
+uses only own-basin/3x3 outlet inputs, immutable outlet curves, <=0.5-mi moves,
+basin containment and strict parent/child elevation bounds. All incident ends
+move together; IDs, downstream links, orders and scalar/endpoint widths stay
+unchanged. Outlets do not move. Infeasible nodes stay fixed and are reported.
+Receiving-approach headroom is reserved, not just point clearance.
+
+Keep the final continuation-rounding guard: shorten looping Hermite handles,
+check other reaches, plan both continuation sides together, and try nine bounded
+common tangent rotations while preserving the intended 8-degree difference.
+Self-contact checking is independent of wavelength spacing exemptions. Numerical
+zero-length samples are removed. A cached seed-31 repair now reports zero
+crossings/self-intersections/reversals/kinks. This is diagnostic, not cold acceptance.
+
+## Last completed full measurements (v4, NOT final acceptance)
+
+Full report: `check-results/20261115-024826-847644/summary.md`.
+Portable unaccepted trial: `checks/a2-part5-trial-v4.json`.
+
+| Seed | Spacing db78343 -> v4 | Nodes moved | Mean / max move (mi) | Finished crossings v4 |
+|---|---:|---:|---:|---:|
+| 14 | 93 -> 21 | 22 | 0.173178 / 0.350217 | 2 |
+| 30 | 108 -> 32 | 32 | 0.184451 / 0.386297 | 6 |
+| 31 | 102 -> 31 | 27 | 0.189947 / 0.414266 | 4 |
+| 7 | 94 -> 28 | 29 | 0.143632 / 0.376843 | 7 |
+| 52 | 87 -> 15 | 24 | 0.167819 / 0.410188 | 2 |
+
+Graph/width/attachment/basin/elevation guards passed in v4. Geometric guards
+failed; later cached repairs cleared crossings but cold confirmation is deferred.
+No topology or density tuning is authorized. N3/N4 values were exactly unchanged:
+mean 5.596, range 2.8-10.375, with the known BASELINE failure retained.
+
+| Seed | Density db78343 -> v4 (mi/sq mi) |
+|---|---:|
+| 13 | 1.574229516 -> 1.554535387 (BASELINE failure, improved) |
+| 14 | 1.395387381 -> 1.329368088 |
+| 30 | 1.435789956 -> 1.500265757 (NEW QA failure) |
+| 31 | 0.887656340 -> 0.914276303 |
+| 46 | 1.488796695 -> 1.494150629 |
+
+Seed-13 historical 9-mi smoke failure: median 1.559370355, target >=1.6, while
+10 mi passed at 1.620157738. Later preview reached 1.624547 at 9 mi; the user
+explicitly deferred this issue anyway. DO NOT tune it again. Current non-trunk
+bow base is 0.328; fillet wave parameter cap 19 widths, with the existing physical
+20-width amplitude check unchanged. These are existing trial choices, not an
+invitation for more parameter experiments.
+
+## Deferred to QA Guy
+
+The structured list in `checks/a2-regression-failures.json` gives commit, seed,
+window size, measured value, threshold and exactly three already-tried entries
+for each item. It covers smoke-window sinuosity; residual spacing; cold crossing/
+continuation confirmation; seed-30 density; the near-parallel bridge deck cap;
+known Rb and seed-13 density baseline failures; and incomplete final audit/render
+QA. No known build, save, or map-export-format failure is being bypassed.
+
+Latest completed v7 pytest before isolating part 5: **125 passed in 590.61s**.
+Final part-5-only run: **125 passed in 346.39s (0:05:46)**.
+Log: `check-results/a2-part5-stop-final-pytest.log`. The v7 full audit was intentionally stopped.
+Older full/quick reports are historical; do not claim all geometric checks green.
+Requested part-6 PNGs were not produced. Do not generate them in this run.
+
+## Exact next step
+
+Final pytest is green. Commit part 5 and push ONLY `python-test/spawner`,
+then STOP. No more code edits or checks are authorized in this run. A future model must wait for explicit new work.
+If later authorized to help QA Guy, start from the structured deferred list and
+its saved v4 metrics; reproduce one specified issue before editing anything.
+Do not start part 6 or repeat the five-seed audit without explicit authorization.
+Do not poll any running logs more often than once per three minutes. Bypassable
+bugs get about 20 minutes, then a structured deferred record. If a visible 5-hour
+or weekly usage meter reaches 90%, checkpoint first, commit/push this branch only,
+and stop immediately. This agent has no exposed account-usage meter.
+
+---
+# Historical investigation notes (not active instructions)
+
 # Item A2: river geometry, 2026-11-14
 
 ## Parts 4-6: baseline investigation in progress
@@ -140,6 +247,132 @@ Baseline before any A2 edit: `py -m pytest -q` 112 passed in 59.94s.
 `py checks/run_all.py --quick` passed in 44.68s (seed 13, 9 mi: entropy 0.884,
 E-W 14.6%, sinuosity median/spread 1.771/0.574, order-1 width 12.39-15.00 ft;
 crossings/bridges 75/75; chunk hash match, 12 features; outlet SD 28.78°).
+
+## Latest continuation: v7 validation pending
+
+The completed v4 full audit is `check-results/20261115-024826-847644/summary.md`.
+It is NOT accepted: spacing counts 14/30/31/7/52 were 21/32/31/28/15 (db78343
+93/108/102/94/87), with finished crossings 2/6/4/7/2. Moved-node counts were
+22/32/27/29/24, mean movements 0.173178/0.184451/0.189947/0.143632/0.167819 mi,
+maxima 0.350217/0.386297/0.414266/0.376843/0.410188 mi. No node graph/width,
+attachment, basin or elevation guard failed, but geometry guards DID fail.
+Rb remained exactly unchanged. Seed-30 density rose from 1.435789956 to
+1.500265757, a NEW failure, not an approved baseline failure. A near-parallel
+road/river crossing also exposed a bridge deck cap mismatch. These remain
+unaccepted until the new cold audit resolves them; do not mark items 5-6 done.
+
+Two separate v4 pytest runs passed 124 tests (426.79s and 445.61s). The earlier
+quick runner passed. Later source changes invalidate using those as final tests.
+
+Subsequent changes: guard final continuation fillets against other channels,
+check self-contacts independently of the wavelength exemption, remove numerical
+zero-length sampled segments (new regression FAIL recorded in
+`check-results/a2-zero-segments-before.log`), and plan both sides of a continuation
+before collision checking. Search nine bounded common tangent rotations while
+keeping their 8-degree difference. Cached repair clears crossings on all five
+seeds; the remaining seed-31 kink is cleared by the joint tangent search
+(`check-results/a2-v7-kink.log`: zero crossings/self-intersections/reversals/kinks).
+These cached trials are diagnostics, not replacements for a cold audit.
+
+Relocation now reserves space for the 0.3-mi inward receiving approach, not only
+the endpoint. If that larger clearance target cannot be reached within the
+approved movement/elevation/basin limits, retain and report the node. Higher-order
+junction candidates prefer >=55 degrees, giving room outside the 0.5-mi pocket.
+The introduced non-trunk bow base was reduced from 0.330 to 0.328 to address the
+new density overshoot; no topology, density threshold or bridge code was changed.
+
+Fresh validation logs: `check-results/a2-v7-full.log` (still running) and
+`check-results/a2-v7-pytest.log`: **125 passed in 590.61s**.
+Parts 5-6 remain uncommitted; only Part 4
+`aff8968` has been pushed. No new acceptance or final render is claimed yet.
+
+## Part 5: bounded clearance repair (validation in progress)
+
+Part 4 is pushed as `aff8968`. Parts 5 and 6 are not committed yet.
+
+The first spacing check FAILS on unchanged db78343: 93/108/102/94/87
+violating reach pairs for 14/30/31/7/52. Every baseline window, worst pair and
+summary is retained in `checks/a2-baseline-spacing-v2.json`.
+
+Fixed-endpoint evidence: ten seed-14 order>=2 starts are already within 0.4 mi
+of an outlet outside the junction exemption. Example
+`river:0:0:edge:10:9:part:1`, start (7.297796517,18.294739824) mi, is
+0.130687426 mi from `river:outlet:0:0`. No curve between unchanged ends can
+meet clearance there (`check-results/a2-fixed-node-clearance14.json`). A naive
+radial proposal moves at most 0.294313 mi but makes three incident edges uphill
+(worst 12.714407 ft); it was rejected, not applied.
+
+The user approved coordinate relocation subject to own-basin/3x3 inputs, a
+0.5-mi movement cap, basin containment, strict endpoint descent, all incident
+reaches moving together, unchanged IDs/links/orders/widths, and fixed outlets.
+Nodes with no admissible candidate stay fixed and must be reported with their
+distances. `river_relocation.py` searches upstream first, using radial and
+clearance-contour candidates with H(seed, integer/string keys). Decisions use
+immutable canonical outlet curves, never another basin's mutable render cache.
+Reports include moved-node count, mean/max movement, blocked nodes and rejection
+counts, every residual violating pair and graph/width/attachment/downhill guards.
+
+Clearance repair uses id-sorted segment buckets and exactly eight phase trials
+H(seed, edge_id, 'space', k), k=0..7, with amplitude 1-0.12k, then valley-only
+and straight candidates. Pins survive all candidates. If none satisfies
+clearance, retain a crossing-free candidate and explicitly report unresolved
+clearance. A failed straight candidate is not counted as an accepted fallback.
+Up to four bounded junction/clearance sweeps let a crossing-forced approach
+relax toward its raw chord, while retaining the measured statistical angle
+requirements. Incoming angular order is preserved; coincident degree samples
+are separated. Proposed approaches are checked against fixed outlet curves.
+
+Longer junction blends had erased small-reach waves and failed the existing
+sinuosity smoke check (1.358 initially, 1.559 in the later bounded trial).
+Seeded variable-wavelength fillet waves, with zero end offset and slope, retain
+winding while the existing 20-width physical amplitude check remains enforced.
+The final trial uses a 19-width wave parameter cap and a small non-trunk valley
+bow adjustment (0.30 to 0.33 chord base). Seed 13's targeted 9/10-mi measurements
+are now 1.625/1.666 sinuosity and 1.557/1.555 density; the 10-mi density baseline
+was 1.574229516. These are previews; the full report is authoritative.
+
+New regression failures were recorded before their fixes:
+
+| Guard | Recorded failing run |
+|---|---|
+| Relocation/incident attachment, infeasible height, iteration order | `check-results/a2-relocation-tests-before.log` (3 failed) |
+| Canonical inputs despite mutated cached outlet rendering | `check-results/a2-stability-tests-before.log` (1 failed) |
+| Distinct reach identities sharing a phase group | `check-results/a2-reach-identity-before.log` |
+| Exclude out-of-window segments from bearing statistics | `check-results/a2-window-bearings-before.log` |
+| Illegal crossing versus legal endpoint/interior confluence | `check-results/a2-crossing-scan-before.log` |
+| Equal sampled angles must not overlap approach stubs | `check-results/a2-overlapping-stubs-before.log` |
+| Final continuation fillet must not reintroduce a self-crossing | `check-results/a2-final-rounding-before.log` |
+
+The pin-repeat test is a positive stability guard, not a claimed fail-first test.
+It compares geometric differences below 1e-6 internal units: the cubic calculation
+can differ by one floating-point ULP on a second application. No river acceptance
+threshold changed. Ten focused regressions pass in `check-results/a2-final-rounding-after.log`.
+Committed failure transcripts: `checks/a2-regression-failures.json`.
+The last continuation repair shortens only self-crossing Hermite handles in
+five bounded steps; endpoints, tangents and the 0.1-mi straight sample stay fixed.
+The clearance lookup optimization gives exactly identical saved features before
+and after (`check-results/a2-bucket-equivalence.log`).
+
+## Part 6: copy detector (validation in progress)
+
+Shared `river_geometry.copy_metrics` resamples every order-1/2 feature, including
+split pieces, at 64 equal arc-length stations. Normalize translation, chord
+rotation and total length; compare station curvature with Pearson >=0.9 or
+turning-function RMS below frozen epsilon 0.0015378363921072784. Epsilon is the
+unchanged db78343 noisy-control turning-distance p95, not tuned to passing data.
+The user-approved additional family detector smooths 13 stations, registers
+cyclic phase and admits mirrored banks at absolute correlation >=0.9. Literal
+and family counts remain separately visible.
+
+The first literal historical negative control FAILS detection (0/240); the
+synthetic control detects 190/190. Family registration detects old b2ee52f
+16/240 (6.667%, not the expected 87%) and synthetic 190/190 (100%). Both controls
+must reject network acceptance at >=5%. Their distributions and the initially
+passing db78343 network rates are saved in `checks/a2-baseline-copy-families.json`.
+All five current-network rates, p1/p5/median turning distances, final junction
+angles, spacing residuals, meander/valley checks, density/Rb and chunk comparisons
+are being regenerated. Final results and the acceptance table follow after that
+run; no all-green or zero-clearance claim is made here yet.
 
 ## Checklist
 
