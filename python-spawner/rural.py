@@ -4,7 +4,7 @@ from spawner import H,FT
 from settings import option
 
 TYPES=('machine shed','barn','grain bin','corn crib','hog building','poultry house','quonset')
-def layout(seed,spec,plan,access_fraction=None):
+def layout(seed,spec,plan,access_fraction=None,place=None):
  W,D=spec['width'],spec['depth']; salt=spec['id']
  def rand(tag): return H(seed,'rural',salt,tag)%10000/10000
  rooms=[r.rect() for r in plan.rooms]
@@ -38,16 +38,21 @@ def layout(seed,spec,plan,access_fraction=None):
  turn=max(lane,hy*.45)
  entry_index=len(drives)
  drives.extend([(entrance,0,lane,turn+lane),(min(entrance,margin),turn,abs(entrance-margin)+lane,lane),(margin,turn,lane,max(lane,end-turn)),(margin,hy+hd/2,hx-margin+lane,lane)])
- if option('stages.trees'):
-  side=H(seed,'grove-side',salt)%3
-  spacing=FT(option('trees.spacing_ft')); density=option('rural.grove_density')
-  length=D if side<2 else W
-  for i in range(max(1,int(length/spacing))):
-   if rand(f'tree{i}')>density: continue
-   along=(i+.3+rand(f'j{i}')*.4)*spacing
-   inset=FT(5+rand(f'inset{i}')*25)
-   trees.append((inset,along) if side==0 else (W-inset,along) if side==1 else (along,D-inset))
  chamfer=min(W,D)*option('rural.lot_corner_fraction')*rand('shape')
  shape=[(0,chamfer),(chamfer,0),(W-chamfer,0),(W,chamfer),(W,D-chamfer),(W-chamfer,D),(chamfer,D),(0,D-chamfer)]
+ if option('stages.trees'):
+  if not option('generation.parity'):
+   site=dict(offset=(dx,dy),buildings=buildings,driveways=drives,shape=shape)
+   from rural_trees import yard_trees
+   trees=yard_trees(seed,spec,plan,site,place)
+  else:
+   side=H(seed,'grove-side',salt)%3
+   spacing=FT(option('trees.spacing_ft')); density=option('rural.grove_density')
+   length=D if side<2 else W
+   for i in range(max(1,int(length/spacing))):
+    if rand(f'tree{i}')>density: continue
+    along=(i+.3+rand(f'j{i}')*.4)*spacing
+    inset=FT(5+rand(f'inset{i}')*25)
+    trees.append((inset,along) if side==0 else (W-inset,along) if side==1 else (along,D-inset))
  access=[(entrance+lane/2,0),(entrance+lane/2,turn+lane/2),(margin+lane/2,turn+lane/2),(margin+lane/2,hy+hd/2),(hx,hy+hd/2)]
  return dict(access=access,access_length=sum(math.dist(a,b) for a,b in zip(access,access[1:])),entry_index=entry_index,offset=(dx,dy),buildings=buildings,driveways=drives,trees=trees,shape=shape)

@@ -2641,6 +2641,12 @@ define('rural.lane_width_ft',14,10,24,1,'ft','Width of rural access lanes and fa
 define('rural.bent_lanes_pct',70,0,100,1,'percent','Share of rural lanes with a bend before the house.')
 define('rural.grove_density',0.8,0,1,0.05,'fraction','Share of irregular shelterbelt marker positions occupied.')
 define('rural.lot_corner_fraction',0.15,0,0.3,0.01,'fraction','Maximum corner cut as a share of rural lot dimensions.')
+define('rural.yard_tree_min',4,2,12,1,'trees','Minimum clumpy yard trees near a farmstead house.')
+define('rural.yard_radius_ft',150,60,300,10,'ft','Yard-tree radius around the farmstead house.')
+define('rural.windbreak_row_ft',16,10,30,1,'ft','Spacing between windbreak rows (ISU Pm-1716).')
+define('rural.windbreak_spacing_ft',14,8,24,1,'ft','In-row spacing of windbreak plants.')
+define('rural.windbreak_extend_ft',100,40,200,10,'ft','Windbreak extension past the last main building toward S/E.')
+define('rural.windbreak_clear_ft',75,40,120,5,'ft','Ideal clearance from inner windbreak row to buildings.')
 
 define('world.rail_diagonal_pct',65,0,100,1,'percent','Share of eligible rural rail sections with diagonal bends; road crossings stay square.')
 define('world.rail_bend_miles',0.25,0,0.5,0.05,'mi','Rail deviation between square crossing approaches and road-parallel sections.')

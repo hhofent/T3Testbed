@@ -274,7 +274,7 @@ def _tile(seed,tx,ty,serialized,detail=True):
    rural=None
    if spec['kind']!='town':
     from rural import layout
-    rural=layout(seed,spec,plan,access_fraction=(H(seed,'farm-lane',prefix+id)%10000/10000 if spec['kind']=='farmstead' else None))
+    rural=layout(seed,spec,plan,access_fraction=(H(seed,'farm-lane',prefix+id)%10000/10000 if spec['kind']=='farmstead' else None),place=pl)
     if spec['kind']=='farmstead':
      access=[to_world(pl,spec['width'],spec['depth'],a,b) for a,b in rural['access']]
      access=[(a+ox,b+oy) for a,b in access]
@@ -292,15 +292,38 @@ def _tile(seed,tx,ty,serialized,detail=True):
    for i,r in enumerate(rural['driveways'] if rural else plan.site.get('drive',[])): add('driveways',id+':drive:'+str(i),transform(r))
    if option('stages.trees'):
     from trees import local_markers
-    for i,(x,y) in enumerate(rural['trees'] if rural else local_markers(plan)):
-     x,y=to_world(pl,spec['width'],spec['depth'],x,y)
-     add('trees',id+':tree:'+str(i),(x,y,0,0))
+    raw_trees=rural['trees'] if rural else local_markers(plan)
+    for i,t in enumerate(raw_trees):
+     if isinstance(t,dict):
+      x,y=to_world(pl,spec['width'],spec['depth'],t['x'],t['y'])
+      add('trees',id+':tree:'+str(i),(x,y,0,0),species=t.get('species'),setting=t.get('setting'),condition=t.get('condition'),label=t.get('label','simplified'))
+     else:
+      x,y=to_world(pl,spec['width'],spec['depth'],t[0],t[1])
+      add('trees',id+':tree:'+str(i),(x,y,0,0))
   if detail and reg['town']:
    for shop in reg['town']['commercial']:
     if shop.get('bldg') and not water_hits(shop['lot']):
      r=shop['bldg']
      if r[0]>=0 and r[1]>=0 and r[0]+r[2]<=extent and r[1]+r[3]<=extent: add('buildings','business:'+shop['id'],r,use=shop['type'])
   share_farm_lanes(seed,out,farm_sites,water_hits,ox,oy)
+  # Drop trees that collide with final drives/buildings/roads/rail (shared lanes land after placement).
+  if option('stages.trees') and not option('generation.parity'):
+   radius=FT(option('world.tree_radius_ft'))
+   blockers=[f for f in out if f['kind'] in ('roads','rail','buildings','driveways')]
+   cell=FT(option('verify.bin_ft')); bins={}
+   def _keys(bounds):
+    for x in range(math.floor(bounds[0]/cell),math.floor((bounds[0]+bounds[2])/cell)+1):
+     for y in range(math.floor(bounds[1]/cell),math.floor((bounds[1]+bounds[3])/cell)+1): yield x,y
+   for blocker in blockers:
+    for key in _keys(blocker['bounds']): bins.setdefault(key,[]).append(blocker)
+   kept=[]
+   for f in out:
+    if f['kind']!='trees': kept.append(f); continue
+    r=(f['bounds'][0]-radius,f['bounds'][1]-radius,2*radius,2*radius)
+    candidates={b['id']:b for key in _keys(r) for b in bins.get(key,[])}
+    if any(intersects(r,b['bounds']) for b in candidates.values()): continue
+    kept.append(f)
+   out=kept
   return out
 
 BASIN_MILES=32

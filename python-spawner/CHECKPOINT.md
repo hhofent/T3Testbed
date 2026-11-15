@@ -1,3 +1,12 @@
+﻿# ACTIVE: rural trees/windbreaks/crossings on python-test/rural-trees-culverts-grok
+
+- Branch: `python-test/rural-trees-culverts-grok` in worktree `..\T3-rural-grok`
+- Start commit: `2469802febb1d9c2e4885830b5b8ae36b668bb83` (verified)
+- Off limits: river geometry (`BASIN_MILES` through `rivers()`, route offsets, `river_*.py`, river checks/tests)
+- Gate new behaviour with `if not option('generation.parity'):`; new settings `rural.*` / `crossing.*`
+- Item 1 in progress: rural lot yard trees via new `rural_trees.py`
+- Do not run the frozen rural_check; Cal scores afterward
+
 # ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
 
 This section overrides all older in-progress notes below. Read this section and
@@ -248,7 +257,7 @@ Start: `6725de2` (v0.10) on `python-test/spawner`. Push only that branch.
 Baseline before any A2 edit: `py -m pytest -q` 112 passed in 59.94s.
 `py checks/run_all.py --quick` passed in 44.68s (seed 13, 9 mi: entropy 0.884,
 E-W 14.6%, sinuosity median/spread 1.771/0.574, order-1 width 12.39-15.00 ft;
-crossings/bridges 75/75; chunk hash match, 12 features; outlet SD 28.78°).
+crossings/bridges 75/75; chunk hash match, 12 features; outlet SD 28.78Â°).
 
 ## Latest continuation: v7 validation pending
 
@@ -378,14 +387,14 @@ run; no all-green or zero-clearance claim is made here yet.
 
 ## Checklist
 
-1. Versioned chunk cache — done. See below.
-2. Curved valley paths — awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
-3. Varied meanders, no kinks — awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
-4. Junction angles — `checks/river_junctions.py`. All joins, unfiltered, last 0.3 mi vs receiving channel. Seeds 14/30/31: mean 55-75°, under 25° < 5%, minimum >= 10°.
-5. Channel spacing — `checks/river_spacing.py`. Order >= 2 channels that do not join within 0.5 mi stay at least 0.4 mi apart. Violation count 0 on the 40 mi window; print the worst pair.
-6. Real copy test — resample each branch over 3 mi, compare normalised curvature profiles, flag correlation >= 0.9. Must fail on `b2ee52f` and on a same-recipe sine pair, and flag under 5% on the new network.
+1. Versioned chunk cache â€” done. See below.
+2. Curved valley paths â€” awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
+3. Varied meanders, no kinks â€” awaiting visual review. Numbers and render paths are below. Do not treat this part as done until those maps have been looked at.
+4. Junction angles â€” `checks/river_junctions.py`. All joins, unfiltered, last 0.3 mi vs receiving channel. Seeds 14/30/31: mean 55-75Â°, under 25Â° < 5%, minimum >= 10Â°.
+5. Channel spacing â€” `checks/river_spacing.py`. Order >= 2 channels that do not join within 0.5 mi stay at least 0.4 mi apart. Violation count 0 on the 40 mi window; print the worst pair.
+6. Real copy test â€” resample each branch over 3 mi, compare normalised curvature profiles, flag correlation >= 0.9. Must fail on `b2ee52f` and on a same-recipe sine pair, and flag under 5% on the new network.
 
-## Part 1: versioned chunk cache — done
+## Part 1: versioned chunk cache â€” done
 
 Cache path is `out/cache/<VERSION>-<short git hash>/<seed>/<lod-key>/<x>_<y>.svg`.
 Hash is `nogit` when git cannot be run. README says old `out/cache/*` folders can be deleted.
@@ -396,7 +405,7 @@ After: that test and `test_cache_version_tag_uses_nogit_when_git_is_unavailable`
 `py -m pytest -q`: 114 passed in 61.40s.
 `py checks/run_all.py --quick`: passed in 43.96s, same seed-13 metrics as the baseline (entropy 0.884, sinuosity 1.771/0.574, 75/75 bridges).
 
-## Part 2: curved valley paths — awaiting visual review
+## Part 2: curved valley paths â€” awaiting visual review
 
 Check `checks/river_valley.py` was shown failing on head `e709402` before `world.py` changed.
 `py checks/river_valley.py` exit 1, 92.19s.
@@ -411,7 +420,7 @@ After the valley centreline, the same command exited 0 in 163.27s.
 - seed 30: 1.247; 0.745/0.992/1.378; 2.08%; min 9.9
 - seed 31: 1.247; 0.750/0.988/1.375; 2.01%; min 8.1
 
-First full pytest after the curves: 2 failed, 112 passed in 63.69s. `test_drainage_continuity_and_downhill` found split pieces whose end sits above the start (one example, seed 13, rise 5.19 ft on a 0.93 mi piece). `test_finished_river_metrics_smoke_fails_on_comb_geometry` had sinuosity spread 0.214 on the 4 mi window. Outlet centreline stays on the old meander so the relief field does not move. Long chords split only where every piece still drops. Meander amplitude varies per reach by a factor from 0.70 to 1.40. A later pytest is 114 passed in 56.40s. `py checks/run_all.py --quick` passed in 51.82s: seed 13, 9 mi, entropy 0.928, E-W 17.9%, sinuosity median/spread 1.965/0.642, order-1 width 12.39-15.00 ft, bridges 85/85, chunk features 17, outlet SD 28.78°.
+First full pytest after the curves: 2 failed, 112 passed in 63.69s. `test_drainage_continuity_and_downhill` found split pieces whose end sits above the start (one example, seed 13, rise 5.19 ft on a 0.93 mi piece). `test_finished_river_metrics_smoke_fails_on_comb_geometry` had sinuosity spread 0.214 on the 4 mi window. Outlet centreline stays on the old meander so the relief field does not move. Long chords split only where every piece still drops. Meander amplitude varies per reach by a factor from 0.70 to 1.40. A later pytest is 114 passed in 56.40s. `py checks/run_all.py --quick` passed in 51.82s: seed 13, 9 mi, entropy 0.928, E-W 17.9%, sinuosity median/spread 1.965/0.642, order-1 width 12.39-15.00 ft, bridges 85/85, chunk features 17, outlet SD 28.78Â°.
 
 Review renders, not committed (`check-results/` is ignored):
 
@@ -422,7 +431,7 @@ Review renders, not committed (`check-results/` is ignored):
 
 The review of these maps found folded joins and a uniform trunk wiggle. Part 3 fixes both.
 
-## Part 3: varied meanders — awaiting visual review
+## Part 3: varied meanders â€” awaiting visual review
 
 Check `checks/river_meander.py` was shown failing on head `8f3a90a` before the new centreline. The amplitude metric is a 0.22 mi high-pass on the middle of the reach, not a cubic residual of the valley bow. `py checks/river_meander.py` exit 1, 111.60s.
 
@@ -438,7 +447,7 @@ After the chord-graph centreline, the same command exited 0 in 148.89s.
 
 `py checks/river_valley.py` still passes, exit 0 in 144.25s. Seed 14 median 1.302, edge mi 0.746/0.989/1.379, straight 0.61%, points/mi min 26.4. Seed 30: 1.305, 0.748/0.992/1.380, 0.69%, 26.4. Seed 31: 1.289, 0.750/0.988/1.375, 0.52%, 26.5.
 
-`py -m pytest -q`: 114 passed in 68.60s. `py checks/run_all.py --quick` passed: seed 13, 9 mi, entropy 0.903, E-W 21.1%, sinuosity median/spread 1.705/0.953, order-1 width 12.39-15.00 ft, bridges 77/77, chunk features 20, outlet SD 28.78°.
+`py -m pytest -q`: 114 passed in 68.60s. `py checks/run_all.py --quick` passed: seed 13, 9 mi, entropy 0.903, E-W 21.1%, sinuosity median/spread 1.705/0.953, order-1 width 12.39-15.00 ft, bridges 77/77, chunk features 20, outlet SD 28.78Â°.
 
 Outlet centreline stays on the width-scaled wave. A valley bow there moves relief and makes a headwater edge climb. A step also has to lose elevation, not only network potential. Wide trunks shorter than 4.5 wavelengths keep one arch, because a partial wave train measures as four similar bends.
 
@@ -465,7 +474,7 @@ in `checks/`; `py checks/run_all.py`, `--quick` and `--quick --seeds 13` all
 completed successfully.
 `check-results/` is ignored; `checks/example-summary.md` is the committed sample.
 
-Fresh normal suite: `py -m pytest -q` — 111 passed in 54.97s. The finished-map
+Fresh normal suite: `py -m pytest -q` â€” 111 passed in 54.97s. The finished-map
 smoke was measured on b2ee52f at seed 13, 4x4 mi: bearing entropy 0.701,
 sinuosity median 1.0 and spread 0.0, so it fails the new-map thresholds.
 
@@ -752,7 +761,7 @@ UTF-8: use explicit encoding when writing it. This follow-up records e7f582d
 because the first checkpoint write hit a Windows encoding error.
 
 --- Prior checkpoint ---
-# Item 1 verification preparation â€” WIP, 2026-11-14
+# Item 1 verification preparation Ã¢â‚¬â€ WIP, 2026-11-14
 
 Resumed at b282432 on python-test/spawner. Item 1 is STILL INCOMPLETE;
 items 2-7 have not been started. This WIP changes verification only, not geometry.
@@ -772,7 +781,7 @@ screenshots are not evidence of the unfinished overhaul. No numbered item is
 claimed complete. Read only the files named by the following checkpoint section.
 
 --- Prior checkpoint ---
-# Real-life generation order request â€” WIP, 2026-11-14
+# Real-life generation order request Ã¢â‚¬â€ WIP, 2026-11-14
 
 Started at 265c044 on python-test/spawner. This section supersedes the previous
 "no further implementation steps pending" statement. The seven numbered items

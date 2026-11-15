@@ -116,7 +116,11 @@ def test_rural_variety_reproducible_and_within_lots():
    layouts.append(site)
   assert len({tuple(n for n,_ in s['buildings']) for s in layouts})>3
   assert len({s['offset'] for s in layouts})>3
-  assert len({tuple(s['trees']) for s in layouts})>3
+  def tree_key(s):
+   trees=s['trees']
+   if trees and isinstance(trees[0],dict): return tuple(sorted((t['x'],t['y']) for t in trees))
+   return tuple(trees)
+  assert len({tree_key(s) for s in layouts})>3
 
 
 def test_diagonal_and_parallel_rail_has_square_road_crossings(monkeypatch):
