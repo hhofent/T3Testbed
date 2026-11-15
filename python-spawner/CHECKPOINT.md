@@ -1151,3 +1151,5 @@ PNGs:
 - check-results\town-bakeoff\python-test_town-bakeoff-luna\s14-mid-highway-v.png
 - check-results\town-bakeoff\python-test_town-bakeoff-luna\s30-big-rail-h.png
 - check-results\town-bakeoff\python-test_town-bakeoff-luna\s31-mid-rail-v.png
+
+CHECKPOINT step 1 follow-up: implementation commit follows | v2 failing 10 | fast 70/70 24.99s | deterministic frontage segments and non-parity segment field added; rejects parcels crossing non-frontage roads. Partial-block generation and corner/connectivity tests remain unfinished; v2 still has 10 failing checks.

@@ -350,6 +350,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             if ds.chance(f"h{k}{n_}", FRINGE_PCT): lo -= cx // number('region.make_town_numbers', 'make_town_322_63')
             streets.append({"id": f"T-S{k}-{n_}", "name": names_h[k % number('region.make_town_numbers', 'make_town_323_70')], "axis": "h", "type": "paved", "c": y,
                             "lo": lo, "hi": hi, "w": sw, "surface_ft": number('region.make_town_numbers', 'make_town_324_71')})
+    segments=[]
     if not option("generation.parity") and blocks:
         bx = [b["rect"] for b in blocks]
         streets.extend([
@@ -468,9 +469,12 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
                     x0=c-half-depth if side=="W" else c+half
                     place={"x0":x0,"y0":pos,"facing":side}
                 rect=world_rect(place,width,depth)
-                if not rail_hits(list(creeks),rect) and not any(overlaps(rect,world_rect(L["place"],L["w"],L["d"])) for L in lots):
-                    lots.append({"id":f"town:edge:{street['id']}:{side}:{nedge}","w":width,"d":depth,"setting":"town","kind":"town","place":place,"along":pos,
+                clear_roads=all(r is street or not overlaps(rect,road_rect(r)) for r in streets)
+                if not rail_hits(list(creeks),rect) and clear_roads and not any(overlaps(rect,world_rect(L["place"],L["w"],L["d"])) for L in lots):
+                    lid=f"town:edge:{street['id']}:{side}:{nedge}"
+                    lots.append({"id":lid,"w":width,"d":depth,"setting":"town","kind":"town","place":place,"along":pos,
                                  "base_lots":mult,"house_type":"stick","use":"house","alley_rear":False})
+                    segments.append({"id":f"seg{len(segments)}","kind":"frontage","street":street["id"],"side":side,"fa":side,"rect":rect,"d":depth,"alley":None,"corners":[],"lots":[lid]})
                     nedge+=1
                 pos += width
     if "funeral home" in prog:                              # converted house near main street
@@ -487,7 +491,7 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     box = (min(r[number('region.make_town_numbers', 'make_town_401_17')] for r in bx) - sw, min(r[number('region.make_town_numbers', 'make_town_401_45')] for r in bx) - sw, number('region.make_town_numbers', 'make_town_401_67'), number('region.make_town_numbers', 'make_town_401_70'))
     box = (box[number('region.make_town_numbers', 'make_town_402_15')], box[number('region.make_town_numbers', 'make_town_402_23')], max(r[number('region.make_town_numbers', 'make_town_402_33')] + r[number('region.make_town_numbers', 'make_town_402_40')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_67')], max(r[number('region.make_town_numbers', 'make_town_402_77')] + r[number('region.make_town_numbers', 'make_town_402_84')] for r in bx) + sw - box[number('region.make_town_numbers', 'make_town_402_111')])
     return {"Xc": Xc, "Yc": Yc, "cols": cols, "rows": rows, "cx": cx, "cy": cy, "street_w": sw, "alley_w": al,
-            "setbacks": sb, "blocks": blocks, "alleys": alleys, "streets": streets, "lots": lots, "box": box, "rail_town": rail_town, "commercial": commercial, **({"highway_local": "h" if rail_town else "v"} if not option("generation.parity") else {}),
+            "setbacks": sb, "blocks": blocks, "alleys": alleys, "streets": streets, "lots": lots, **({"segments": segments} if not option("generation.parity") else {}), "box": box, "rail_town": rail_town, "commercial": commercial, **({"highway_local": "h" if rail_town else "v"} if not option("generation.parity") else {}),
             "year": year, "size": size, "pop_est": pop, "houses_est": houses, "band": band, "program": prog, **({"topup": added} if not option("generation.parity") else {}), "edge_want": edge_want, "unplaced": unplaced}
 
 def place_rail_features(seed, town, rail, occupied, bar=None):
@@ -674,6 +678,8 @@ def make_region(seed, force_town=False, overrides=None, force_rail=None, force_p
             cands=[x for x in allroads if inside((fx, fy), road_rect(x))]
             L["road"] = min(cands, key=lambda x: bool(x.get("main"))) if cands else None
             if L["road"] is None: continue  # no lot without a surviving frontage street
+            # A segment may front its street, but its parcel cannot cover a cross street.
+            if any(r is not L["road"] and overlaps(wr, road_rect(r)) for r in allroads): continue
             raw.append(L)
     year = region_year(seed)
     lots = []
