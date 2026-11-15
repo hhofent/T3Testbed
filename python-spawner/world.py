@@ -206,8 +206,21 @@ def _town_scene(seed,site,serialized,detail):
   if detail:
    for shop in town['commercial']:
     if shop.get('bldg'): add('buildings','business:'+shop['id'],shop['bldg'],use=shop['type'])
+    if not option('generation.parity') and shop.get('lot') and not shop.get('house_lot'):
+     add('lots', 'business:'+shop['id'], shop['lot'], use='business:'+shop['type'])
    for i,parcel in enumerate(reg['parcels']):
-    if parcel['kind'] in ('elevator','industry'): add('buildings','industry:'+str(i),parcel['rect'],use=parcel['kind'])
+    if parcel['kind'] in ('elevator','industry'):
+     p_rect = parcel['rect']
+     if not option('generation.parity') and parcel.get('office'):
+      o = parcel['office']
+      # Truncate elevator building rect in y so it does not overlap co-op office
+      near_top = abs(p_rect[1] + p_rect[3] - town['Yc']) < abs(p_rect[1] - town['Yc'])
+      if near_top:
+       p_rect = (p_rect[0], p_rect[1], p_rect[2], o[1] - p_rect[1] - FT(5))
+      else:
+       p_rect = (p_rect[0], o[1] + o[3] + FT(5), p_rect[2], p_rect[1] + p_rect[3] - (o[1] + o[3] + FT(5)))
+      add('buildings', 'business:coop-office', o, use='co-op office')
+     add('buildings','industry:'+str(i),p_rect,use=parcel['kind'])
    if reg['depot']: add('buildings','depot',reg['depot'],use='depot')
   return out
 

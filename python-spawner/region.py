@@ -218,8 +218,12 @@ def choose_businesses(seed, band, year=BASE_YEAR):
     if "grocery" in out and band == number('region.choose_businesses_numbers', 'choose_businesses_215_36') and d.chance("hwy", number('region.choose_businesses_numbers', 'choose_businesses_215_58')): out[out.index("grocery")] = "grocery (highway)"
     return out
 
-def _wr(F, x0, u, w, h):   # face-local (x0 world x, u = depth from the street edge) -> world rect
-    return (x0, F["front_y"] + u, w, h) if F["fa"] == "S" else (x0, F["front_y"] - u - h, w, h)
+def _wr(F, pos, u, w, h):   # face-local -> world rect
+    fa = F["fa"]
+    if fa == "S": return (pos, F["front_y"] + u, w, h)
+    if fa == "N": return (pos, F["front_y"] - u - h, w, h)
+    if fa == "W": return (F["front_x"] + u, pos, h, w)
+    if fa == "E": return (F["front_x"] - u - h, pos, h, w)
 
 def _main_biz(typ, x0, F, n, seed, vacant_of=None):
     D = F["d"]; dd = rng(seed, F["run"], "biz", n)
@@ -311,14 +315,28 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
             bld = (by1 - by0 - al) // number('region.make_town_numbers', 'make_town_295_38')
             blocks.append({"id": f"b{i}{j}", "ij": (i, j), "rect": (bx0, by0, bx1 - bx0, by1 - by0), "lot_d": bld})
             alleys.append((bx0, by0 + bld, bx1 - bx0, al))
-            for half, y0, fa in (("S", by0, "S"), ("N", by1 - bld, "N")):
-                front = ys[j] if half == "S" else ys[j + number('region.make_town_numbers', 'make_town_299_57')]
-                edge = (half == "S" and j == number('region.make_town_numbers', 'make_town_300_45')) or (half == "N" and j == rows - number('region.make_town_numbers', 'make_town_300_80'))
-                if edge and front != Yc and rng(seed, "halfblock", i, j).chance("drop", EDGE_HALF_PCT): continue   # uneven edge depth
-                main = front == Yc and Xc in (xs[i], xs[i + number('region.make_town_numbers', 'make_town_302_60')])
-                faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": bx0, "bx1": bx1, "d": bld,
-                              "front_y": by0 if half == "S" else by1, "main": front == Yc,
-                              "dist": min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_305_70')] - Xc)), "from_lo": xs[i] == Xc or (xs[i + number('region.make_town_numbers', 'make_town_305_115')] != Xc and xs[i] < Xc)})
+            if option("generation.parity"):
+                for half, y0, fa in (("S", by0, "S"), ("N", by1 - bld, "N")):
+                    front = ys[j] if half == "S" else ys[j + number('region.make_town_numbers', 'make_town_299_57')]
+                    edge = (half == "S" and j == number('region.make_town_numbers', 'make_town_300_45')) or (half == "N" and j == rows - number('region.make_town_numbers', 'make_town_300_80'))
+                    if edge and front != Yc and rng(seed, "halfblock", i, j).chance("drop", EDGE_HALF_PCT): continue   # uneven edge depth
+                    main = front == Yc and Xc in (xs[i], xs[i + number('region.make_town_numbers', 'make_town_302_60')])
+                    faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": bx0, "bx1": bx1, "d": bld,
+                                  "front_y": by0 if half == "S" else by1, "main": front == Yc,
+                                  "dist": min(abs(xs[i] - Xc), abs(xs[i + number('region.make_town_numbers', 'make_town_305_70')] - Xc)), "from_lo": xs[i] == Xc or (xs[i + number('region.make_town_numbers', 'make_town_305_115')] != Xc and xs[i] < Xc)})
+            else:
+                for half, y0, fa in (("S", by0, "S"), ("N", by1 - bld, "N")):
+                    front = ys[j] if half == "S" else ys[j + 1]
+                    edge = (half == "S" and j == 0) or (half == "N" and j == rows - 1)
+                    if edge and front != Yc and rng(seed, "halfblock", i, j).chance("drop", EDGE_HALF_PCT): continue
+                    # For rail town, main street is Yc. For highway town, main street is Xc, so blocks touching Xc are on main!
+                    if rail_town:
+                        main = (front == Yc)
+                    else:
+                        main = (abs(xs[i] - Xc) < FT(5) or abs(xs[i + 1] - Xc) < FT(5))
+                    faces.append({"run": f"town:b{i}{j}:{half}", "y0": y0, "fa": fa, "bx0": bx0, "bx1": bx1, "d": bld,
+                                  "front_y": by0 if half == "S" else by1, "main": main,
+                                  "dist": min(abs(xs[i] - Xc), abs(xs[i + 1] - Xc)), "from_lo": xs[i] == Xc or (xs[i + 1] != Xc and xs[i] < Xc)})
     if not option("generation.parity"):
         streets = build_streets(seed, rail_town, Xc, Yc, xs, ys, blocks, sw, main_w, names_h)
     else:
@@ -371,8 +389,13 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
         return out
     houses = sum(len(face_lots(F, F["bx0"], F["bx1"])) for F in faces)          # pass 1: houses before businesses
     pop = round(houses * PEOPLE_PER_HOUSE); band = town_band(force_pop if force_pop else pop)
-    year = region_year(seed); prog = choose_businesses(seed, band, year); db = rng(seed, "bizplace")
-    mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:MAIN_FACES]
+    year = region_year(seed); prog = choose_businesses(seed, band, year)
+    if not option("generation.parity"):
+        from town_biz import top_up_program
+        prog = top_up_program(seed, prog, size, rail_town)
+    db = rng(seed, "bizplace")
+    mains_limit = MAIN_FACES if option("generation.parity") else None
+    mains = sorted((F for F in faces if F["main"]), key=lambda F: (F["dist"], F["run"]))[:mains_limit]
     off = sorted((F for F in faces if not F["main"] and abs((F["front_y"]) - Yc) < number('region.make_town_numbers', 'make_town_357_83') * cy), key=lambda F: (F["dist"], F["run"]))
     for F in faces: F["lo"], F["hi"] = F["bx0"], F["bx1"]
     def take(F, w, far=False):
@@ -384,7 +407,14 @@ def make_town(seed, roads, rail, force_town, force_pop=None, creeks=()):
     commercial, unplaced, n = [], [], number('region.make_town_numbers', 'make_town_365_38')
     def put(typ, faces_, w, **k):
         nonlocal n
-        for F in faces_:
+        cand_faces = faces_
+        if not option("generation.parity"):
+            cand_faces = sorted(faces_, key=lambda F: (
+                0 if F.get("main") and ((F["lo"] - F["bx0"] < FT(55)) and (F["bx1"] - F["hi"] < FT(55)))
+                else (1 if F.get("main") else 2),
+                F.get("dist", 0), F["run"]
+            ))
+        for F in cand_faces:
             x0 = take(F, w)
             if x0 is not None: commercial.append(_main_biz(typ, x0, F, n, seed, **k)); n += number('region.make_town_numbers', 'make_town_370_92'); return True
         unplaced.append(typ); return False
