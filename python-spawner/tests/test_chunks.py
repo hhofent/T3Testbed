@@ -132,3 +132,22 @@ def test_far_chunk_svg_uses_local_geometry():
  for item in root.findall('.//{*}rect'):
   assert abs(float(item.attrib['x']))<10*MILE
   assert abs(float(item.attrib['y']))<10*MILE
+
+
+def test_chunk_response_reports_visible_progress(monkeypatch,tmp_path):
+ import chunks
+ from settings import Settings
+ monkeypatch.setattr(chunks,'CACHE',tmp_path)
+ monkeypatch.setattr(chunks,'generate',lambda seed,x,y,settings,path,detail=True:'<svg/>')
+ with chunks.LOCK:
+  chunks.JOBS.clear();chunks.WAITING.clear();chunks.ACTIVE=None
+ data={'seed':31,'window':[0,0,3*MILE,3*MILE],'detail':True}
+ response=chunks.request(data,Settings())
+ assert response['total']==1 and response['completed'] in (0,1)
+ assert response['chunks'][0]['preview'] is None or '<svg' in response['chunks'][0]['preview']
+ assert isinstance(response['waiting'],int) and 'active' in response
+
+
+def test_renderer_identity_invalidates_pre_v29_world_chunks():
+ # This expected identity changes when display geometry or SVG layering changes.
+ assert chunks.identity(Settings())=='6ffc52d24b8ccc8493fb93cd'

@@ -1,4 +1,49 @@
-# Python spawner
+# Python spawner — quick start
+
+Generate and explore a seeded countryside map with roads, rivers, towns, and farms.
+
+## First-time setup (Windows)
+
+Install Python 3.11 or newer, then open PowerShell and run:
+
+```powershell
+cd "C:\Users\hhofe\Documents\grokkable projects\t3 testbed\python-spawner"
+py -m pip install -r requirements.txt
+```
+
+## Start the spawner
+
+From the same folder, run:
+
+```powershell
+py cli.py --serve
+```
+
+Open **http://127.0.0.1:8765** in your browser. Leave PowerShell running while you use the page. Press **Ctrl+C** in PowerShell to stop the server.
+
+Each launch chooses a random seed and prints it in the terminal. To reproduce a world, run `py cli.py --serve --seed 31` (replace 31 with your seed). Browser refreshes keep that launch's seed.
+
+Stopping discards queued work and keeps completed chunks cached. If you stop during generation, the unfinished chunk is generated again next time. The progress message shows the active seed/chunk and elapsed time, including when an earlier view is still using the worker.
+
+## Explore the map
+
+- Change **Seed** to generate another world. The same seed and settings reproduce the same map.
+- Drag the map or use **North / South / East / West** to move. Use the mouse wheel or **+ / −** to zoom.
+- Use **Find a town** to visit the nearest accepted town in loaded chunks. **Previous town / Next town** work once towns have loaded; **Town zoom** sets the visit scale.
+- An empty origin is valid. Pan to load nearby chunks if no town is available.
+- Expand settings groups to adjust generation. **Save JSON / Load JSON** preserve settings.
+
+A new seed can take several minutes to generate its first basin. Watch the progress message; finished chunks appear as they become available. Cached views are faster.
+
+While it works, an estimated percentage meter tracks generation stages. Temporary previews show basin boundaries and main rivers first, then tributaries, roads, rail, towns, and countryside as they become available. These layers may change during refinement; finished chunks replace them automatically. The percentage tracks stages rather than time remaining.
+
+If port 8765 is busy, run `py cli.py --serve --port 8766` and open **http://127.0.0.1:8766** instead. After changing the code, restart the server and hard-refresh the browser with **Ctrl+F5**.
+
+On macOS/Linux, run these commands from your checkout's `python-spawner` folder using `python3` instead of `py`.
+
+---
+
+# Detailed reference
 
 ## 1. What it is
 
@@ -82,7 +127,7 @@ py cli.py --serve --port 8766
 python3 cli.py --serve --port 8766
 ```
 
-The first view of a new seed can take several seconds. A 96-mile overview can take minutes on a cold cache.
+The first basin of a new seed can take several minutes on a cold cache. Temporary layers appear during generation and are replaced by completed chunks.
 
 ## 5. After updating
 
@@ -123,7 +168,7 @@ The page is the map on the right and the settings panel on the left. Status text
 
 **Header**
 
-- Seed. Integer that picks the whole world. Default 31. Changing it rebuilds the view.
+- Seed. Integer that picks the whole world. A fresh launch chooses a random seed unless one is supplied. Changing it rebuilds the view.
 - Random. Picks a new seed.
 - Lock seed / Unlock seed. Keeps the seed fixed while you move sliders. Random is disabled while locked.
 - Find a town. Widens the view until a generated town is in the loaded chunks, then zooms to the nearest one. Towns must be on in Generation stages. If none are nearby it says so.
@@ -169,7 +214,7 @@ Draw order is contours, rivers, creeks, towns, lots, roads, rail, bridges, drive
 
 ## 7. Tests
 
-From this folder. About one minute:
+From this folder. About six minutes (river and world generation dominate):
 
 Windows (PowerShell):
 

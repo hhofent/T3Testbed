@@ -1,13 +1,13 @@
 """Command line entry point for generation, presets, sweeps and the control page."""
-import argparse,json
+import argparse,json,secrets
 from pathlib import Path
-from presets import stack,save,diff
-from settings import DEFAULTS
+from presets import stack,save,diff,PRESETS
+from settings import DEFAULTS,CATALOG
 ROOT=Path(__file__).resolve().parent
 
 def parser():
  p=argparse.ArgumentParser(description=__doc__)
- p.add_argument('--seed',type=int,default=DEFAULTS['controls.seed'])
+ p.add_argument('--seed',type=int,help='Reproduce a seed (default: choose a random seed at launch)')
  p.add_argument('--serve',action='store_true')
  p.add_argument('--world',action='store_true')
  p.add_argument('--verify',action='store_true')
@@ -28,6 +28,15 @@ def main(argv=None):
  if args.seeds<1: p.error("--seeds must be positive")
  try: settings=stack(args.preset,args.param)
  except (ValueError,KeyError,OSError) as error: p.error(str(error))
+ if args.seed is None:
+  configured=any(item.partition('=')[0]=='controls.seed' for item in args.param) or settings.values['controls.seed']!=DEFAULTS['controls.seed']
+  if not configured:
+   for name in args.preset:
+    values=PRESETS[name] if name in PRESETS else json.loads(Path(name).read_text(encoding='utf-8'))['values']
+    if 'controls.seed' in values:configured=True;break
+  args.seed=settings.values['controls.seed'] if configured else secrets.randbelow(CATALOG['controls.seed']['max']+1)
+ try: settings.set('controls.seed',args.seed)
+ except ValueError as error:p.error(str(error))
  if args.save_preset: save(settings,args.save_preset)
  if args.diff: print(json.dumps(diff(settings),indent=2)); return
  if args.verify:
@@ -39,6 +48,7 @@ def main(argv=None):
   return
  if args.serve:
   from control import serve
+  print(f'Seed: {args.seed}',flush=True)
   serve(args.port,settings); return
  if args.sweep:
   from sweep import sweep

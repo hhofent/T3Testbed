@@ -1,6 +1,6 @@
 """Main-street storefronts with a controlled highway strip (N12)."""
 from settings import option
-from region import FT,overlaps,rail_hits,_edge_slot
+from region import FT,overlaps,rail_hits,_edge_slot,world_rect
 from spawner import H
 
 def arrange(reg):
@@ -15,6 +15,7 @@ def arrange(reg):
  road=next((r for r in reg['grid_roads'] if r['type']=='paved' and r['axis']=='h'),None)
  if not road: return
  occupied=[town['box']]+[p['rect'] for p in reg['parcels'] if not p.get('in_town')]+[c['lot'] for c in town['commercial'] if c['site'].startswith('edge')]
+ occupied += [world_rect(l['place'],l['spec']['width'],l['spec']['depth']) for l in reg['lots'] if ':outer' in l['spec']['id']]
  for shop in town['commercial']:
   if not shop.get('storefront') and shop['type']!='gas station': continue
   if H(reg['seed'],shop['id'],'highway')/2**64 < share: continue

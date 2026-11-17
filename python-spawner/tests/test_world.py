@@ -371,6 +371,30 @@ def test_bridges_cover_every_paved_rail_and_gravel_water_crossing():
  assert sorted(first,key=lambda f:f['id'])==sorted(second,key=lambda f:f['id'])
  assert len(first)==2
 
+def test_section_road_bridge_deck_uses_traveled_surface_width():
+ from world import bridges,feature,FT,MILE
+ water=feature('rivers','water',points=[(0,-MILE/10),(0,MILE/10)],width=FT(20),widths=[FT(20),FT(20)])
+ road=feature('roads','section',rect=(-MILE/10,-FT(11),MILE/5,FT(22)),axis='h',surface='gravel')
+ decks=bridges([water,road])
+ assert len(decks)==1
+ assert decks[0]['width']==FT(22)
+
+
+def test_town_display_name_is_stable_and_readable():
+ import xml.etree.ElementTree as ET
+ from world import town_display_name,feature,svg,MILE
+ site='town:rail:h:0:0:town'
+ first=town_display_name(site)
+ assert first==town_display_name(site)
+ assert first.replace(' ','').isalpha() and first[0].isupper()
+ assert 'town:rail' not in first
+ town=feature('towns',site,rect=(0,0,100,100),site_id=site)
+ markup=svg({'window':(0,0,6*MILE,6*MILE),'features':[town]}).decode()
+ group=ET.fromstring(markup).find('.//{*}g[@data-kind="towns"]')
+ assert group.get('data-town-name')==first and group.get('data-site-id')==site
+ assert group.find('{*}title').text.startswith(first)
+ assert f'>{first}</text>' in markup
+
 
 def test_rail_density_directions_curvature_and_corrected_crossing_angles(monkeypatch):
  import math
@@ -455,3 +479,16 @@ def test_farmstead_density_and_world_access_lane_lengths(monkeypatch):
     assert out[0]['shared_lane']==out[1]['shared_lane']
     break
   else: assert False,'no seeded shared-lane cluster'
+
+
+def test_section_roads_render_only_22_foot_traveled_surface(monkeypatch):
+ skip_tile_settlement_work(monkeypatch)
+ from settings import applied
+ from world import svg
+ scene=window(31,(0,0,MILE,MILE),Settings({'stages.houses':False}),detail=False)
+ roads=[f for f in scene['features'] if f['kind']=='roads' and f.get('axis')=='v' and 'rect' in f]
+ assert roads
+ assert all(f['rect'][2]==22*192 for f in roads)
+ assert all(f['rect'][3]==22*192 for f in roads if f.get('axis')=='h')
+ markup=svg({'window':scene['window'],'features':roads}).decode()
+ assert 'width="4224"' in markup

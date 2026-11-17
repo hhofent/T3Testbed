@@ -10,10 +10,10 @@ PC = {'industry':'#c9b48a','cemetery':'#9bb59b','church':'#e0c0e0','fuel':'#f0a0
 def draw_roads(ax):
     for r in reg["roads"]:
         x, y, w, h = road_rect(r)
-        ax.add_patch(Rectangle((f(x), f(y)), f(w), f(h), color=ROADC[r["type"]], alpha=0.3, lw=0))
-        s = FT(r["surface_ft"])
+        ax.add_patch(Rectangle((f(x), f(y)), f(w), f(h), fill=False, edgecolor=ROADC[r["type"]], alpha=0.35, lw=0.35))
+        s = FT(22)
         rr = (r["lo"], r["c"] - s // 2, r["hi"] - r["lo"], s) if r["axis"] == "h" else (r["c"] - s // 2, r["lo"], s, r["hi"] - r["lo"])
-        ax.add_patch(Rectangle((f(rr[0]), f(rr[1])), f(rr[2]), f(rr[3]), color=ROADC[r["type"]], lw=0))
+        ax.add_patch(Rectangle((f(rr[0]), f(rr[1])), f(rr[2]), f(rr[3]), color=ROADC[r["type"]], lw=0, zorder=2))
     if t:
         for a in t["alleys"]: ax.add_patch(Rectangle((f(a[0]), f(a[1])), f(a[2]), f(a[3]), color="#ddd", lw=0))
     for c in reg.get("creeks", []):
@@ -83,7 +83,7 @@ def png(region,results,town_only=True,framed=False):
         ax.set_xlim(f(b[0]-margin),f(b[0]+b[2]+margin)); ax.set_ylim(f(b[1]-margin),f(b[1]+b[3]+margin)); ax.set_aspect('equal')
         ax.set_axis_off()
         if framed: ax.set_position([.01,.01,.98,.98])
-        else: fig.tight_layout()
+        else: fig.subplots_adjust(left=.01, right=.99, bottom=.01, top=.99)
         buf=io.BytesIO(); fig.savefig(buf,format='png',dpi=110,metadata={'Software':'Python spawner'}); return buf.getvalue()
     finally: plt.close(fig)
 
@@ -114,7 +114,7 @@ def world_png(scene,width=1440):
                 else:
                     points=ftr['points']; widths=ftr.get('widths')
                     raw=ftr.get('width',FT(1))
-                    if kind=='rail' or (kind=='bridges' and ftr.get('surface')=='rail'): raw=FT(__import__('settings').option('world.rail_draw_ft'))
+                    if kind=='rail': raw=FT(__import__('settings').option('world.rail_draw_ft'))
                     if widths:
                         segments=list(zip(points,points[1:])); strokes=[max(minimum,(a+b)/2/w*width)*.72 for a,b in zip(widths,widths[1:])]
                     else: segments=[points]; strokes=[max(minimum,raw/w*width)*.72]

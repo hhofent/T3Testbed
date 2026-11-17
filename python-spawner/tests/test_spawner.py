@@ -91,3 +91,13 @@ def test_trailer_on_single_50ft_lot():
         assert plan.site.get("drive_surface") == "gravel" and not any(r.kind == "garage" for r in plan.rooms)
         assert any((r[0] == x1 or r[0] + r[2] == x0) and r[1] == 0 for r in plan.site["drive"])   # pad beside, from the road
         assert all(rep[k][0] == "n/a" for k in TRAILER_NA if k != "21") and rep["3"][0] == "pass"
+
+
+def test_narrow_lots_spawn_valid_houses():
+    # A detached garage tucks behind the house when the side-by-side garage and
+    # drive do not fit, so lots down to 60 ft still build a valid plan.
+    for w in (60, 62, 66, 70):
+        for s in range(10):
+            plan, rep, _, _ = spawn(make_lot(f"narrow{w}-{s}", w, s), max_attempts=25)
+            assert plan is not None, (w, s)
+            assert not [k for k, (st, _) in rep.items() if st == "fail"], (w, s, rep)

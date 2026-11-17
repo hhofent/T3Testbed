@@ -1,21 +1,100 @@
-# ACTIVE HANDOFF: Part 5 stopped by user; QA deferred
+# ACTIVE HANDOFF: v0.11 commit
 
-This section overrides all older in-progress notes below. Read this section and
-`checks/a2-regression-failures.json` before doing anything. Do not resume tuning.
+- Repository: `C:\Users\hhofe\Documents\grokkable projects\t3 testbed\python-spawner`
+- Branch: `python-test/spawner`
+- Parent HEAD: `2469802febb1d9c2e4885830b5b8ae36b668bb83`
+- VERSION: **v0.11**. Cache identity `lod-v30-river-road-town-narrow-lot` / `6ffc52d24b8ccc8493fb93cd`.
+- Milestone: five-improvements + progressive loading + quirk-fixes. Elevation-then-rivers remake was reverted (c0919) and is not in this version.
 
-- Repository: hhofent/T3Testbed. Work only in `python-spawner/`.
-- Branch: `python-test/spawner`. Push ONLY this branch. No merge, rebase,
-  history rewrite, force-push or PR.
-- Last implementation commit: `3b80fe880127d40a4feacf5bfa59f7db44e241c5`
-  (`river A2 part 5: bounded spacing repair and continuation guards`).
-- Part 4: `aff8968b42d42e385e7afac71662057550f78575`.
-- Part 5 is finalized with accepted implementation scope and deferred QA.
-  Geometric zero-spacing acceptance is NOT claimed.
-- Part 6: NOT STARTED. Its uncommitted verification/copy-helper replacement was
-  removed before the final part-5 pytest run. Pre-existing part-4 baseline copy
-  scripts/artifacts remain historical evidence. Do not start part 6.
-- User ordered STOP after checkpoint, commit and push. No more full audits,
-  smoke tuning, renders, or new work in this run.
+## Restored
+
+- `world.elevation` is distance-to-river + `_network_potential` again. `window()` emits contours, rivers, roads, rail, towns, countryside, bridges. No lakes / relief wash / `layers='land-water'`.
+- Control page has Find/Previous/Next town, Town zoom, all settings groups, generation meter. Status copy is "Temporary grid; … building 32-mi basin".
+- `chunks.generate` calls full `window()` (no land-water). `preview_svg` is the cheap section grid.
+
+## Tests
+
+- Fresh `py -m pytest -q` from python-spawner/ after the revert: **154 passed in 353.87s (0:05:53), exit 0**. Same count as the pre-remake quirk-fixes suite.
+
+## Tests
+
+- Fresh `py -m pytest -q` from python-spawner/: **154 passed in 353.87s (0:05:53), exit 0**.
+
+## Exact next action
+
+Commit and push `python-test/spawner` as v0.11. Do not merge, rebase, force-push, or open a PR.
+
+---
+
+## Historical: Quirk fixes (visual) — previous run, preserved dirty work
+
+Repository C:/Users/hhofe/Documents/grokkable projects/t3 testbed/python-spawner; branch python-test/spawner; HEAD 2469802. No commit/push (pre-existing dirty edits from the "spawner five improvements" and "progressive loading" handoffs are preserved and untouched). User reported three visual quirks on top of the earlier findings; implemented fixes for all of them plus the earlier list.
+
+### Done this session
+
+1. **Roads — parallel/duplicate N-S sections at 24-mi survey correction lines.** The N-S section grid steps sideways ~635 ft at each correction line (`correction_shift` flips sign), so every vertical gravel/dirt road looked like two offset parallel segments. Added `world._correction_curve(x1,x2,y0)` (cubic-bezier S-curve) and a loop in `window()` that emits `road:{axis}:{line}:jog:{band}` polyline features bridging the offset for gravel/dirt roads (paved highways already draw their own curve). Also extended the existing corner trim to horizontal transverse-jog segments.
+2. **Rivers — regular kink + half-circle.** In `world._edge_curve` non-trunk branch: `valley_amp` 0.33-0.51 -> 0.14-0.24 of chord, `bows=max(1,round(chord/(.75*MILE)))` (was always 1), `bow=sin(pi*bows*t)`, plus per-wave amplitude jitter `wave_amp`. Measured max lateral bulge 0.70 mi -> 0.34 mi on a 1.4 mi reach.
+3. **Towns — no lots on outside edge streets.** `region.make_town` now appends a full outer lot ring: four full faces (`town:outer:S/N` via `face_lots`, `town:outer:E/W` via new `face_lots_we`), box expanded by `bld` on N/S. `face_lots_we` handles W/E (vertical-street) frontage. Outer faces flagged `outer:True` and excluded from `res` (church candidates). `commercial_layout.arrange` and `make_region` (edge businesses) now include outer-lot rects in `occupied` so edge/highway-strip businesses don't overlap them. Parity mode is gated off (`parity = option("generation.parity")`).
+4. **Earlier quirks:** narrow-lot spawn cliff (detached-garage rear fallback in `spawner.place_on_lot`; 60 ft now 100%), `numpy` added to requirements.txt, `tight_layout`->`subplots_adjust` in map_render.py, VERSION->v0.11 (+ history entry), README test-time corrected, chunk cache identity bumped to `lod-v30-…` (test_chunks hash updated to `6ffc52d24b8ccc8493fb93cd`).
+
+### Tests
+
+- `tests/test_region.py` + `tests/test_settings.py`: **32 passed** (after fixing rail-town box and edge-business overlap).
+- `tests/test_spawner.py`: 35 passed (new `test_narrow_lots_spawn_valid_houses`).
+- `tests/test_river_shapes.py`: 7 passed.
+- Full `py -m pytest -q`: **154 passed in 355.36s (0:05:55), exit 0** (log: pytest-full4.log).
+- Screenshots in `artifacts/quirk-fixes/` (town-seed31*.png, rivers-fixed.png, road-corner.png, house-60ft.png).
+
+### Exact next step
+
+Nothing pending. Full suite green (154 passed). Hand back; no merge/push.
+
+---
+
+## Progressive loading follow-up
+
+Recovery c0842; latest c0915. LOCALLY COMPLETE: item4 staged loading plus the added random-default request. Repository C:/Users/hhofe/Documents/grokkable projects/t3 testbed/python-spawner; branch python-test/spawner; starting/current HEAD2469802febb1d9c2e4885830b5b8ae36b668bb83. Fresh py -m pytest -q:153 passed435.53s (0:07:15), log check-results/progressive-random-full.log. Final focused command py -m pytest tests/test_cli_seed.py tests/test_generation_progress.py tests/test_chunks.py tests/test_control.py tests/test_worker_lifecycle.py -q:36 passed1.72s, progressive-random-focused-final.log. Baselines:4 loading failures0.19s (progressive-loading-before.log);3 seed failures2 passes0.19s (random-seed-before.log). Changed this follow-up: generation_progress.py and generation_preview.py(new), world.py observational hooks only, chunks.py live snapshots/versioned payloads, control.html meter and temporary layer replacement, cli.py random launch seed/explicit overrides, tests/test_generation_progress.py and tests/test_cli_seed.py(new), readme.md and CHECKPOINT.md. Previous worker/five-improvement edits remain dirty and preserved. No river geometry, topology, width, crossing, generation parameter, spacing or Part6 changes; final seed31 SVG801534 bytes exactly matches prior unobserved baseline (SHA25689024294123278ac2dc0ad27d67746ab71619e797db8dd3b5c6c5de3f7e9e09a). Cold stage first basin/main-river preview0.66s; roads374.31s, final381.41s. Cached request0.109s; interrupt shutdown exit0 in1.313s. Temporary percentage is explicitly an estimated stage completion measure, not remaining time. Real random CLI launch seed1275092222 matched initial schema; explicit --seed0/31 and preset seeds covered. Logs check-results/progressive-http-smoke.log, progressive-http-server.log, random-launch-smoke.log, random-launch-server.log. Artifacts artifacts/spawner-progressive-loading/seed31-browser-rivers.png, seed31-browser-ready.png, seed31-main-river-routes.svg, seed31-river-channels.svg, seed31-roads.svg, seed31-crossings-and-finishing.svg, seed31-final.svg (other phase SVGs in same folder). Cold cache check-results/progressive-cold-1794864768965257700; test harnesses progressive_http_smoke.py, random_launch_smoke.py and progressive_cached_preview.py retained under check-results. Browser observed100% - Ready, final tile, no console errors; owned tab closed. All owned test servers stopped. git diff --check passed. No commit or push. No new blockers or unfinished implementation; original river-strand issue c0845 remains unrelated and blocked. Cleanup: temporary loading_recovery.py writer is removed immediately after this write; evidence retained. Exact next action: restart py cli.py --serve, hard-refresh Ctrl+F5, observe random seed and staged previews; use py cli.py --serve --seed 31 for a reproducible world. Future work should begin from c0842 and this checkpoint; no additional implementation is pending for these requests.
+
+# Historical: Spawner five improvements (previous run, not this handoff)
+
+- Recovery claim: c0842. Durable findings and measurements: c0843-c0890. Proposed bridge style: c0849; proposed town-distance status design: c0864; proposed overview town-label design: c0869; marker baseline: c0870; renderer name metadata/clamp: c0871; cache hash baseline: c0872; v28 hash update: c0873; passing marker focused runs: c0874/c0878; v28 cold progress: c0875/c0877/c0879; unique town keys: c0876; selected-town redraw issue: c0880; seed42 overview evidence: c0881; selection regression baseline: c0882; stable-ID implementation/v29 identity: c0883; first post-fix run: c0884; passing stable-ID focused run: c0885; v29 cold-start evidence: c0886; seed42 v29 progress: c0887; fresh v29 seed42 named overview: c0888; final full pytest result: c0889; browser screenshot automation limitation: c0890; river strand issue blocked: c0845.
+- Repository/worktree: C:\Users\hhofe\Documents\grokkable projects\t3 testbed\python-spawner.
+- Branch: python-test/spawner. Starting/current HEAD: 2469802febb1d9c2e4885830b5b8ae36b668bb83. No commit or push.
+- Tracked edits: world.py, map_render.py, chunks.py, control.html, tests/test_world.py, tests/test_chunks.py, tests/test_control.py, and this file. Evidence is under artifacts/spawner-five-improvements/. Changes remain uncommitted. Pre-existing untracked paths outside this worktree remain untouched.
+
+## Current item status
+
+1. **Locally complete.** Roads use 22-ft traveled surfaces and regional rendering uses a thin ROW outline.
+2. **Blocked (river-strand subtask).** Rail has a distinct narrow dash, elevator/depot buildings and spur are styled, bridges use a distinct 22-ft deck. Focused bridge/style tests passed 4 in 0.73s. Review screenshots show close parallel/fanned strokes but lack target world coordinates; a duplicate-draw cause is unproven. c0845 records the blocker. Do not change river geometry, topology, width, crossings, generation parameters, or Part 5 spacing.
+3. **Locally complete.** Lots/frontage/trees, buildings/spur, loaded-town Previous/Next, nearest loaded accepted-town Find, gap explanation, and persistent next-town status are implemented. Display-only town names, SVG metadata, unique site-ID keys, marker clamping, and v29 cache identity are implemented. Stable-ID selection regression suite passed 11 in 0.87s (c0885). Fresh v29 seed42 is Ready with town ID `town:rail:h:0:0`; “Mason Falls” marker was observed within the 1280x800 view (c0888). Existing visual close-town evidence is `seed31-town-close-v27.png`; fresh v29 close screenshot was not captured because browser automation stopped responding (c0890).
+4. **Locally complete for progressive display.** Cold seed31 showed 0/16, then 8/16, then Ready in the earlier v27 run. Fresh v29 cold seed31 shows its temporary grid at 0/16 and 35 queued (c0886). Fresh seed42 6-mi request advanced to 2/4 chunks, 13 queued, with all four previews visible and one town loaded (c0887).
+5. **Locally complete.** Details/stages collapse by default, duplicate names/version are removed, the header stays on one row at 1280px, and the map receives more width.
+
+## Current verification and evidence
+
+- Final fresh full suite: `py -m pytest -q` passed 137 in 431.54s (0:07:11), exit 0; log `check-results/spawner-v29-final-pytest.log`, claim c0889. Earlier 131-pass suite remains stale. `preview_snapshot` and `preview_evaluate` timed out; `preview_open` hung; computer-use fallback returned native pipe unavailable after reset/retry (c0890).
+- Focused fresh results: bridge style/deck 4 passed in 0.73s; town distance/navigation 2 passed in 0.16s. Test-first bridge and town-distance baselines and logs are listed in the recovery claim.
+- New test-first marker baseline: 2 expected failures in 0.31s because the deterministic name function and town-name SVG metadata/placement path are absent; log check-results/spawner-town-marker-baseline.log; metric claim c0870.
+- Post-change focused command passed 5 tests and failed 1 in 0.53s; the only failure is tests/test_chunks.py pinning the previous v27 renderer hash c632d659f54205554c4af10b. The current v28 hash is 75af96767908cdf28e4036d2. Log check-results/spawner-town-marker-focused-baseline.log; claim c0872.
+- Updated tests/test_chunks.py to expect the measured v28 hash 75af96767908cdf28e4036d2. The assertion remains strict; focused rerun is pending (claim c0873).
+- Fresh focused command now passes 10 in 1.01s: town display name/SVG metadata, marker clamp, town distance, quiet page, progressive status, bridge styling/width, rail style, and v28 cache identity. Log check-results/spawner-town-marker-focused.log; claim c0874.
+- Newly restarted v28 server and hard refresh showed a genuinely cold seed31 grid with basin/chunk progress at 0/16 and 35 queued; no blank page. T3 screenshot timed out at 15s. Claim c0875.
+- Fresh seed42 6-mi request first waited behind seed31, then started its 32-mi basin at 0/4 with 15 queued; temporary grid remains visible (c0877, c0879). The SVG/browser town map uses data-site-id for unique internal keys while showing data-town-name (c0876).
+- After the unique site-key change, the focused suite passed 10 in 1.23s (check-results/spawner-town-marker-focused-final.log; c0878).
+- Test-first selection regression failed as expected: 1 failed in 0.25s because replacing the selected rectangle array under the same town ID resets townIndex; log check-results/spawner-town-selection-baseline.log; claim c0882.
+- Source fix tracks townList by stable ID and resolves current rectangles from the Map; renderer v29 identity is d6ee9910c81ec978017ba0c4. Focused rerun pending (c0883).
+- The first post-fix focused command passed 9 and failed 2 in 1.73s. The implementation uses stable IDs, so the selection harness must initialize an ID and the quiet-page assertion must expect towns.keys(); log check-results/spawner-town-selection-focused.log; c0884.
+- After updating those test expectations, the focused selection/name/control/bridge/rail/cache suite passed 11 in 0.87s; log check-results/spawner-town-selection-focused-final.log; c0885.
+- Existing evidence includes seed31-country.png, seed31-town.png, seed31-town-close-v27.png, seed13-overview.png, seed42-town-overview.png, cold-start-1280.png, progress-8-of-16-1280.png, fresh-render-ready-1280.png, seed31-bridge-before.png, seed31-bridge-after.png, seed31-bridge-comparison.png, and cold-start-bridge-v27-1280.png.
+- Fresh v29 cold seed31 capture (artifacts/spawner-five-improvements/cold-start-v29-seed31.png) shows the temporary grid and queue at 0/16 (c0886). Seed42 progressed 0/4 to Ready, with the readable marker and stable site ID inspected (c0887-c0888). Existing visual evidence also includes `seed42-town-overview-v28.png`, `seed31-town-close-v27.png`, `seed13-overview.png`, and `seed31-bridge-after.png`. A fresh v29 screenshot could not be exported due browser tool failure (c0890); town redraw persistence is covered by focused regression.
+
+## Exact next action
+
+Resume only the blocked river-strand subtask: recover/reproduce the exact world windows represented by `seed31-elevator.png` and `seed13-farm-river.png`, inspect feature IDs/points and emitted SVG, add a regression for a proven duplicate stroke, then apply the smallest rendering-only fix. If exact windows or duplication cannot be established, leave c0845 blocked. The other four items and full suite (137 passed) are complete. Final cleanup: `git diff --check` passed; owned server PID 25288 was stopped after verifying its command line; temporary DB writer scripts were removed. The T3 tab remains open because the Ctrl+W preview action also timed out; no close-tab endpoint is available.
+
+Final verification recorded: river strand subtask is explicitly blocked in c0845; the fresh full pytest suite passed 137 in 431.54s (0:07:11); c0842 contains the final branch/HEAD, files, tests, artifacts, blockers, and exact next action.
+
+- Preserve existing work outside python-spawner. Do not retune Part 5 spacing, start Part 6, change candidate town spacing, alter river geometry/topology/widths/crossings, or touch other projects/worktrees. No merge, rebase, push, or PR.
 
 ## What changed
 

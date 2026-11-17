@@ -76,11 +76,15 @@ class Handler(BaseHTTPRequestHandler):
    else: result=render_request(data)
    self.reply(200,result)
   except (ValueError,KeyError,TypeError,ArithmeticError,IndexError) as error: self.reply(400,{'error':str(error)})
+  except (RuntimeError,OSError) as error: self.reply(500,{'error':str(error)})
 
 def serve(port=None,settings=None):
+ from chunks import start,shutdown
+ start()
  port=port or Settings().values['controls.port']
  with ThreadingHTTPServer(('127.0.0.1',port),Handler) as server:
   server.settings=settings or Settings()
   print(f'Control page: http://127.0.0.1:{server.server_port}',flush=True)
   try: server.serve_forever()
   except KeyboardInterrupt: pass
+  finally: shutdown()

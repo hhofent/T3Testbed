@@ -307,6 +307,9 @@ def place_on_lot(plan, lot, gtype, Wh, D):
         elif gtype == "detached":
             x = max(acc_l + FT(number('spawner.place_on_lot_numbers', 'place_on_lot_308_31')), l)               # garage 12 ft + 3 ft to the house; drive runs beside it
             if x + Wh <= W - r: hx = x; break
+            # Narrow lot: the side-by-side garage and drive do not fit. Place the
+            # house across the buildable width and tuck the garage at the rear.
+            if Wh <= W - l - r: hx = l + (W - l - r - Wh) // number('spawner.place_on_lot_numbers', 'place_on_lot_306_61'); break
         else:
             Wt = GW[gtype] + Wh
             if Wt <= W - l - r: hx = l + (W - l - r - Wt) // number('spawner.place_on_lot_numbers', 'place_on_lot_312_61'); break

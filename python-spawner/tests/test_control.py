@@ -75,3 +75,83 @@ def test_world_png_and_browser_share_styles_for_the_same_rectangle():
    channel=max(range(3),key=lambda i:abs(bg[i]-color[i]))
    coverage=sum((bg[channel]-raster.getpixel((x,256))[channel])/(bg[channel]-color[channel]) for x in range(column-5,column+6))
    assert abs(coverage-style['minimum_px'])<.15,(f['kind'],coverage)
+
+
+def test_rail_has_distinct_narrow_dashed_rendering():
+ from world import WORLD_STYLE,feature,svg,MILE,FT
+ rail=feature('rail','rail:sample',points=[(0,0),(MILE,MILE)],width=FT(100))
+ markup=svg({'window':(0,0,MILE,MILE),'features':[rail]}).decode()
+ assert WORLD_STYLE['minimum_px']['rail'] < WORLD_STYLE['minimum_px']['paved']
+ assert '#685553' in markup and 'stroke-dasharray=' in markup
+
+def test_bridge_deck_is_distinct_visible_and_below_rail():
+ from world import WORLD_STYLE,feature,feature_style,MILE,FT
+ bridge=feature('bridges','bridge:sample',points=[(MILE/2,MILE*.45),(MILE/2,MILE*.55)],width=FT(22),surface='gravel',carrier='roads')
+ style=feature_style(bridge)
+ assert style['color']==WORLD_STYLE['colors']['bridges']
+ assert style['color'] not in WORLD_STYLE['roads'].values()
+ assert style['minimum_px']>=1.2
+ order=WORLD_STYLE['order']
+ assert order.index('roads')<order.index('bridges')<order.index('rail')
+
+def test_control_page_quiet_defaults_and_loaded_town_navigation():
+ from control import page_bytes
+ page=page_bytes().decode()
+ assert page.count('class="version"')==1
+ assert "group.open=title==='Endless world and navigation'" in page
+ assert 'detail.open=false' in page
+ assert 'function collectTowns()' in page and 'towns.keys()' in page
+ assert "className='town-marker'" in page and "viewport[2]>=6*mile" in page
+ assert 'for(let width=12' not in page
+ assert 'No accepted town in loaded chunks' in page
+ assert 'flex-wrap:nowrap' in page
+
+def test_town_distance_status_survives_async_chunk_redraw():
+ from control import page_bytes
+ page=page_bytes().decode()
+ assert '<div id="townDistance" role="status" aria-live="polite"></div>' in page
+ assert 'function updateTownDistance()' in page
+ assert "$('townDistance').textContent=`Town ${townIndex+1} of ${townList.length}; next town ${distance.toFixed(1)} mi away`" in page
+ assert "$('status').textContent=`Town ${townIndex+1}" not in page
+
+
+def test_overview_town_labels_are_readable_and_stay_inside_map():
+ import re,subprocess
+ from control import page_bytes
+ page=page_bytes().decode()
+ assert "group.getAttribute('data-town-name')" in page
+ assert 'marker.textContent=label' in page
+ assert "marker.textContent='? '" not in page
+ helper=re.search(r'^function townMarkerPosition[^\n]+',page,re.M).group()
+ script=helper+"""
+ const p=townMarkerPosition(0,0,160,28,500,400);
+ if(p.left<8||p.top<8||p.left+160>492||p.top+28>392)throw Error(JSON.stringify(p));
+ const q=townMarkerPosition(500,400,160,28,500,400);
+ if(q.left<8||q.top<8||q.left+160>492||q.top+28>392)throw Error(JSON.stringify(q));
+ """
+ subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
+
+def test_town_selection_survives_detail_chunk_replacing_rectangle():
+ import re,subprocess
+ from control import page_bytes
+ page=page_bytes().decode()
+ collect=re.search(r'function collectTowns\(\)\{[^\n]+\}',page).group()
+ script="""
+ const towns=new Map([['town:site',[0,0,100,100,'Mason Falls']]]);
+ let townList=['town:site'],townIndex=0;
+ const controls={prevTown:{},nextTown:{}};const $=id=>controls[id];const updateTownDistance=()=>{};
+ """+collect+"""
+ towns.set('town:site',[5,5,100,100,'Mason Falls']);
+ collectTowns();
+ if(townIndex!==0||townList.length!==1)throw Error(JSON.stringify({townIndex,townList}));
+ """
+ subprocess.run(['node','-e',script],check=True,capture_output=True,text=True)
+
+
+def test_control_reports_basin_chunk_progress_without_blank_status():
+ from control import page_bytes
+ page=page_bytes().decode()
+ assert 'Temporary grid;' in page and 'basin for chunk (${data.active.x}, ${data.active.y})' in page
+ assert '${data.completed||0} of ${data.total||data.chunks.length} visible chunks ready' in page
+ assert "host.style.background='#deded2'" in page
