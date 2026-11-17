@@ -3,6 +3,7 @@
 - Repository: `C:\Users\hhofe\Documents\grokkable projects\t3 testbed\python-spawner`
 - Branch: `python-test/spawner`
 - Parent HEAD: `2469802febb1d9c2e4885830b5b8ae36b668bb83`
+- Current HEAD: `f90cbc7950709481520058887baa093f66f9e3ff` (v0.11)
 - VERSION: **v0.11**. Cache identity `lod-v30-river-road-town-narrow-lot` / `6ffc52d24b8ccc8493fb93cd`.
 - Milestone: five-improvements + progressive loading + quirk-fixes. Elevation-then-rivers remake was reverted (c0919) and is not in this version.
 
@@ -22,7 +23,7 @@
 
 ## Exact next action
 
-Commit and push `python-test/spawner` as v0.11. Do not merge, rebase, force-push, or open a PR.
+Pushed `python-test/spawner` as v0.11 (`f90cbc7`). Hard-refresh http://127.0.0.1:8765/. Do not merge, rebase, force-push, or open a PR.
 
 ---
 

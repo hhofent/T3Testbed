@@ -8,4 +8,4 @@ v0.7 2026-11-13 265c044 Overhaul overview strokes, keep rail square at section c
 v0.8 2026-11-14 b2ee52f Rebuild the world drainage-first: basin rivers, continuous paved routes, 24-mile correction jogs, owned bridges, bidirectional rail, route-owned towns, farmstead density, and a shared PNG/browser style.
 v0.9 2026-11-14 eb6c96f Replace trunk-lane rivers with the overhaul 2A basin network and add the checks/ harness.
 v0.10 2026-11-14 51cae68 Show the version label on the viewer and control panel, and add a shared-user README.
-v0.11 2026-11-16 Show staged generation previews, distinctive bridges and town labels, interruptible workers, correction-line road joins, smoother river bends, outer town lots, and narrow-lot houses.
+v0.11 2026-11-16 f90cbc7 Show staged generation previews, distinctive bridges and town labels, interruptible workers, correction-line road joins, smoother river bends, outer town lots, and narrow-lot houses.
