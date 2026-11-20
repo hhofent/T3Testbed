@@ -1,0 +1,122 @@
+<Window x:Class="csharp_spawnerv0._1.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:csharp_spawnerv0._1"
+        Title="World Spawner Viewer 0.22" Height="820" Width="1120"
+        MinHeight="600" MinWidth="800" Background="#f2f1e6"
+        Closing="Window_Closing">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="170" />
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <TextBlock x:Name="StatusText" DockPanel.Dock="Right" VerticalAlignment="Center"
+                       Foreground="#47534a" Text="Ready" Margin="12,0" />
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Seed" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBox x:Name="SeedInput" Width="120" Text="31" VerticalContentAlignment="Center" />
+                    <Button x:Name="GenerateButton" Content="Random seed" Click="RandomSeed_Click"
+                            Margin="8,0,0,0" Padding="12,5" />
+                    <TextBlock Text="Drag to pan | mouse wheel to zoom" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#667064" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,7,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="Spawners" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="SemiBold" Foreground="#47534a" />
+                    <CheckBox x:Name="ElevationSpawnerToggle" Content="Elevation" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Generate terrain for new chunks." Margin="0,0,14,0" />
+                    <CheckBox x:Name="WaterSpawnerToggle" Content="Water" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Fill saved riverbeds and low basins for new chunks." Margin="0,0,14,0" />
+                    <CheckBox x:Name="PopulationSpawnerToggle" Content="Population" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Generate settlers and main roads for new chunks." Margin="0,0,14,0" />
+                    <CheckBox x:Name="RailSpawnerToggle" Content="Rail" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Link generated major towns for new chunks." Margin="0,0,14,0" />
+                    <CheckBox x:Name="RoadSpawnerToggle" Content="Roads" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Generate the rural section-road grid for new chunks." Margin="0,0,14,0" />
+                    <CheckBox x:Name="RuralSpawnerToggle" Content="Rural lots" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Place farmsteads and acreages along completed rural roads." Margin="0,0,14,0" />
+                    <CheckBox x:Name="TownSpawnerToggle" Content="Towns" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Build town streets, houses and businesses around saved rail and road access." Margin="0,0,14,0" />
+                    <CheckBox x:Name="TreeSpawnerToggle" Content="Trees" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Place trunk markers after all terrain, water, roads, rural lots, and towns are ready." Margin="0,0,14,0" />
+                    <CheckBox x:Name="WallPlanToggle" Content="Near walls" IsChecked="True" Click="SpawnerToggle_Click" ToolTip="Load SpawnGuide house wall plans at near scale." />
+                </StackPanel>
+            </StackPanel>
+        </DockPanel>
+        <TabControl Grid.Row="1">
+            <TabItem Header="Map">
+                <Border BorderBrush="#a9aa9d" BorderThickness="1" Background="#f2f1e6">
+                    <local:MapSurface x:Name="MapView" />
+                </Border>
+            </TabItem>
+            <TabItem Header="Settings">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#faf9f2">
+                    <StackPanel Margin="18" MaxWidth="620" HorizontalAlignment="Left">
+                        <TextBlock Text="World generation settings" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
+                        <TextBlock Text="Values apply when you click Regenerate. The seed is also editable here." TextWrapping="Wrap" Foreground="#667064" Margin="0,0,0,12" />
+                        <UniformGrid Columns="2" Rows="60" Margin="0,0,0,12">
+                            <TextBlock Text="Settlement spacing (miles)" VerticalAlignment="Center"/><TextBox x:Name="SettlementSpacingInput" Margin="4"/>
+                            <TextBlock Text="Minimum settlement separation (miles)" VerticalAlignment="Center"/><TextBox x:Name="SettlementSeparationInput" Margin="4"/>
+                            <TextBlock Text="Water search (miles)" VerticalAlignment="Center"/><TextBox x:Name="WaterSearchInput" Margin="4"/>
+                            <TextBlock Text="Major town chance (1 in N)" VerticalAlignment="Center"/><TextBox x:Name="MajorTownChanceInput" Margin="4"/>
+                            <TextBlock Text="People at new site (base)" VerticalAlignment="Center"/><TextBox x:Name="PeopleBaseInput" Margin="4"/>
+                            <TextBlock Text="People at new site (roll max)" VerticalAlignment="Center"/><TextBox x:Name="PeopleRollInput" Margin="4"/>
+                            <TextBlock Text="Farm count: zero below (%)" VerticalAlignment="Center"/><TextBox x:Name="FarmZeroInput" Margin="4"/>
+                            <TextBlock Text="Farm count: one below (%)" VerticalAlignment="Center"/><TextBox x:Name="FarmOneInput" Margin="4"/>
+                            <TextBlock Text="Acreage chance (%)" VerticalAlignment="Center"/><TextBox x:Name="AcreageChanceInput" Margin="4"/>
+                            <TextBlock Text="Acreage minimum area (acres)" VerticalAlignment="Center"/><TextBox x:Name="AcreageMinInput" Margin="4"/>
+                            <TextBlock Text="Acreage maximum area (acres)" VerticalAlignment="Center"/><TextBox x:Name="AcreageMaxInput" Margin="4"/>
+                            <TextBlock Text="Farmstead minimum area (acres)" VerticalAlignment="Center"/><TextBox x:Name="FarmMinInput" Margin="4"/>
+                            <TextBlock Text="Farmstead maximum area (acres)" VerticalAlignment="Center"/><TextBox x:Name="FarmMaxInput" Margin="4"/>
+                            <TextBlock Text="Home occupancy (%)" VerticalAlignment="Center"/><TextBox x:Name="HomeOccupancyInput" Margin="4"/>
+                            <TextBlock Text="Garage chance (%)" VerticalAlignment="Center"/><TextBox x:Name="GarageChanceInput" Margin="4"/>
+                            <TextBlock Text="Sea level (feet)" VerticalAlignment="Center"/><TextBox x:Name="SeaLevelInput" Margin="4"/>
+                            <TextBlock Text="South drop (feet per mile)" VerticalAlignment="Center"/><TextBox x:Name="SouthDropInput" Margin="4"/>
+                            <TextBlock Text="Gambrel barn chance (%)" VerticalAlignment="Center"/><TextBox x:Name="GambrelChanceInput" Margin="4"/>
+                            <TextBlock Text="Shelterbelt minimum rows" VerticalAlignment="Center"/><TextBox x:Name="ShelterbeltMinRowsInput" Margin="4"/>
+                            <TextBlock Text="Shelterbelt maximum rows" VerticalAlignment="Center"/><TextBox x:Name="ShelterbeltMaxRowsInput" Margin="4"/>
+                            <TextBlock Text="Field entrances minimum per quarter" VerticalAlignment="Center"/><TextBox x:Name="FieldEntrancesMinInput" Margin="4"/>
+                            <TextBlock Text="Field entrances maximum per quarter" VerticalAlignment="Center"/><TextBox x:Name="FieldEntrancesMaxInput" Margin="4"/>
+                            <TextBlock Text="Field entrance width (feet)" VerticalAlignment="Center"/><TextBox x:Name="FieldEntranceWidthInput" Margin="4"/>
+                            <TextBlock Text="Field entrance minimum length (feet)" VerticalAlignment="Center"/><TextBox x:Name="FieldEntranceLengthMinInput" Margin="4"/>
+                            <TextBlock Text="Field entrance maximum length (feet)" VerticalAlignment="Center"/><TextBox x:Name="FieldEntranceLengthMaxInput" Margin="4"/>
+                            <TextBlock Text="Field entrance setback (feet)" VerticalAlignment="Center"/><TextBox x:Name="FieldEntranceSetbackInput" Margin="4"/>
+                            <TextBlock Text="Cattle yard chance per 4 sections (%)" VerticalAlignment="Center"/><TextBox x:Name="CattleYardChanceInput" Margin="4"/>
+                            <TextBlock Text="Cattle yard minimum area (acres)" VerticalAlignment="Center"/><TextBox x:Name="CattleYardMinInput" Margin="4"/>
+                            <TextBlock Text="Cattle yard maximum area (acres)" VerticalAlignment="Center"/><TextBox x:Name="CattleYardMaxInput" Margin="4"/>
+                            <TextBlock Text="Sections per cattle yard" VerticalAlignment="Center"/><TextBox x:Name="CattleYardSectionsInput" Margin="4"/>
+                            <TextBlock Text="Coop rail distance (feet)" VerticalAlignment="Center"/><TextBox x:Name="CoopRailDistanceInput" Margin="4"/>
+                            <TextBlock Text="Coop town exclusion (miles)" VerticalAlignment="Center"/><TextBox x:Name="CoopTownExclusionInput" Margin="4"/>
+                            <TextBlock Text="Town plat on north side (%)" VerticalAlignment="Center"/><TextBox x:Name="TownNorthInput" Margin="4"/>
+                            <TextBlock Text="Town plat on south side (%)" VerticalAlignment="Center"/><TextBox x:Name="TownSouthInput" Margin="4"/>
+                            <TextBlock Text="Blocks with alleys (%)" VerticalAlignment="Center"/><TextBox x:Name="TownAlleyChanceInput" Margin="4"/>
+                            <TextBlock Text="Downtown business share (%)" VerticalAlignment="Center"/><TextBox x:Name="TownDowntownShareInput" Margin="4"/>
+                            <TextBlock Text="Towns with no extra street (%)" VerticalAlignment="Center"/><TextBox x:Name="TownNoExtraStreetInput" Margin="4"/>
+                            <TextBlock Text="Maximum extra streets" VerticalAlignment="Center"/><TextBox x:Name="TownMaxExtraStreetsInput" Margin="4"/>
+                            <TextBlock Text="Sidewalk width (feet)" VerticalAlignment="Center"/><TextBox x:Name="TownSidewalkWidthInput" Margin="4"/>
+                            <TextBlock Text="Sidewalk inset (feet)" VerticalAlignment="Center"/><TextBox x:Name="TownSidewalkInsetInput" Margin="4"/>
+                            <TextBlock Text="Paved business strip search (miles)" VerticalAlignment="Center"/><TextBox x:Name="TownStripSearchInput" Margin="4"/>
+                            <TextBlock Text="Dead-end bulb width (feet)" VerticalAlignment="Center"/><TextBox x:Name="TownBulbWidthInput" Margin="4"/>
+                            <TextBlock Text="Water tower chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownWaterTowerInput" Margin="4"/>
+                            <TextBlock Text="Ball field chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownBallFieldInput" Margin="4"/>
+                            <TextBlock Text="Cemetery chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownCemeteryInput" Margin="4"/>
+                            <TextBlock Text="Library chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownLibraryInput" Margin="4"/>
+                            <TextBlock Text="Edge park chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownEdgeParkInput" Margin="4"/>
+                            <TextBlock Text="Central square chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownCentralSquareInput" Margin="4"/>
+                            <TextBlock Text="Golf course chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownGolfInput" Margin="4"/>
+                            <TextBlock Text="Fairgrounds chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownFairgroundsInput" Margin="4"/>
+                            <TextBlock Text="Airstrip chance (%)" VerticalAlignment="Center"/><TextBox x:Name="TownAirstripInput" Margin="4"/>
+                            <TextBlock Text="Motel chance, small towns (%)" VerticalAlignment="Center"/><TextBox x:Name="TownMotelSmallInput" Margin="4"/>
+                            <TextBlock Text="Motel chance, medium towns (%)" VerticalAlignment="Center"/><TextBox x:Name="TownMotelMediumInput" Margin="4"/>
+                            <TextBlock Text="Motel chance, large towns (%)" VerticalAlignment="Center"/><TextBox x:Name="TownMotelLargeInput" Margin="4"/>
+                            <TextBlock Text="Tree density (%)" VerticalAlignment="Center"/><TextBox x:Name="TreeDensityInput" Margin="4"/>
+                            <TextBlock Text="Street-tree chance (%)" VerticalAlignment="Center"/><TextBox x:Name="StreetTreeChanceInput" Margin="4"/>
+                            <TextBlock Text="Sections per grove" VerticalAlignment="Center"/><TextBox x:Name="GroveSectionsInput" Margin="4"/>
+                        </UniformGrid>
+                        <Button Content="Regenerate" Click="Regenerate_Click" Padding="16,7" HorizontalAlignment="Left" />
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+        <GroupBox Grid.Row="2" Header="Generation console" Margin="0,8,0,0">
+            <TextBox x:Name="ConsoleOutput" IsReadOnly="True" AcceptsReturn="True"
+                     TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12"
+                     Background="#171a18" Foreground="#d6e2d8" BorderThickness="0" />
+        </GroupBox>
+    </Grid>
+</Window>
+
